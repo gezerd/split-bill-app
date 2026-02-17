@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: split-bill-db
+    environment:
+      POSTGRES_DB: splitbill
+      POSTGRES_USER: splitbill_user
+      POSTGRES_PASSWORD: splitbill_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U splitbill_user -d splitbill"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - splitbill-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: split-bill-backend
+    environment:
+      DATABASE_URL: postgresql://splitbill_user:splitbill_pass@postgres:5432/splitbill
+      GOOGLE_CLOUD_VISION_CREDENTIALS: ${GOOGLE_CLOUD_VISION_CREDENTIALS:-}
+      CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - splitbill-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: split-bill-frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+    networks:
+      - splitbill-network
+
+volumes:
+  postgres_data:
+
+networks:
+  splitbill-network:
+    driver: bridge
