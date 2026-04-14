@@ -1,10 +1,11 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies for image processing
 RUN apt-get update && apt-get install -y \
     gcc \
+    libheif-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

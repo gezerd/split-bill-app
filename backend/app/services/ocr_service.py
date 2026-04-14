@@ -1,22 +1,46 @@
 import re
+import os
+from pillow_heif import register_heif_opener, open_heif
+register_heif_opener()  # Register HEIC opener with PIL
 from typing import Dict, List
 from decimal import Decimal
-import os
-
+from io import BytesIO
+from google.cloud import vision
+from PIL import Image
 
 class OCRService:
     """Service for extracting receipt data from images using Google Cloud Vision API"""
 
     def __init__(self):
-        # Initialize Google Cloud Vision client only if credentials are provided
-        self.client = None
-        credentials_path = os.getenv("GOOGLE_CLOUD_VISION_CREDENTIALS")
+        # Set project ID if provided (for Application Default Credentials)
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+        if project_id:
+            os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
 
-        if credentials_path and os.path.exists(credentials_path):
-            from google.cloud import vision
+        # Initialize Google Cloud Vision client
+        # Uses Application Default Credentials from `gcloud auth application-default login`
+        self.client = vision.ImageAnnotatorClient()
+        print("Google Cloud Vision client initialized successfully.")
 
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-            self.client = vision.ImageAnnotatorClient()
+    def _convert_heic_to_png(self, image_bytes: bytes) -> bytes:
+        """
+        Convert HEIC image to PNG format using pillow-heif
+
+        Args:
+            image_bytes: Original image bytes (HEIC format)
+
+        Returns:
+            PNG image bytes
+        """
+        try:
+            heif_file = open_heif(BytesIO(image_bytes))
+            image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode)
+            output = BytesIO()
+            image.convert("RGB").save(output, format="PNG")
+            return output.getvalue()
+        except Exception as e:
+            print(f"Image conversion error: {type(e).__name__}: {e}")
+            return image_bytes
 
     def extract_receipt_data(self, image_bytes: bytes) -> Dict:
         """
@@ -35,7 +59,12 @@ class OCRService:
         try:
             from google.cloud import vision
 
-            image = vision.Image(content=image_bytes)
+            # Convert HEIC to PNG if necessary (skip if already JPEG or PNG)
+            is_jpeg = image_bytes[:3] == b'\xff\xd8\xff'
+            is_png = image_bytes[:8] == b'\x89PNG\r\n\x1a\n'
+            converted_bytes = image_bytes if (is_jpeg or is_png) else self._convert_heic_to_png(image_bytes)
+
+            image = vision.Image(content=converted_bytes)
             response = self.client.text_detection(image=image)
 
             if response.error.message:

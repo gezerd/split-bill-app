@@ -12,6 +12,7 @@ venv/
 env/
 ENV/
 .venv
+.python-version
 
 # Node
 node_modules/
@@ -42,3 +43,5 @@ service-account*.json
 
 # Postgres data
 postgres_data/
+
+package-lock.json

@@ -14,15 +14,72 @@ A web application to split restaurant bills among multiple people using OCR tech
 ## Tech Stack
 
 - **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: Python FastAPI
+- **Backend**: Python 3.12 + FastAPI
 - **Database**: PostgreSQL (infrastructure setup, v1 uses in-memory storage)
 - **OCR**: Google Cloud Vision API
+- **Image Processing**: OpenCV + pillow-heif (HEIC support)
 - **Containerization**: Docker Compose
 
 ## Prerequisites
 
+### For Docker (Recommended)
 - Docker and Docker Compose
 - Google Cloud Vision API credentials (see setup below)
+
+### For Local Development
+- **Python 3.12** (required for backend development)
+- **Node.js 18+** (required for frontend development)
+- **Google Cloud CLI** with authentication set up
+- Google Cloud Vision API credentials
+
+## Python Installation (Local Development Only)
+
+If you want to run the backend locally (without Docker), you need Python 3.12 installed.
+
+### Option 1: Using pyenv (Recommended)
+
+```bash
+# Install pyenv (if not already installed)
+# macOS
+brew install pyenv
+
+# Linux
+curl https://pyenv.run | bash
+
+# Install Python 3.12
+pyenv install 3.12.0
+
+# Set Python 3.12 for this project
+cd /path/to/split-bill-app
+pyenv local 3.12.0
+
+# Verify installation
+python --version  # Should show Python 3.12.0
+pip --version     # Should now work
+```
+
+### Option 2: Direct Installation
+
+**macOS:**
+```bash
+brew install python@3.12
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install python3.12 python3.12-venv python3-pip
+```
+
+**Windows:**
+Download from [python.org/downloads](https://www.python.org/downloads/) and install Python 3.12
+
+### Verify Installation
+
+```bash
+python --version  # or python3 --version
+pip --version     # or pip3 --version
+```
 
 ## Quick Start
 
@@ -35,17 +92,48 @@ cd split-bill-app
 
 ### 2. Set up Google Cloud Vision API
 
-1. Create a Google Cloud project
-2. Enable the Cloud Vision API
-3. Create a service account and download the JSON credentials file
-4. Save the credentials file (e.g., `google-credentials.json`) in a secure location
-
-### 3. Configure environment variables
-
-Create a `.env` file in the root directory:
+**Using Google Cloud CLI (Recommended for local development):**
 
 ```bash
-GOOGLE_CLOUD_VISION_CREDENTIALS=/path/to/your/google-credentials.json
+# Install Google Cloud CLI if not already installed
+# macOS: brew install google-cloud-sdk
+# See: https://cloud.google.com/sdk/docs/install
+
+# Authenticate
+gcloud auth application-default login
+
+# Create a new project (or use existing)
+gcloud projects create YOUR_PROJECT_ID
+
+# Set the project
+gcloud config set project YOUR_PROJECT_ID
+
+# Enable Cloud Vision API
+gcloud services enable vision.googleapis.com
+
+# Create backend .env file
+cd backend
+echo "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID" > .env
+echo "CORS_ORIGINS=http://localhost:5173" >> .env
+```
+
+**Alternative: Using Service Account JSON (for Docker/Production):**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project and enable Cloud Vision API
+3. Create a service account and download JSON credentials
+4. Set `GOOGLE_CLOUD_VISION_CREDENTIALS` in docker-compose.yml
+
+### 3. Install dependencies
+
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+
+# Frontend
+cd frontend
+npm install
 ```
 
 ### 4. Start the application
@@ -65,6 +153,44 @@ Open your browser and navigate to http://localhost:5173
 
 ## Development
 
+### Setup for Local Development
+
+**1. Install Python 3.12** (see Python Installation section above)
+
+**2. Set up Python environment:**
+```bash
+# Navigate to project root
+cd split-bill-app
+
+# Set Python 3.12 for this project (if using pyenv)
+pyenv local 3.12.0
+
+# Verify Python version
+python --version  # Should show Python 3.12.x
+```
+
+**3. Install backend dependencies:**
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+**4. Set up Google Cloud authentication:**
+```bash
+# Authenticate with Google Cloud
+gcloud auth application-default login
+
+# Set your project ID
+gcloud config set project YOUR_PROJECT_ID
+```
+
+**5. Create backend .env file:**
+```bash
+cd backend
+cp .env.example .env
+# Edit .env and set GOOGLE_CLOUD_PROJECT=your-project-id
+```
+
 ### Frontend Development
 
 ```bash
@@ -73,13 +199,36 @@ npm install
 npm run dev
 ```
 
+Runs at http://localhost:5173
+
 ### Backend Development
 
 ```bash
 cd backend
-pip install -r requirements.txt
+
+# Make sure you're using Python 3.12
+python --version
+
+# Run the development server
 uvicorn app.main:app --reload
 ```
+
+Runs at http://localhost:8000
+
+### Running with Docker (Recommended)
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Stop all services
+docker-compose down
+```
+
+This approach ensures:
+- Consistent Python 3.12 environment
+- All dependencies installed correctly
+- No local Python version conflicts
 
 ## API Documentation
 
@@ -116,6 +265,55 @@ split-bill-app/
 4. Calculation engine computes proportional splits
 5. Frontend displays itemized breakdown
 
+## Troubleshooting
+
+### "pip: command not found"
+
+**Solution 1: Activate Python 3.12 with pyenv**
+```bash
+cd split-bill-app
+pyenv local 3.12.0
+python --version  # Verify it shows 3.12.x
+pip --version     # Should now work
+```
+
+**Solution 2: Use python -m pip**
+```bash
+python -m pip install -r backend/requirements.txt
+# or
+python3 -m pip install -r backend/requirements.txt
+```
+
+### Docker: "DefaultCredentialsError"
+
+The backend container needs access to your Google Cloud credentials:
+
+```bash
+# Make sure you're authenticated
+gcloud auth application-default login
+
+# Verify docker-compose.yml has this volume mount:
+# - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
+```
+
+### HEIC Image Upload Fails
+
+The app supports iPhone HEIC images. If conversion fails:
+1. Make sure `opencv-python` and `pillow-heif` are installed
+2. Try converting the HEIC to JPG first using macOS Preview or another tool
+3. Check backend logs for specific error messages
+
+### Port Already in Use
+
+```bash
+# Check what's using the port
+lsof -i :8000  # Backend
+lsof -i :5173  # Frontend
+lsof -i :5432  # PostgreSQL
+
+# Stop conflicting process or change ports in docker-compose.yml
+```
+
 ## Future Enhancements
 
 - Database persistence for saving and sharing bills
@@ -123,6 +321,7 @@ split-bill-app/
 - PDF/image export of breakdowns
 - Support for percentage-based splits
 - Multiple currency support
+- Receipt image preprocessing for better OCR accuracy
 
 ## License
 

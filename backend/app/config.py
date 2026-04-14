@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://splitbill_user:splitbill_pass@postgres:5432/splitbill"
 
     # Google Cloud Vision API
-    google_cloud_vision_credentials: str = ""
+    google_cloud_project: str = ""
 
     # CORS
     cors_origins: str = "http://localhost:5173"
