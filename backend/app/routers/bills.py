@@ -48,14 +48,15 @@ async def upload_receipt(file: UploadFile = File(...)):
                 name=item_data["name"],
                 price=item_data["price"],
                 quantity=item_data["quantity"],
+                custom_modifiers=item_data.get("customModifiers", []),
             )
             items.append(
                 {
                     "id": str(item.id),
-                    "bill_id": str(item.bill_id),
                     "name": item.name,
                     "price": float(item.price),
                     "quantity": item.quantity,
+                    "customModifiers": item.custom_modifiers,
                 }
             )
 

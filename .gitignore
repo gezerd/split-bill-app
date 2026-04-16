@@ -37,10 +37,6 @@ Thumbs.db
 # Docker
 *.log
 
-# Google Cloud credentials
-*credentials*.json
-service-account*.json
-
 # Postgres data
 postgres_data/
 

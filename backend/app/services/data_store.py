@@ -22,6 +22,7 @@ class Item:
     name: str
     price: Decimal
     quantity: int = 1
+    custom_modifiers: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -104,10 +105,10 @@ class InMemoryStore:
 
     # Item operations
     def create_item(
-        self, bill_id: UUID, name: str, price: Decimal, quantity: int = 1
+        self, bill_id: UUID, name: str, price: Decimal, quantity: int = 1, custom_modifiers: List[str] = None
     ) -> Item:
         with self._lock:
-            item = Item(id=uuid4(), bill_id=bill_id, name=name, price=price, quantity=quantity)
+            item = Item(id=uuid4(), bill_id=bill_id, name=name, price=price, quantity=quantity, custom_modifiers=custom_modifiers or [])
             self._items[item.id] = item
             return item
 

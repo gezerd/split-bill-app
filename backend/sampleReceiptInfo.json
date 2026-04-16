@@ -1,0 +1,20 @@
+{
+    "items": [
+        {
+            "description",
+            "customModifiers": [
+                {
+                    "description",
+                }
+            ],
+            "quantity",
+            "unitPrice",
+            "totalPrice"
+        },
+    ],
+    "tax",
+    "taxPercentage",
+    "totalPrice",
+    "tip",
+    "tipPercentage",
+}

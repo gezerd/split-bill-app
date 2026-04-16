@@ -26,6 +26,7 @@ def create_item(item: ItemCreate):
         "name": new_item.name,
         "price": new_item.price,
         "quantity": new_item.quantity,
+        "custom_modifiers":new_item.custom_modifiers,
     }
 
 
@@ -40,6 +41,7 @@ def get_items(bill_id: UUID):
             "name": item.name,
             "price": item.price,
             "quantity": item.quantity,
+            "custom_modifiers":item.custom_modifiers,
         }
         for item in items
     ]
@@ -61,6 +63,7 @@ def update_item(item_id: UUID, item_update: ItemUpdate):
         "name": updated_item.name,
         "price": updated_item.price,
         "quantity": updated_item.quantity,
+        "custom_modifiers":updated_item.custom_modifiers,
     }
 
 

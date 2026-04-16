@@ -1,13 +1,13 @@
 # Split Bill App
 
-A web application to split restaurant bills among multiple people using OCR technology to automatically extract receipt data.
+A web application to split restaurant bills among multiple people using AI to automatically extract receipt data.
 
 ## Features
 
-- 📸 Upload receipt images with automatic OCR extraction (Google Cloud Vision API)
+- 📸 Upload receipt images with automatic extraction (Claude AI)
 - 👥 Add, edit, and remove people splitting the bill
 - 🍕 Assign items to individuals or share among multiple people
-- ➕ Add, edit, or delete items if OCR misses something
+- ➕ Add, edit, or delete items if extraction misses something
 - 💰 Automatic proportional tax and tip distribution
 - 📊 Detailed breakdown showing each person's share
 
@@ -16,21 +16,20 @@ A web application to split restaurant bills among multiple people using OCR tech
 - **Frontend**: React + Vite + Tailwind CSS
 - **Backend**: Python 3.12 + FastAPI
 - **Database**: PostgreSQL (infrastructure setup, v1 uses in-memory storage)
-- **OCR**: Google Cloud Vision API
-- **Image Processing**: OpenCV + pillow-heif (HEIC support)
+- **AI**: Claude API (Haiku 4.5) for receipt extraction
+- **Image Processing**: pillow-heif (HEIC support)
 - **Containerization**: Docker Compose
 
 ## Prerequisites
 
 ### For Docker (Recommended)
 - Docker and Docker Compose
-- Google Cloud Vision API credentials (see setup below)
+- Anthropic API key (get one at [platform.claude.com](https://platform.claude.com))
 
 ### For Local Development
 - **Python 3.12** (required for backend development)
 - **Node.js 18+** (required for frontend development)
-- **Google Cloud CLI** with authentication set up
-- Google Cloud Vision API credentials
+- Anthropic API key
 
 ## Python Installation (Local Development Only)
 
@@ -90,39 +89,15 @@ git clone <repository-url>
 cd split-bill-app
 ```
 
-### 2. Set up Google Cloud Vision API
-
-**Using Google Cloud CLI (Recommended for local development):**
+### 2. Set up your Anthropic API key
 
 ```bash
-# Install Google Cloud CLI if not already installed
-# macOS: brew install google-cloud-sdk
-# See: https://cloud.google.com/sdk/docs/install
-
-# Authenticate
-gcloud auth application-default login
-
-# Create a new project (or use existing)
-gcloud projects create YOUR_PROJECT_ID
-
-# Set the project
-gcloud config set project YOUR_PROJECT_ID
-
-# Enable Cloud Vision API
-gcloud services enable vision.googleapis.com
-
-# Create backend .env file
 cd backend
-echo "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID" > .env
-echo "CORS_ORIGINS=http://localhost:5173" >> .env
+cp .env.example .env
+# Edit .env and set ANTHROPIC_API_KEY=your-api-key-here
 ```
 
-**Alternative: Using Service Account JSON (for Docker/Production):**
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a project and enable Cloud Vision API
-3. Create a service account and download JSON credentials
-4. Set `GOOGLE_CLOUD_VISION_CREDENTIALS` in docker-compose.yml
+Get your API key at [platform.claude.com](https://platform.claude.com).
 
 ### 3. Install dependencies
 
@@ -175,20 +150,11 @@ cd backend
 pip install -r requirements.txt
 ```
 
-**4. Set up Google Cloud authentication:**
-```bash
-# Authenticate with Google Cloud
-gcloud auth application-default login
-
-# Set your project ID
-gcloud config set project YOUR_PROJECT_ID
-```
-
-**5. Create backend .env file:**
+**4. Create backend .env file:**
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env and set GOOGLE_CLOUD_PROJECT=your-project-id
+# Edit .env and set ANTHROPIC_API_KEY=your-api-key-here
 ```
 
 ### Frontend Development
@@ -230,6 +196,38 @@ This approach ensures:
 - All dependencies installed correctly
 - No local Python version conflicts
 
+## Testing
+
+### Mock Mode (no Anthropic API call)
+
+Set `MOCK_OCR=true` to bypass the Anthropic API and use hardcoded receipt data. The app behaves normally — items are created in the data store and all features (assignments, breakdown, etc.) work as usual.
+
+**Docker:**
+```bash
+MOCK_OCR=true docker-compose up --build
+```
+
+**Local backend:**
+```bash
+MOCK_OCR=true uvicorn app.main:app --reload
+```
+
+The mock returns an In-N-Out order with 9 items including custom modifiers (e.g. "Protein Style", "Grilled Onions") so you can test the full UI without spending API credits.
+
+### With the Anthropic API
+
+Make sure `ANTHROPIC_API_KEY` is set and `MOCK_OCR` is unset (or set to `false`). The backend will call Claude Haiku 4.5 to extract items from the uploaded receipt image.
+
+**Docker:** add your key to the root `.env` file:
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**Local backend:** export it in your shell or add it to `backend/.env`:
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
 ## API Documentation
 
 Once the backend is running, view the interactive API docs at:
@@ -239,7 +237,7 @@ Once the backend is running, view the interactive API docs at:
 ## How to Use
 
 1. **Upload Receipt**: Click to upload a photo of your receipt
-2. **Review Items**: Verify OCR-extracted items, edit/add/delete as needed
+2. **Review Items**: Verify extracted items, edit/add/delete as needed
 3. **Add People**: Add names of people splitting the bill
 4. **Assign Items**: Click items to assign them to people (supports sharing with custom share counts)
 5. **Adjust Tip/Tax**: Enter tip as percentage or amount, edit tax if needed
@@ -252,18 +250,17 @@ Once the backend is running, view the interactive API docs at:
 ```
 split-bill-app/
 ├── frontend/          # React + Vite + Tailwind
-├── backend/           # FastAPI + Google Cloud Vision
+├── backend/           # FastAPI + Claude AI
 ├── postgres/          # Database schema
 └── docker-compose.yml # Service orchestration
 ```
 
 ### Data Flow
 
-1. Receipt image uploaded → Google Cloud Vision API extracts text
-2. Parser identifies items, prices, tax, tip
-3. User manages people and assigns items (with optional share counts)
-4. Calculation engine computes proportional splits
-5. Frontend displays itemized breakdown
+1. Receipt image uploaded → Claude AI extracts items, prices, tax, tip
+2. User manages people and assigns items (with optional share counts)
+3. Calculation engine computes proportional splits
+4. Frontend displays itemized breakdown
 
 ## Troubleshooting
 
@@ -284,22 +281,10 @@ python -m pip install -r backend/requirements.txt
 python3 -m pip install -r backend/requirements.txt
 ```
 
-### Docker: "DefaultCredentialsError"
-
-The backend container needs access to your Google Cloud credentials:
-
-```bash
-# Make sure you're authenticated
-gcloud auth application-default login
-
-# Verify docker-compose.yml has this volume mount:
-# - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
-```
-
 ### HEIC Image Upload Fails
 
 The app supports iPhone HEIC images. If conversion fails:
-1. Make sure `opencv-python` and `pillow-heif` are installed
+1. Make sure `pillow-heif` is installed
 2. Try converting the HEIC to JPG first using macOS Preview or another tool
 3. Check backend logs for specific error messages
 
@@ -321,7 +306,7 @@ lsof -i :5432  # PostgreSQL
 - PDF/image export of breakdowns
 - Support for percentage-based splits
 - Multiple currency support
-- Receipt image preprocessing for better OCR accuracy
+- Receipt image preprocessing for better extraction accuracy
 
 ## License
 

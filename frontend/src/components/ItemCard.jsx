@@ -82,6 +82,15 @@ export default function ItemCard({
               <span className="text-sm text-gray-500">× {item.quantity}</span>
             )}
           </div>
+          {item.customModifiers && item.customModifiers.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {item.customModifiers.map((mod, i) => (
+                <span key={i} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                  {mod}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-1">
@@ -119,7 +128,7 @@ export default function ItemCard({
       {/* Assigned People */}
       {assignedPeople.length > 0 ? (
         <div className="flex flex-wrap gap-2 mb-3">
-          {assignedPeople.map((person, index) => {
+          {assignedPeople.map((person) => {
             const colorIndex = people.findIndex((p) => p.id === person.id);
             return (
               <span

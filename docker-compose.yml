@@ -28,14 +28,13 @@ services:
     container_name: split-bill-backend
     environment:
       DATABASE_URL: postgresql://splitbill_user:splitbill_pass@postgres:5432/splitbill
-      GOOGLE_CLOUD_PROJECT: split-bill-project-487703
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      MOCK_OCR: ${MOCK_OCR:-false}
       CORS_ORIGINS: http://localhost:5173
     ports:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
-      # Mount gcloud ADC credentials into container
-      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
     depends_on:
       postgres:
         condition: service_healthy

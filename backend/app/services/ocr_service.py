@@ -1,37 +1,85 @@
-import re
 import os
+import json
+import base64
+import re
 from pillow_heif import register_heif_opener, open_heif
-register_heif_opener()  # Register HEIC opener with PIL
-from typing import Dict, List
+register_heif_opener()
+from typing import Dict
 from decimal import Decimal
 from io import BytesIO
-from google.cloud import vision
+import anthropic
 from PIL import Image
 
+RECEIPT_PROMPT = """Read the text from this photo of a receipt and return only valid JSON with no other text.
+
+Rules:
+- Each item must include a "customModifiers" array. If the item has modifiers printed on the receipt (e.g. "No tomatoes", "Extra onions", "Add bacon"), list each one as {"description": "..."}. If there are no modifiers, use an empty array [].
+- Use 0 for any field not found on the receipt.
+
+Return JSON in exactly this format:
+{
+  "items": [
+    {
+      "description": "Cheeseburger",
+      "customModifiers": [{"description": "No tomatoes"}, {"description": "Extra onions"}],
+      "quantity": 1,
+      "unitPrice": 12.99,
+      "totalPrice": 12.99
+    }
+  ],
+  "tax": 0.00,
+  "taxPercentage": 0.0,
+  "totalPrice": 0.00,
+  "tip": 0.00,
+  "tipPercentage": 0.0
+}"""
+
+# Formats natively supported by Claude's API
+_CLAUDE_SUPPORTED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+
+_MOCK_DATA = {
+    "items": [
+        {"name": "Cheeseburger", "price": Decimal("4.25"), "quantity": 1, "customModifiers": ["Grilled 0"]},
+        {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Tomato"]},
+        {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Grilled 0", "Protein Style"]},
+        {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Onion", "Grilled 0"]},
+        {"name": "Fry", "price": Decimal("7.05"), "quantity": 3, "customModifiers": []},
+        {"name": "Animal Fry", "price": Decimal("9.50"), "quantity": 2, "customModifiers": []},
+        {"name": "Med Coke", "price": Decimal("2.30"), "quantity": 1, "customModifiers": []},
+        {"name": "Med Root Beer", "price": Decimal("2.30"), "quantity": 1, "customModifiers": []},
+        {"name": "Reg Neapolitan Shk", "price": Decimal("6.10"), "quantity": 2, "customModifiers": []},
+    ],
+    "tax": Decimal("4.86"),
+    "tip": Decimal("0.0"),
+    "subtotal": Decimal("79.50"),
+    "total": Decimal("54.66"),
+}
+
+
 class OCRService:
-    """Service for extracting receipt data from images using Google Cloud Vision API"""
-
     def __init__(self):
-        # Set project ID if provided (for Application Default Credentials)
-        project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-        if project_id:
-            os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
+        self._mock = os.environ.get("MOCK_OCR", "").lower() in ("1", "true", "yes")
+        if not self._mock:
+            self.client = anthropic.Anthropic()
+            print("Anthropic client initialized successfully.")
+        else:
+            print("OCR mock enabled — Anthropic API will not be called.")
 
-        # Initialize Google Cloud Vision client
-        # Uses Application Default Credentials from `gcloud auth application-default login`
-        self.client = vision.ImageAnnotatorClient()
-        print("Google Cloud Vision client initialized successfully.")
+    def _get_media_type(self, image_bytes: bytes) -> str:
+        if image_bytes[:3] == b'\xff\xd8\xff':
+            return "image/jpeg"
+        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+            return "image/png"
+        if image_bytes[:6] in (b'GIF87a', b'GIF89a'):
+            return "image/gif"
+        if image_bytes[:4] == b'RIFF' and image_bytes[8:12] == b'WEBP':
+            return "image/webp"
+        if image_bytes[4:8] == b'ftyp':  # HEIC/HEIF (ISOBMFF container)
+            return "image/heic"
+        return "image/jpeg"
 
     def _convert_heic_to_png(self, image_bytes: bytes) -> bytes:
-        """
-        Convert HEIC image to PNG format using pillow-heif
-
-        Args:
-            image_bytes: Original image bytes (HEIC format)
-
-        Returns:
-            PNG image bytes
-        """
         try:
             heif_file = open_heif(BytesIO(image_bytes))
             image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode)
@@ -43,108 +91,58 @@ class OCRService:
             return image_bytes
 
     def extract_receipt_data(self, image_bytes: bytes) -> Dict:
-        """
-        Extract text from receipt image and parse into structured data
+        if self._mock:
+            return _MOCK_DATA
 
-        Args:
-            image_bytes: Image file bytes
+        media_type = self._get_media_type(image_bytes)
 
-        Returns:
-            Dict with keys: items (List), tax (Decimal), tip (Decimal), subtotal (Decimal), total (Decimal)
-        """
-        if not self.client:
-            # Return mock data if Google Cloud Vision is not configured
-            return self._get_mock_receipt_data()
+        if media_type not in _CLAUDE_SUPPORTED_TYPES:
+            image_bytes = self._convert_heic_to_png(image_bytes)
+            media_type = "image/png"
 
-        try:
-            from google.cloud import vision
+        image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-            # Convert HEIC to PNG if necessary (skip if already JPEG or PNG)
-            is_jpeg = image_bytes[:3] == b'\xff\xd8\xff'
-            is_png = image_bytes[:8] == b'\x89PNG\r\n\x1a\n'
-            converted_bytes = image_bytes if (is_jpeg or is_png) else self._convert_heic_to_png(image_bytes)
+        message = self.client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": image_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": RECEIPT_PROMPT,
+                        },
+                    ],
+                }
+            ],
+        )
+        text = message.content[0].text
+        text = re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip())
+        data = json.loads(text)
 
-            image = vision.Image(content=converted_bytes)
-            response = self.client.text_detection(image=image)
+        items = [
+            {
+                "name": item.get("description", ""),
+                "price": Decimal(str(item.get("unitPrice", 0))),
+                "quantity": int(item.get("quantity", 1)),
+                "customModifiers": [m.get("description", "") for m in item.get("customModifiers", [])],
+            }
+            for item in data.get("items", [])
+        ]
 
-            if response.error.message:
-                raise Exception(f"Google Cloud Vision API error: {response.error.message}")
-
-            # Extract text from first annotation (full text)
-            if response.text_annotations:
-                text = response.text_annotations[0].description
-                return self._parse_receipt_text(text)
-            else:
-                return {"items": [], "tax": Decimal("0.00"), "tip": Decimal("0.00"), "subtotal": Decimal("0.00"), "total": Decimal("0.00")}
-
-        except Exception as e:
-            print(f"OCR extraction error: {e}")
-            # Return mock data on error for development
-            return self._get_mock_receipt_data()
-
-    def _parse_receipt_text(self, text: str) -> Dict:
-        """
-        Parse extracted text into structured receipt data
-
-        Args:
-            text: Raw text from OCR
-
-        Returns:
-            Dict with items, tax, tip, subtotal, total
-        """
-        lines = text.split("\n")
-        items = []
-        tax = Decimal("0.00")
-        tip = Decimal("0.00")
-        subtotal = Decimal("0.00")
-        total = Decimal("0.00")
-
-        # Regex pattern to find prices: $XX.XX or XX.XX
-        price_pattern = re.compile(r"\$?(\d+\.\d{2})")
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Try to find a price in the line
-            price_match = price_pattern.search(line)
-            if not price_match:
-                continue
-
-            price_value = Decimal(price_match.group(1))
-            line_lower = line.lower()
-
-            # Identify line type based on keywords
-            if any(keyword in line_lower for keyword in ["tax", "sales tax", "hst", "gst", "vat"]):
-                tax = price_value
-            elif any(keyword in line_lower for keyword in ["tip", "gratuity", "service charge"]):
-                tip = price_value
-            elif any(keyword in line_lower for keyword in ["subtotal", "sub total", "sub-total"]):
-                subtotal = price_value
-            elif any(keyword in line_lower for keyword in ["total", "amount due", "balance"]):
-                total = price_value
-            else:
-                # Assume it's an item
-                # Extract item name (text before the price)
-                name = line[: price_match.start()].strip()
-
-                # Try to extract quantity
-                quantity = self._extract_quantity(line)
-
-                # Skip if name is too short or looks like a label
-                if len(name) < 2 or name.lower() in ["qty", "price", "item", "description"]:
-                    continue
-
-                items.append({"name": name, "price": price_value, "quantity": quantity})
-
-        # Calculate subtotal from items if not found
-        if subtotal == Decimal("0.00") and items:
-            subtotal = sum(Decimal(str(item["price"])) * item["quantity"] for item in items)
-
-        # Calculate total if not found
-        if total == Decimal("0.00"):
-            total = subtotal + tax + tip
+        tax = Decimal(str(data.get("tax", 0)))
+        tip = Decimal(str(data.get("tip", 0)))
+        total = Decimal(str(data.get("totalPrice", 0)))
+        subtotal = sum(Decimal(str(item.get("totalPrice", 0))) for item in data.get("items", []))
 
         return {
             "items": items,
@@ -152,34 +150,4 @@ class OCRService:
             "tip": tip,
             "subtotal": subtotal,
             "total": total,
-        }
-
-    def _extract_quantity(self, line: str) -> int:
-        """Extract quantity from line if present"""
-        # Look for patterns like "2x", "x2", "qty 2", "quantity: 2"
-        quantity_patterns = [
-            r"(\d+)\s*[xX]",  # 2x
-            r"[xX]\s*(\d+)",  # x2
-            r"(?:qty|quantity)[\s:]+(\d+)",  # qty 2 or quantity: 2
-        ]
-
-        for pattern in quantity_patterns:
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match:
-                return int(match.group(1))
-
-        return 1  # Default quantity
-
-    def _get_mock_receipt_data(self) -> Dict:
-        """Return mock receipt data for development/testing when Google Cloud Vision is not configured"""
-        return {
-            "items": [
-                {"name": "Burger", "price": Decimal("12.99"), "quantity": 1},
-                {"name": "Fries", "price": Decimal("4.50"), "quantity": 2},
-                {"name": "Soda", "price": Decimal("2.50"), "quantity": 3},
-            ],
-            "tax": Decimal("3.45"),
-            "tip": Decimal("0.00"),  # Tip typically not on receipt
-            "subtotal": Decimal("29.99"),
-            "total": Decimal("33.44"),
         }
