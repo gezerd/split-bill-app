@@ -79,13 +79,18 @@ class OCRService:
             return "image/heic"
         return "image/jpeg"
 
-    def _convert_heic_to_png(self, image_bytes: bytes) -> bytes:
+    def _convert_heic_to_jpeg(self, image_bytes: bytes) -> bytes:
         try:
             heif_file = open_heif(BytesIO(image_bytes))
-            image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode)
-            output = BytesIO()
-            image.convert("RGB").save(output, format="PNG")
-            return output.getvalue()
+            image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode).convert("RGB")
+            quality = 85
+            while True:
+                output = BytesIO()
+                image.save(output, format="JPEG", quality=quality)
+                result = output.getvalue()
+                if len(result) <= 5 * 1024 * 1024 or quality <= 30:
+                    return result
+                quality -= 15
         except Exception as e:
             print(f"Image conversion error: {type(e).__name__}: {e}")
             return image_bytes
@@ -97,8 +102,8 @@ class OCRService:
         media_type = self._get_media_type(image_bytes)
 
         if media_type not in _CLAUDE_SUPPORTED_TYPES:
-            image_bytes = self._convert_heic_to_png(image_bytes)
-            media_type = "image/png"
+            image_bytes = self._convert_heic_to_jpeg(image_bytes)
+            media_type = "image/jpeg"
 
         image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
 
