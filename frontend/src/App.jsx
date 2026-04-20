@@ -114,7 +114,7 @@ export default function App() {
               />
 
               {/* Step 4: Final Breakdown */}
-              <FinalBreakdown billId={billId} people={people} />
+              <FinalBreakdown billId={billId} people={people} items={items} assignments={assignments} />
 
               {/* Reset Button */}
               <div className="text-center">

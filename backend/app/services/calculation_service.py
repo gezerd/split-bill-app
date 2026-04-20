@@ -52,9 +52,8 @@ class CalculationService:
                 if total_shares == 0:
                     continue
 
-                # Calculate this person's share amount
-                item_total = item.price * item.quantity
-                share_amount = item_total * Decimal(assignment.share_count) / Decimal(total_shares)
+                # Each share = 1 unit at unit price
+                share_amount = item.price * Decimal(assignment.share_count)
 
                 person_items.append(
                     {
@@ -62,7 +61,7 @@ class CalculationService:
                         "price": item.price,
                         "quantity": item.quantity,
                         "share_count": assignment.share_count,
-                        "total_shares": total_shares,
+                        "total_shares": item.quantity,
                         "share_amount": round(share_amount, 2),
                     }
                 )

@@ -15,6 +15,9 @@ RECEIPT_PROMPT = """Read the text from this photo of a receipt and return only v
 Rules:
 - Each item must include a "customModifiers" array. If the item has modifiers printed on the receipt (e.g. "No tomatoes", "Extra onions", "Add bacon"), list each one as {"description": "..."}. If there are no modifiers, use an empty array [].
 - Use 0 for any field not found on the receipt.
+- "totalPrice" per item is the line total printed on the receipt for that item (the amount charged for all units of that item combined).
+- "unitPrice" per item is the price for a single unit. If the receipt only shows a line total, divide it by the quantity (e.g. line total $7.05 for quantity 3 → unitPrice 2.35, totalPrice 7.05).
+- The top-level "totalPrice" is the grand total of the entire receipt (including tax and tip if on the receipt).
 
 Return JSON in exactly this format:
 {
@@ -27,6 +30,7 @@ Return JSON in exactly this format:
       "totalPrice": 12.99
     }
   ],
+  "subtotal": 0.00,
   "tax": 0.00,
   "taxPercentage": 0.0,
   "totalPrice": 0.00,
@@ -44,15 +48,15 @@ _MOCK_DATA = {
         {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Tomato"]},
         {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Grilled 0", "Protein Style"]},
         {"name": "Dbl-Dbl", "price": Decimal("6.10"), "quantity": 1, "customModifiers": ["Onion", "Grilled 0"]},
-        {"name": "Fry", "price": Decimal("7.05"), "quantity": 3, "customModifiers": []},
-        {"name": "Animal Fry", "price": Decimal("9.50"), "quantity": 2, "customModifiers": []},
+        {"name": "Fry", "price": Decimal("2.35"), "quantity": 3, "customModifiers": []},
+        {"name": "Animal Fry", "price": Decimal("4.75"), "quantity": 2, "customModifiers": []},
         {"name": "Med Coke", "price": Decimal("2.30"), "quantity": 1, "customModifiers": []},
         {"name": "Med Root Beer", "price": Decimal("2.30"), "quantity": 1, "customModifiers": []},
-        {"name": "Reg Neapolitan Shk", "price": Decimal("6.10"), "quantity": 2, "customModifiers": []},
+        {"name": "Reg Neapolitan Shk", "price": Decimal("3.05"), "quantity": 2, "customModifiers": []},
     ],
     "tax": Decimal("4.86"),
     "tip": Decimal("0.0"),
-    "subtotal": Decimal("79.50"),
+    "subtotal": Decimal("49.80"),
     "total": Decimal("54.66"),
 }
 
@@ -133,21 +137,25 @@ class OCRService:
         text = message.content[0].text
         text = re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip())
         data = json.loads(text)
+        print(f"OCR extracted data: {data}")
 
-        items = [
-            {
+        items = []
+        print('data', data)
+        for item in data.get("items", []):
+            quantity = max(int(item.get("quantity", 1)), 1)
+            total_price = Decimal(str(item.get("totalPrice", 0)))
+            unit_price = total_price / quantity
+            items.append({
                 "name": item.get("description", ""),
-                "price": Decimal(str(item.get("unitPrice", 0))),
-                "quantity": int(item.get("quantity", 1)),
+                "price": unit_price,
+                "quantity": quantity,
                 "customModifiers": [m.get("description", "") for m in item.get("customModifiers", [])],
-            }
-            for item in data.get("items", [])
-        ]
+            })
 
         tax = Decimal(str(data.get("tax", 0)))
         tip = Decimal(str(data.get("tip", 0)))
         total = Decimal(str(data.get("totalPrice", 0)))
-        subtotal = sum(Decimal(str(item.get("totalPrice", 0))) for item in data.get("items", []))
+        subtotal = Decimal(str(data.get("subtotal", 0)))
 
         return {
             "items": items,

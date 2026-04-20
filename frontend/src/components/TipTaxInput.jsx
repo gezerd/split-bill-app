@@ -4,6 +4,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
   const [taxValue, setTaxValue] = useState(tax || 0);
   const [tipValue, setTipValue] = useState(tip || 0);
   const [tipMode, setTipMode] = useState('amount'); // 'amount' or 'percentage'
+  const [includeTip, setIncludeTip] = useState(() => tip > 0);
 
   useEffect(() => {
     setTaxValue(tax || 0);
@@ -11,6 +12,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
 
   useEffect(() => {
     setTipValue(tip || 0);
+    if (tip > 0) setIncludeTip(true);
   }, [tip]);
 
   const handleTaxChange = (e) => {
@@ -90,52 +92,73 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
 
         {/* Tip */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Tip
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleTipModeChange('amount')}
-                className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                  tipMode === 'amount'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Amount
-              </button>
-              <button
-                onClick={() => handleTipModeChange('percentage')}
-                className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                  tipMode === 'percentage'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Percentage
-              </button>
-            </div>
-          </div>
-          <div className="relative">
-            <span className="absolute left-4 top-2.5 text-gray-500">
-              {tipMode === 'percentage' ? '%' : '$'}
-            </span>
+          <div className="flex items-center gap-2 mb-2">
             <input
-              id="tip"
-              type="number"
-              step={tipMode === 'percentage' ? '1' : '0.01'}
-              min="0"
-              value={tipValue}
-              onChange={handleTipChange}
-              onBlur={handleTipBlur}
-              className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              id="include-tip"
+              type="checkbox"
+              checked={includeTip}
+              onChange={(e) => {
+                setIncludeTip(e.target.checked);
+                if (!e.target.checked) {
+                  setTipValue(0);
+                  onUpdateTip(0);
+                }
+              }}
+              className="w-4 h-4 text-blue-600 rounded"
             />
+            <label htmlFor="include-tip" className="text-sm font-medium text-gray-700 cursor-pointer">
+              Include tip
+            </label>
           </div>
-          {tipMode === 'percentage' && subtotal > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
-              = ${((subtotal * tipValue) / 100).toFixed(2)}
-            </p>
+
+          {includeTip && (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-gray-500">Tip amount</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleTipModeChange('amount')}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      tipMode === 'amount'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Amount
+                  </button>
+                  <button
+                    onClick={() => handleTipModeChange('percentage')}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      tipMode === 'percentage'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Percentage
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                <span className="absolute left-4 top-2.5 text-gray-500">
+                  {tipMode === 'percentage' ? '%' : '$'}
+                </span>
+                <input
+                  id="tip"
+                  type="number"
+                  step={tipMode === 'percentage' ? '1' : '0.01'}
+                  min="0"
+                  value={tipValue}
+                  onChange={handleTipChange}
+                  onBlur={handleTipBlur}
+                  className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {tipMode === 'percentage' && subtotal > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  = ${((subtotal * tipValue) / 100).toFixed(2)}
+                </p>
+              )}
+            </>
           )}
         </div>
 

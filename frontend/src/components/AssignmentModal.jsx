@@ -23,20 +23,27 @@ export default function AssignmentModal({
     setSelectedPeople(initial);
   }, [item.id, currentAssignments, people]);
 
+  const totalShares = Array.from(selectedPeople.values()).reduce((sum, count) => sum + count, 0);
+  const maxShares = item.quantity || 1;
+  const remainingShares = maxShares - totalShares;
+  const itemTotal = parseFloat(item.price) * maxShares;
+
   const handleTogglePerson = (personId) => {
     const newSelected = new Map(selectedPeople);
     if (newSelected.has(personId)) {
       newSelected.delete(personId);
-    } else {
-      newSelected.set(personId, 1); // Default share count of 1
+    } else if (remainingShares > 0) {
+      newSelected.set(personId, 1);
     }
     setSelectedPeople(newSelected);
   };
 
   const handleShareCountChange = (personId, count) => {
     const newSelected = new Map(selectedPeople);
-    const shareCount = parseInt(count) || 1;
-    newSelected.set(personId, Math.max(1, shareCount));
+    const current = newSelected.get(personId) || 1;
+    const parsed = parseInt(count) || 1;
+    const maxForPerson = current + remainingShares;
+    newSelected.set(personId, Math.min(Math.max(1, parsed), maxForPerson));
     setSelectedPeople(newSelected);
   };
 
@@ -44,9 +51,6 @@ export default function AssignmentModal({
     await onSave(item.id, selectedPeople);
     onClose();
   };
-
-  const totalShares = Array.from(selectedPeople.values()).reduce((sum, count) => sum + count, 0);
-  const itemTotal = parseFloat(item.price) * (item.quantity || 1);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -86,12 +90,20 @@ export default function AssignmentModal({
             </p>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600 mb-3">
-                Select people and set share counts:
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-600">Select people and set share counts:</p>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  remainingShares === 0
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {totalShares}/{maxShares} shares
+                </span>
+              </div>
               {people.map((person) => {
                 const isSelected = selectedPeople.has(person.id);
                 const shareCount = selectedPeople.get(person.id) || 1;
+                const isDisabled = !isSelected && remainingShares === 0;
 
                 return (
                   <div
@@ -99,16 +111,19 @@ export default function AssignmentModal({
                     className={`border-2 rounded-lg p-3 transition-all ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50'
+                        : isDisabled
+                        ? 'border-gray-100 bg-gray-50 opacity-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                      <label className={`flex items-center gap-3 flex-1 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                         <input
                           type="checkbox"
                           checked={isSelected}
+                          disabled={isDisabled}
                           onChange={() => handleTogglePerson(person.id)}
-                          className="w-5 h-5 text-blue-500 rounded focus:ring-2 focus:ring-blue-500"
+                          className="w-5 h-5 text-blue-500 rounded focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
                         />
                         <span className="font-medium text-gray-900">{person.name}</span>
                       </label>
@@ -119,6 +134,7 @@ export default function AssignmentModal({
                           <input
                             type="number"
                             min="1"
+                            max={shareCount + remainingShares}
                             value={shareCount}
                             onChange={(e) => handleShareCountChange(person.id, e.target.value)}
                             className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -127,9 +143,9 @@ export default function AssignmentModal({
                       )}
                     </div>
 
-                    {isSelected && totalShares > 0 && (
+                    {isSelected && (
                       <div className="mt-2 text-sm text-gray-600">
-                        Pays: ${((itemTotal * shareCount) / totalShares).toFixed(2)}
+                        Pays: ${(parseFloat(item.price) * shareCount).toFixed(2)}
                         {totalShares > 1 && (
                           <span className="text-gray-500">
                             {' '}

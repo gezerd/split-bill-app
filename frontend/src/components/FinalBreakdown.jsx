@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { getBreakdown } from '../api/client';
 
-export default function FinalBreakdown({ billId, people }) {
+export default function FinalBreakdown({ billId, items, assignments }) {
   const [breakdown, setBreakdown] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const allAssigned =
+    items &&
+    items.length > 0 &&
+    items.every((item) => {
+      const itemAssignments = assignments ? assignments.filter((a) => a.item_id === item.id) : [];
+      const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
+      return totalShares >= (item.quantity || 1);
+    });
 
   const fetchBreakdown = async () => {
     if (!billId) return;
@@ -23,10 +32,12 @@ export default function FinalBreakdown({ billId, people }) {
   };
 
   useEffect(() => {
-    if (billId) {
+    if (billId && allAssigned) {
       fetchBreakdown();
+    } else {
+      setBreakdown(null);
     }
-  }, [billId]);
+  }, [billId, allAssigned]);
 
   if (!billId) {
     return null;
@@ -58,12 +69,18 @@ export default function FinalBreakdown({ billId, people }) {
     );
   }
 
-  if (!breakdown || !breakdown.people || breakdown.people.length === 0) {
+  if (!allAssigned || !breakdown || !breakdown.people || breakdown.people.length === 0) {
+    const unassignedCount = items
+      ? items.filter((item) => !assignments || !assignments.some((a) => a.item_id === item.id)).length
+      : 0;
+
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Final Breakdown</h2>
         <p className="text-gray-500 text-center py-8">
-          Add people and assign items to see the breakdown.
+          {unassignedCount > 0
+            ? `Assign all items to see the breakdown (${unassignedCount} item${unassignedCount > 1 ? 's' : ''} remaining).`
+            : 'Add people and assign items to see the breakdown.'}
         </p>
       </div>
     );
