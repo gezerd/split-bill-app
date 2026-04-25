@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 const COLORS = [
-  'bg-blue-100 text-blue-800',
-  'bg-green-100 text-green-800',
-  'bg-purple-100 text-purple-800',
-  'bg-pink-100 text-pink-800',
-  'bg-yellow-100 text-yellow-800',
-  'bg-indigo-100 text-indigo-800',
+  'bg-secondary-500/20 text-secondary-300',
+  'bg-green-500/20 text-green-300',
+  'bg-purple-500/20 text-purple-300',
+  'bg-pink-500/20 text-pink-300',
+  'bg-yellow-500/20 text-yellow-300',
+  'bg-indigo-500/20 text-indigo-300',
 ];
 
 export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
@@ -39,8 +39,8 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">People</h2>
+    <div className="bg-surface rounded-lg shadow p-6">
+      <h2 className="text-xl font-semibold mb-4 text-white">People</h2>
 
       <form onSubmit={handleSubmit} className="mb-4">
         <div className="flex gap-2">
@@ -49,13 +49,13 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
             value={newPersonName}
             onChange={(e) => setNewPersonName(e.target.value)}
             placeholder="Enter person's name"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 bg-surface-2 text-gray-100 focus:ring-primary-500"
             disabled={adding}
           />
           <button
             type="submit"
             disabled={adding || !newPersonName.trim()}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:bg-surface-2 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {adding ? 'Adding...' : 'Add'}
           </button>
@@ -64,14 +64,14 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
 
       <div className="space-y-2">
         {people.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
+          <p className="text-gray-400 text-center py-4">
             No people added yet. Add someone to start assigning items.
           </p>
         ) : (
           people.map((person, index) => (
             <div
               key={person.id}
-              className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-3 border border-gray-700 rounded-lg hover:bg-surface-2 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <span

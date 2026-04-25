@@ -48,8 +48,8 @@ export default function ReceiptUpload({ onUpload }) {
       <div
         className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
           dragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-secondary-500 bg-secondary-50'
+            : 'border-gray-600 hover:border-gray-500'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -70,7 +70,7 @@ export default function ReceiptUpload({ onUpload }) {
           className="cursor-pointer flex flex-col items-center"
         >
           <svg
-            className="w-16 h-16 text-gray-400 mb-4"
+            className="w-16 h-16 text-gray-500 mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -83,20 +83,20 @@ export default function ReceiptUpload({ onUpload }) {
             />
           </svg>
 
-          <p className="text-lg font-medium text-gray-700 mb-2">
+          <p className="text-lg font-medium text-gray-300 mb-2">
             {uploading ? 'Uploading...' : 'Upload Receipt'}
           </p>
           <p className="text-sm text-gray-500">
             Drag and drop or click to select an image
           </p>
-          <p className="text-xs text-gray-400 mt-2">PNG, JPG up to 10MB</p>
+          <p className="text-xs text-gray-500 mt-2">PNG, JPG up to 10MB</p>
         </label>
 
         {uploading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+          <div className="absolute inset-0 bg-surface bg-opacity-90 flex items-center justify-center rounded-lg">
             <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <p className="mt-4 text-sm text-gray-600">Processing receipt...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+              <p className="mt-4 text-sm text-gray-500">Processing receipt...</p>
             </div>
           </div>
         )}

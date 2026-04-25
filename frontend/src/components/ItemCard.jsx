@@ -2,12 +2,12 @@ import { useState } from 'react';
 import ItemForm from './ItemForm';
 
 const COLORS = [
-  'bg-blue-100 text-blue-800',
-  'bg-green-100 text-green-800',
-  'bg-purple-100 text-purple-800',
-  'bg-pink-100 text-pink-800',
-  'bg-yellow-100 text-yellow-800',
-  'bg-indigo-100 text-indigo-800',
+  'bg-secondary-500/20 text-secondary-300',
+  'bg-green-500/20 text-green-300',
+  'bg-purple-500/20 text-purple-300',
+  'bg-pink-500/20 text-pink-300',
+  'bg-yellow-500/20 text-yellow-300',
+  'bg-indigo-500/20 text-indigo-300',
 ];
 
 export default function ItemCard({
@@ -56,36 +56,36 @@ export default function ItemCard({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow p-4 border-2 transition-all ${
+      className={`bg-surface rounded-lg shadow p-4 border-2 transition-all ${
         isShared
           ? 'border-orange-300 border-dashed'
           : assignedPeople.length > 0
           ? 'border-green-300'
-          : 'border-gray-200 hover:border-gray-300'
+          : 'border-gray-700 hover:border-gray-600'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-900">{item.name}</h3>
+            <h3 className="font-semibold text-gray-100">{item.name}</h3>
             {isShared && (
-              <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
+              <span className="text-xs px-2 py-0.5 bg-orange-900/30 text-orange-300 rounded-full">
                 Shared
               </span>
             )}
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-lg font-medium text-gray-700">
+            <span className="text-lg font-medium text-gray-300">
               ${parseFloat(item.price).toFixed(2)}
             </span>
             {item.quantity > 1 && (
-              <span className="text-sm text-gray-500">× {item.quantity}</span>
+              <span className="text-sm text-gray-400">× {item.quantity}</span>
             )}
           </div>
           {item.customModifiers && item.customModifiers.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {item.customModifiers.map((mod, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                <span key={i} className="text-xs px-2 py-0.5 bg-surface-2 text-gray-400 rounded-full">
                   {mod}
                 </span>
               ))}
@@ -96,7 +96,7 @@ export default function ItemCard({
         <div className="flex gap-1">
           <button
             onClick={() => setEditing(true)}
-            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-surface-2 rounded transition-colors"
             title="Edit item"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ export default function ItemCard({
           </button>
           <button
             onClick={handleDelete}
-            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
             title="Delete item"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export default function ItemCard({
 
       <button
         onClick={() => onAssignClick(item)}
-        className="w-full py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+        className="w-full py-2 text-sm bg-surface-2 hover:bg-surface-3 text-gray-300 rounded-md transition-colors"
       >
         {assignedPeople.length > 0 ? 'Change Assignment' : 'Assign to People'}
       </button>

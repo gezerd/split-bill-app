@@ -45,9 +45,9 @@ export default function FinalBreakdown({ billId, items, assignments }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-surface rounded-lg shadow p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
         </div>
       </div>
     );
@@ -55,12 +55,12 @@ export default function FinalBreakdown({ billId, items, assignments }) {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-surface rounded-lg shadow p-6">
         <div className="text-center py-8">
-          <p className="text-red-500">Failed to calculate breakdown: {error}</p>
+          <p className="text-red-400">Failed to calculate breakdown: {error}</p>
           <button
             onClick={fetchBreakdown}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
           >
             Try Again
           </button>
@@ -75,9 +75,9 @@ export default function FinalBreakdown({ billId, items, assignments }) {
       : 0;
 
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Final Breakdown</h2>
-        <p className="text-gray-500 text-center py-8">
+      <div className="bg-surface rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4 text-white">Final Breakdown</h2>
+        <p className="text-gray-400 text-center py-8">
           {unassignedCount > 0
             ? `Assign all items to see the breakdown (${unassignedCount} item${unassignedCount > 1 ? 's' : ''} remaining).`
             : 'Add people and assign items to see the breakdown.'}
@@ -87,12 +87,12 @@ export default function FinalBreakdown({ billId, items, assignments }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold">Final Breakdown</h2>
+        <h2 className="text-xl font-semibold text-white">Final Breakdown</h2>
         <button
           onClick={fetchBreakdown}
-          className="text-sm text-blue-500 hover:text-blue-700 flex items-center gap-1"
+          className="text-sm text-primary-500 hover:text-primary-700 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -108,14 +108,14 @@ export default function FinalBreakdown({ billId, items, assignments }) {
 
       <div className="space-y-4">
         {breakdown.people.map((personData) => (
-          <div key={personData.person_id} className="border border-gray-200 rounded-lg p-4">
+          <div key={personData.person_id} className="border border-gray-700 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">{personData.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-100">{personData.name}</h3>
               <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-100">
                   ${parseFloat(personData.total).toFixed(2)}
                 </div>
-                <div className="text-xs text-gray-500">Total</div>
+                <div className="text-xs text-gray-400">Total</div>
               </div>
             </div>
 
@@ -123,11 +123,11 @@ export default function FinalBreakdown({ billId, items, assignments }) {
             {personData.items && personData.items.length > 0 && (
               <div className="mb-3 space-y-1">
                 {personData.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm text-gray-600">
+                  <div key={idx} className="flex justify-between text-sm text-gray-400">
                     <span>
                       {item.name}
                       {item.total_shares > 1 && (
-                        <span className="text-xs text-gray-500 ml-1">
+                        <span className="text-xs text-gray-400 ml-1">
                           ({item.share_count}/{item.total_shares})
                         </span>
                       )}
@@ -139,19 +139,19 @@ export default function FinalBreakdown({ billId, items, assignments }) {
             )}
 
             {/* Breakdown */}
-            <div className="border-t border-gray-200 pt-3 space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600">
+            <div className="border-t border-gray-700 pt-3 space-y-1 text-sm">
+              <div className="flex justify-between text-gray-400">
                 <span>Subtotal</span>
                 <span>${parseFloat(personData.subtotal).toFixed(2)}</span>
               </div>
               {parseFloat(personData.tax_amount) > 0 && (
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-400">
                   <span>Tax</span>
                   <span>${parseFloat(personData.tax_amount).toFixed(2)}</span>
                 </div>
               )}
               {parseFloat(personData.tip_amount) > 0 && (
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-400">
                   <span>Tip</span>
                   <span>${parseFloat(personData.tip_amount).toFixed(2)}</span>
                 </div>

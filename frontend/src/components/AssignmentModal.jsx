@@ -54,13 +54,13 @@ export default function AssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-surface rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-700">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">{item.name}</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="text-xl font-semibold text-gray-100">{item.name}</h3>
+              <p className="text-sm text-gray-400 mt-1">
                 ${parseFloat(item.price).toFixed(2)}
                 {item.quantity > 1 && ` × ${item.quantity}`} = $
                 {itemTotal.toFixed(2)}
@@ -68,7 +68,7 @@ export default function AssignmentModal({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-400 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -85,17 +85,17 @@ export default function AssignmentModal({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
           {people.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-400 text-center py-8">
               No people added yet. Add people first to assign items.
             </p>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-600">Select people and set share counts:</p>
+                <p className="text-sm text-gray-400">Select people and set share counts:</p>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                   remainingShares === 0
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-green-500/20 text-green-300'
+                    : 'bg-surface-2 text-gray-400'
                 }`}>
                   {totalShares}/{maxShares} shares
                 </span>
@@ -110,10 +110,10 @@ export default function AssignmentModal({
                     key={person.id}
                     className={`border-2 rounded-lg p-3 transition-all ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-secondary-500 bg-secondary-50'
                         : isDisabled
-                        ? 'border-gray-100 bg-gray-50 opacity-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-gray-700 bg-surface-2 opacity-50'
+                        : 'border-gray-700 hover:border-gray-600'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -123,31 +123,31 @@ export default function AssignmentModal({
                           checked={isSelected}
                           disabled={isDisabled}
                           onChange={() => handleTogglePerson(person.id)}
-                          className="w-5 h-5 text-blue-500 rounded focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
+                          className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed"
                         />
-                        <span className="font-medium text-gray-900">{person.name}</span>
+                        <span className="font-medium text-gray-100">{person.name}</span>
                       </label>
 
                       {isSelected && (
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-gray-600">Shares:</label>
+                          <label className="text-sm text-gray-400">Shares:</label>
                           <input
                             type="number"
                             min="1"
                             max={shareCount + remainingShares}
                             value={shareCount}
                             onChange={(e) => handleShareCountChange(person.id, e.target.value)}
-                            className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-16 px-2 py-1 border border-gray-600 rounded text-center focus:outline-none focus:ring-2 bg-surface-2 text-gray-100 focus:ring-primary-500"
                           />
                         </div>
                       )}
                     </div>
 
                     {isSelected && (
-                      <div className="mt-2 text-sm text-gray-600">
+                      <div className="mt-2 text-sm text-gray-400">
                         Pays: ${(parseFloat(item.price) * shareCount).toFixed(2)}
                         {totalShares > 1 && (
-                          <span className="text-gray-500">
+                          <span className="text-gray-400">
                             {' '}
                             ({shareCount}/{totalShares})
                           </span>
@@ -162,9 +162,9 @@ export default function AssignmentModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-6 border-t border-gray-700 bg-surface">
           {selectedPeople.size > 0 && (
-            <div className="mb-3 text-sm text-gray-600">
+            <div className="mb-3 text-sm text-gray-400">
               {selectedPeople.size === 1
                 ? '1 person selected'
                 : `${selectedPeople.size} people selected`}
@@ -174,14 +174,14 @@ export default function AssignmentModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-surface-2 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={people.length === 0}
-              className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:bg-surface-2 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               Save
             </button>
