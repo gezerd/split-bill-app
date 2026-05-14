@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateTip }) {
+export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateTip, onBack, onNext }) {
   const [taxValue, setTaxValue] = useState(tax || 0);
   const [tipValue, setTipValue] = useState(tip || 0);
   const [tipMode, setTipMode] = useState('amount'); // 'amount' or 'percentage'
@@ -171,6 +171,28 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
             </span>
           </div>
         </div>
+
+        {/* Navigation */}
+        {(onBack || onNext) && (
+          <div className="flex gap-3 pt-2">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="px-5 py-2 bg-surface-2 text-gray-300 rounded-lg hover:bg-surface-3 transition-colors"
+              >
+                ← Back
+              </button>
+            )}
+            {onNext && (
+              <button
+                onClick={onNext}
+                className="flex-1 px-5 py-2 bg-accent text-background font-semibold rounded-lg hover:bg-accent/90 transition-colors"
+              >
+                See Breakdown →
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

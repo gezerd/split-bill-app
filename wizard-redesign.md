@@ -18,7 +18,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 2 — App.jsx wizard shell
+## ~~Step 2 — App.jsx wizard shell~~ ✓
 
 **File:** `frontend/src/App.jsx`
 
@@ -32,6 +32,8 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
   - Step 4 → `FinalBreakdown` (receives `onBack` prop)
 - Step 2→3 Next button disabled until all item quantities are assigned
 - Compute `tipPercentage` from `tip / subtotal` and pass to `FinalBreakdown`
+
+> **Note:** As part of this step, minimal Back / "See Breakdown →" nav buttons were added to `TipTaxInput.jsx` (accepting `onBack` / `onNext` props) so the wizard is navigable end-to-end. Step 7 will replace these with the full redesigned footer.
 
 ---
 
