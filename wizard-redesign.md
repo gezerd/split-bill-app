@@ -6,7 +6,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 1 — StepIndicator component
+## ~~Step 1 — StepIndicator component~~ ✓
 
 **New file:** `frontend/src/components/StepIndicator.jsx`
 
