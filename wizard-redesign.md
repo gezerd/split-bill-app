@@ -37,7 +37,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 3 — ReceiptUpload.jsx
+## ~~Step 3 — ReceiptUpload.jsx~~ ✓
 
 **File:** `frontend/src/components/ReceiptUpload.jsx`
 
