@@ -50,7 +50,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 4 — PeopleManager.jsx
+## ~~Step 4 — PeopleManager.jsx~~ ✓
 
 **File:** `frontend/src/components/PeopleManager.jsx`
 
