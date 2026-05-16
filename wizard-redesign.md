@@ -76,14 +76,22 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ## Step 6 — Inline assignment via person pills on ItemCard
 
-**Files:** `frontend/src/components/ItemCard.jsx`, `frontend/src/components/AssignmentModal.jsx`
+**File:** `frontend/src/components/ItemCard.jsx`
 
-- Remove the "Tap to assign" / card-click-opens-modal behavior
-- Under each item card, show all people as clickable initials avatar pills
-- Clicking a person pill toggles them assigned/unassigned to that item (1 share each)
-- For items with `quantity > 1`, clicking a pill cycles through 0 → 1 → … → quantity shares, then back to 0
-- Pills use accent border/bg when assigned, muted when not
-- AssignmentModal can be removed or kept only for the multi-share edge case (TBD during implementation)
+- Remove card-click-opens-modal behavior; card body is no longer clickable
+- Below each item's assigned-to row, show all people as clickable initials avatar pills
+- **Click behavior — each click adds 1 share to that person:**
+  - `remainingShares = item.quantity - total shares already assigned to all other people`
+  - If the person has shares and `remainingShares === 0` (they hold the last available share(s)), clicking unassigns them entirely (sets to 0)
+  - Otherwise, each click increments their share count by 1 up to `their current shares + remainingShares`
+  - Each click immediately persists via the existing `handleAssignmentSave(itemId, Map<personId, shareCount>)` in App.jsx
+- **Share count badge:** shown on the bottom-right corner of the avatar pill when a person has > 1 share
+  - Format: `×N` (e.g. `×2`, `×3`)
+  - Style: accent (`#00FDDC`) background, dark text, small rounded pill
+- **Visual states:**
+  - Assigned (≥ 1 share): full opacity avatar
+  - Unassigned: dimmed avatar (`opacity-40`)
+- AssignmentModal kept in codebase but no longer triggered from ItemCard
 
 ---
 
