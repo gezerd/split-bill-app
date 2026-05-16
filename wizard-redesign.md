@@ -33,7 +33,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 - Step 2→3 Next button disabled until all item quantities are assigned
 - Compute `tipPercentage` from `tip / subtotal` and pass to `FinalBreakdown`
 
-> **Note:** As part of this step, minimal Back / "See Breakdown →" nav buttons were added to `TipTaxInput.jsx` (accepting `onBack` / `onNext` props) so the wizard is navigable end-to-end. Step 7 will replace these with the full redesigned footer.
+> **Note:** As part of this step, minimal Back / "See Breakdown →" nav buttons were added to `TipTaxInput.jsx` (accepting `onBack` / `onNext` props) so the wizard is navigable end-to-end. Step 8 will replace these with the full redesigned footer.
 
 ---
 
@@ -61,7 +61,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 5 — ItemCard.jsx
+## ~~Step 5 — ItemCard.jsx~~ ✓
 
 **File:** `frontend/src/components/ItemCard.jsx`
 
@@ -74,7 +74,20 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 6 — ItemList.jsx
+## Step 6 — Inline assignment via person pills on ItemCard
+
+**Files:** `frontend/src/components/ItemCard.jsx`, `frontend/src/components/AssignmentModal.jsx`
+
+- Remove the "Tap to assign" / card-click-opens-modal behavior
+- Under each item card, show all people as clickable initials avatar pills
+- Clicking a person pill toggles them assigned/unassigned to that item (1 share each)
+- For items with `quantity > 1`, clicking a pill cycles through 0 → 1 → … → quantity shares, then back to 0
+- Pills use accent border/bg when assigned, muted when not
+- AssignmentModal can be removed or kept only for the multi-share edge case (TBD during implementation)
+
+---
+
+## Step 7 — ItemList.jsx
 
 **File:** `frontend/src/components/ItemList.jsx`
 
@@ -84,7 +97,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 7 — TipTaxInput.jsx
+## Step 8 — TipTaxInput.jsx
 
 **File:** `frontend/src/components/TipTaxInput.jsx`
 
@@ -103,7 +116,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 8 — FinalBreakdown.jsx
+## Step 9 — FinalBreakdown.jsx
 
 **File:** `frontend/src/components/FinalBreakdown.jsx`
 
