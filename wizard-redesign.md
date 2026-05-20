@@ -97,7 +97,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 7 — ItemList.jsx
+## ~~Step 7 — ItemList.jsx~~ ✓
 
 **File:** `frontend/src/components/ItemList.jsx`
 
