@@ -143,6 +143,7 @@ export default function App() {
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
                 onAssignClick={setSelectedItem}
+                onAssignmentSave={handleAssignmentSave}
               />
             </div>
 

@@ -74,7 +74,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 6 — Inline assignment via person pills on ItemCard
+## ~~Step 6 — Inline assignment via person pills on ItemCard~~ ✓
 
 **File:** `frontend/src/components/ItemCard.jsx`
 
@@ -92,6 +92,8 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
   - Assigned (≥ 1 share): full opacity avatar
   - Unassigned: dimmed avatar (`opacity-40`)
 - AssignmentModal kept in codebase but no longer triggered from ItemCard
+- If no people have been added yet, show `"Add people to assign"` placeholder (small, muted) instead of the pills row
+- If people exist, show `"Tap to add a share:"` label directly above the pills row
 
 ---
 

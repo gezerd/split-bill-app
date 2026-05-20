@@ -10,6 +10,7 @@ export default function ItemList({
   onUpdateItem,
   onDeleteItem,
   onAssignClick,
+  onAssignmentSave,
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -51,6 +52,7 @@ export default function ItemList({
               onAssignClick={onAssignClick}
               onUpdateItem={onUpdateItem}
               onDeleteItem={onDeleteItem}
+              onAssignmentSave={onAssignmentSave}
             />
           ))}
         </div>

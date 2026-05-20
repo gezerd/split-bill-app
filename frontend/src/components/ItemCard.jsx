@@ -9,6 +9,7 @@ export default function ItemCard({
   onAssignClick,
   onUpdateItem,
   onDeleteItem,
+  onAssignmentSave,
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -34,6 +35,33 @@ export default function ItemCard({
     }
   };
 
+  const handlePersonClick = async (person) => {
+    const quantity = item.quantity || 1;
+    const currentAssignment = itemAssignments.find((a) => a.person_id === person.id);
+    const currentShares = currentAssignment?.share_count || 0;
+
+    const otherShares = itemAssignments
+      .filter((a) => a.person_id !== person.id)
+      .reduce((sum, a) => sum + (a.share_count || 1), 0);
+    const remainingShares = quantity - otherShares;
+
+    const newShareMap = new Map(
+      itemAssignments.map((a) => [a.person_id, a.share_count || 1])
+    );
+
+    const maxShares = remainingShares; // quantity - otherShares = max this person can hold
+
+    if (currentShares > 0 && currentShares >= maxShares) {
+      newShareMap.delete(person.id);
+    } else {
+      const newShares = Math.min(currentShares + 1, maxShares);
+      if (newShares === 0) return;
+      newShareMap.set(person.id, newShares);
+    }
+
+    await onAssignmentSave(item.id, newShareMap);
+  };
+
   if (editing) {
     return (
       <ItemForm
@@ -46,8 +74,7 @@ export default function ItemCard({
 
   return (
     <div
-      onClick={() => onAssignClick(item)}
-      className={`bg-surface rounded-lg p-4 border-l-4 cursor-pointer transition-all hover:bg-surface-2 ${
+      className={`bg-surface rounded-lg p-4 border-l-4 transition-all ${
         isFullyAssigned ? 'border-accent' : 'border-transparent'
       }`}
     >
@@ -99,32 +126,39 @@ export default function ItemCard({
         </div>
       </div>
 
-      {/* Assigned people */}
-      {assignedPeople.length > 0 ? (
-        <div className="mt-2">
-          <span className="text-xs text-gray-400 mr-2">Assigned to:</span>
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            {assignedPeople.map((person) => {
+      {/* Person pills */}
+      {people.length === 0 ? (
+        <div className="mt-3 text-xs text-gray-400">Add people to assign</div>
+      ) : (
+        <div className="mt-3">
+          <span className="text-xs text-gray-400">Tap to add a share:</span>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {people.map((person) => {
               const colorIndex = people.findIndex((p) => p.id === person.id);
+              const assignment = itemAssignments.find((a) => a.person_id === person.id);
+              const shares = assignment?.share_count || 0;
+              const assigned = shares > 0;
+
               return (
-                <div
+                <button
                   key={person.id}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                  onClick={() => handlePersonClick(person)}
+                  className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold text-white transition-opacity ${
                     AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]
-                  }`}
+                  } ${assigned ? 'opacity-100' : 'opacity-40'}`}
                   title={person.name}
                 >
                   {getInitials(person.name)}
-                </div>
+                  {shares > 1 && (
+                    <span className="absolute -bottom-1 -right-1 bg-accent text-background text-[9px] font-bold px-1 rounded-full leading-4">
+                      ×{shares}
+                    </span>
+                  )}
+                </button>
               );
             })}
-            {assignedPeople.length > 1 && (
-              <span className="text-xs text-gray-400">split {assignedPeople.length} ways</span>
-            )}
           </div>
         </div>
-      ) : (
-        <div className="mt-2 text-xs text-gray-500 italic">Tap to assign</div>
       )}
     </div>
   );
