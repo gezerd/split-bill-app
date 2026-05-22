@@ -126,7 +126,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 9 — FinalBreakdown.jsx
+## ~~Step 9 — FinalBreakdown.jsx~~ ✓
 
 **File:** `frontend/src/components/FinalBreakdown.jsx`
 

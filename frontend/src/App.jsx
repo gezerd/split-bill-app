@@ -176,8 +176,7 @@ export default function App() {
         {step === 4 && (
           <FinalBreakdown
             billId={billId}
-            items={items}
-            assignments={assignments}
+            people={people}
             tipPercentage={tipPercentage}
             onBack={() => setStep(3)}
           />
