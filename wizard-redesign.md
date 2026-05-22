@@ -107,7 +107,7 @@ The accent color `#00FDDC` is applied heavily: CTA buttons, active step indicato
 
 ---
 
-## Step 8 — TipTaxInput.jsx
+## ~~Step 8 — TipTaxInput.jsx~~ ✓
 
 **File:** `frontend/src/components/TipTaxInput.jsx`
 
