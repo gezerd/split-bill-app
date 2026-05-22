@@ -65,7 +65,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 3 — StepIndicator.jsx
+## ~~Step 3 — StepIndicator.jsx~~ ✅
 
 **File:** `frontend/src/components/StepIndicator.jsx`
 

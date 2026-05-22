@@ -14,7 +14,7 @@ export default function StepIndicator({ currentStep }) {
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   isCompleted || isActive
-                    ? 'bg-accent text-background'
+                    ? 'bg-accent text-on-accent'
                     : 'bg-surface-2 text-gray-400'
                 }`}
               >
