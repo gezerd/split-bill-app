@@ -11,20 +11,20 @@
 | `--text` | `#EEF4FA` | Primary text |
 | `--text-muted` | `#A0C4DC` | Secondary text |
 | `--text-dim` | `#7AAAB8` | Tertiary text |
-| `--accent` | `oklch(78% 0.16 85)` | Warm gold — CTA buttons, totals |
-| `--accent-dim` | `oklch(78% 0.16 85 / 0.15)` | Subtle accent fill |
+| `--accent` | `#E6AE00` | Warm gold — CTA buttons, totals |
+| `--accent-dim` | `#E6AE0026` | Subtle accent fill |
 | `--on-accent` | `#111` | Dark text rendered on accent backgrounds |
 
 ---
 
-## Step 1 — tailwind.config.js
+## ~~Step 1 — tailwind.config.js~~ ✅
 
 **File:** `frontend/tailwind.config.js`
 
 | Key | Current value | New value |
 |---|---|---|
-| `accent` | `'#00FDDC'` | `'oklch(78% 0.16 85)'` |
-| `accent-dim` | *(missing)* | `'oklch(78% 0.16 85 / 0.15)'` — add new key |
+| `accent` | `'#00FDDC'` | `'#E6AE00'` |
+| `accent-dim` | *(missing)* | `'#E6AE0026'` — add new key |
 | `on-accent` | *(missing)* | `'#111'` — add new key |
 | `surface.DEFAULT` | `'#3A4D45'` | `'#1C3A54'` |
 | `surface.2` | `'#4A5E56'` | `'#254862'` |
@@ -37,8 +37,12 @@
 | `gray.500` | *(not set)* | `'#7AAAB8'` |
 | `gray.600` | *(not set)* | `'#7AAAB8'` |
 | `gray.700` | *(not set)* | `'#2E5674'` |
+| `primary.500` | `'#5A6E66'` | `'#E6AE00'` — remap to accent gold |
+| `primary.600` | `'#4A5C54'` | `'oklch(72% 0.16 85)'` — slightly darker gold for hover |
+| `secondary.50` | `'#22293A'` | `'#E6AE0026'` — remap to accent-dim |
+| `secondary.500` | `'#CDD1DE'` | `'#E6AE00'` — remap to accent gold |
 
-Remove the `primary` and `secondary` palettes — no longer used.
+Keep the `primary` and `secondary` keys — just remap the slots used in components so class names in JSX don't need to change.
 
 ---
 
@@ -118,10 +122,9 @@ Replace `AVATAR_COLORS` array:
 **File:** `frontend/src/components/AssignmentModal.jsx`
 
 - `border-gray-700` / `border-gray-600` → `border-border`
-- `border-secondary-500 bg-secondary-50` (selected person row) → `border-accent bg-accent-dim`
-- `text-primary-500 focus:ring-primary-500` (checkbox) → `text-accent focus:ring-accent`
-- `focus:ring-primary-500` (share count input) → `focus:ring-accent`
-- `bg-primary-500 hover:bg-primary-600` (Save button) → `bg-accent text-on-accent hover:bg-accent/90`
+- `text-white` → `text-on-accent` on the Save button (keeps `bg-primary-500 hover:bg-primary-600`, color now resolves to gold)
+
+> `border-secondary-500 bg-secondary-50` and `focus:ring-primary-500` require no class changes — the remapped config values handle them.
 
 ---
 
@@ -130,5 +133,6 @@ Replace `AVATAR_COLORS` array:
 **File:** `frontend/src/components/ItemForm.jsx`
 
 - `border-gray-700` / `border-gray-600` → `border-border`
-- `focus:ring-primary-500` (all inputs) → `focus:ring-accent`
-- `bg-primary-500 hover:bg-primary-600 text-white` (submit button) → `bg-accent text-on-accent hover:bg-accent/90`
+- `text-white` → `text-on-accent` on the submit button (keeps `bg-primary-500 hover:bg-primary-600`)
+
+> `focus:ring-primary-500` on inputs requires no class change — the remapped config value handles it.
