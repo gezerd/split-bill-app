@@ -1,12 +1,14 @@
 import { useState } from 'react';
 
 export const AVATAR_COLORS = [
-  'bg-red-500/80',
-  'bg-blue-500/80',
-  'bg-purple-500/80',
-  'bg-pink-500/80',
-  'bg-yellow-500/80',
-  'bg-indigo-500/80',
+  'bg-[#F87171]',
+  'bg-[#60A5FA]',
+  'bg-[#A78BFA]',
+  'bg-[#4ADE80]',
+  'bg-[#FBBF24]',
+  'bg-[#F472B6]',
+  'bg-[#FB923C]',
+  'bg-[#38BDF8]',
 ];
 
 export function getInitials(name) {

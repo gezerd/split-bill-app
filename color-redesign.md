@@ -46,7 +46,7 @@ Keep the `primary` and `secondary` keys — just remap the slots used in compone
 
 ---
 
-## Step 2 — PeopleManager.jsx
+## ~~Step 2 — PeopleManager.jsx~~ ✅
 
 **File:** `frontend/src/components/PeopleManager.jsx`
 
