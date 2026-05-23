@@ -91,13 +91,17 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 6 — TipTaxInput.jsx
+## ~~Step 6 — TipTaxInput.jsx~~ ✅
 
 **File:** `frontend/src/components/TipTaxInput.jsx`
 
 - `bg-accent text-background` → `bg-accent text-on-accent` on selected tip preset pills
 - `bg-accent text-background` → `bg-accent text-on-accent` on the "See Breakdown →" footer button
 - `border-gray-700` → `border-border` on the card `<hr>` and inputs
+- "Total" label: `font-medium` → `font-bold text-lg`
+- Total amount: `font-bold text-xl` → `font-extrabold text-3xl`
+- "← Back" button: added `font-bold`
+- "See Breakdown →" button: `font-semibold` → `font-bold`
 
 ---
 

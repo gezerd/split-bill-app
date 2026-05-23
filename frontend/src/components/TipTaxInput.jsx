@@ -58,7 +58,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
           <span className="text-gray-100 font-semibold">${parseFloat(subtotal || 0).toFixed(2)}</span>
         </div>
 
-        <hr className="border-gray-700" />
+        <hr className="border-border" />
 
         {/* Tax */}
         <div>
@@ -72,7 +72,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
               value={taxValue}
               onChange={(e) => setTaxValue(e.target.value)}
               onBlur={handleTaxBlur}
-              className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-border rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <p className="text-xs text-gray-500 mt-1.5">Auto-extracted from receipt. Tap to edit.</p>
@@ -86,7 +86,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
               onClick={() => handlePresetClick('none')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selectedPreset === 'none'
-                  ? 'bg-accent text-background'
+                  ? 'bg-accent text-on-accent'
                   : 'bg-surface-2 text-gray-400 hover:text-gray-200'
               }`}
             >
@@ -98,7 +98,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
                 onClick={() => handlePresetClick(pct)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selectedPreset === pct
-                    ? 'bg-accent text-background'
+                    ? 'bg-accent text-on-accent'
                     : 'bg-surface-2 text-gray-400 hover:text-gray-200'
                 }`}
               >
@@ -109,7 +109,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
               onClick={() => handlePresetClick('custom')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selectedPreset === 'custom'
-                  ? 'bg-accent text-background'
+                  ? 'bg-accent text-on-accent'
                   : 'bg-surface-2 text-gray-400 hover:text-gray-200'
               }`}
             >
@@ -128,7 +128,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
                 onChange={(e) => setCustomTip(e.target.value)}
                 onBlur={handleCustomBlur}
                 placeholder="0.00"
-                className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-border rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                 autoFocus
               />
             </div>
@@ -142,21 +142,21 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
 
       {/* Total bar */}
       <div className="bg-accent rounded-xl px-5 py-4 flex items-center justify-between mt-4">
-        <span className="text-background font-medium">Total</span>
-        <span className="text-background font-bold text-xl">${total.toFixed(2)}</span>
+        <span className="text-background font-bold text-lg">Total</span>
+        <span className="text-background font-extrabold text-3xl">${total.toFixed(2)}</span>
       </div>
 
       {/* Footer */}
       <div className="flex gap-3 mt-4">
         <button
           onClick={onBack}
-          className="px-5 py-2.5 bg-surface text-gray-300 rounded-lg hover:bg-surface-2 transition-colors"
+          className="px-5 py-2.5 bg-surface text-gray-300 font-bold rounded-lg hover:bg-surface-2 transition-colors"
         >
           ← Back
         </button>
         <button
           onClick={onNext}
-          className="flex-1 px-5 py-2.5 bg-accent text-background font-semibold rounded-lg hover:bg-accent/90 transition-colors"
+          className="flex-1 px-5 py-2.5 bg-accent text-on-accent font-bold rounded-lg hover:bg-accent/90 transition-colors"
         >
           See Breakdown →
         </button>
