@@ -150,7 +150,7 @@ export default function ItemCard({
                 >
                   {getInitials(person.name)}
                   {shares > 1 && (
-                    <span className="absolute -bottom-1 -right-1 bg-accent text-background text-[9px] font-bold px-1 rounded-full leading-4">
+                    <span className="absolute -bottom-1 -right-1 bg-accent text-black text-[9px] font-bold px-1 rounded-full leading-4">
                       ×{shares}
                     </span>
                   )}

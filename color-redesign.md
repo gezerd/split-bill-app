@@ -83,11 +83,11 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 5 — ItemCard.jsx
+## ~~Step 5 — ItemCard.jsx~~ ✅
 
 **File:** `frontend/src/components/ItemCard.jsx`
 
-- `bg-accent text-background` → `bg-accent text-on-accent` on the `×N` share count badge
+- `bg-accent text-background` → `bg-accent text-black` on the `×N` share count badge
 
 ---
 
