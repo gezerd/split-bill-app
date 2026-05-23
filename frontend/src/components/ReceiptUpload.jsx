@@ -44,7 +44,7 @@ export default function ReceiptUpload({ onUpload }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto pt-8">
-      <h1 className="text-4xl font-bold text-white mb-3">Split the bill.</h1>
+      <h1 className="text-4xl font-bold text-gray-100 mb-3">Split the bill.</h1>
       <p className="text-gray-400 mb-8">
         Upload a receipt and AI extracts every item automatically.
       </p>
@@ -52,8 +52,8 @@ export default function ReceiptUpload({ onUpload }) {
       <div
         className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
           dragActive
-            ? 'border-accent bg-accent/5'
-            : 'border-gray-600 hover:border-gray-500'
+            ? 'border-accent bg-accent-dim'
+            : 'border-border hover:border-gray-500'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -87,7 +87,7 @@ export default function ReceiptUpload({ onUpload }) {
             />
           </svg>
 
-          <p className="text-lg font-semibold text-white mb-1">
+          <p className="text-lg font-semibold text-gray-100 mb-1">
             {uploading ? 'Uploading...' : 'Drop your receipt here'}
           </p>
           <p className="text-sm text-gray-400">

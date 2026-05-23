@@ -73,7 +73,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 4 — ReceiptUpload.jsx
+## ~~Step 4 — ReceiptUpload.jsx~~ ✅
 
 **File:** `frontend/src/components/ReceiptUpload.jsx`
 
