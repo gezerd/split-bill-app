@@ -151,7 +151,7 @@ export default function App() {
               <button
                 onClick={() => setStep(3)}
                 disabled={!allAssigned}
-                className="px-6 py-3 bg-accent text-background font-semibold rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Next: Tax &amp; Tip →
               </button>

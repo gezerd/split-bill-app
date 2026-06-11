@@ -113,7 +113,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 8 — App.jsx
+## ~~Step 8 — App.jsx~~ ✅
 
 **File:** `frontend/src/App.jsx`
 
