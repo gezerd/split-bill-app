@@ -132,7 +132,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 10 — ItemForm.jsx
+## ~~Step 10 — ItemForm.jsx~~ ✅
 
 **File:** `frontend/src/components/ItemForm.jsx`
 
