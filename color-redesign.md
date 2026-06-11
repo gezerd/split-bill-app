@@ -11,9 +11,9 @@
 | `--text` | `#EEF4FA` | Primary text |
 | `--text-muted` | `#A0C4DC` | Secondary text |
 | `--text-dim` | `#7AAAB8` | Tertiary text |
-| `--accent` | `#E6AE00` | Warm gold — CTA buttons, totals |
-| `--accent-dim` | `#E6AE0026` | Subtle accent fill |
-| `--on-accent` | `#111` | Dark text rendered on accent backgrounds |
+| `--accent` | `#00FDDC` | Mint — CTA buttons, totals |
+| `--accent-dim` | `#00FDDC26` | Subtle accent fill |
+| `--on-accent` | `#152D42` | Dark text rendered on accent backgrounds |
 
 ---
 
@@ -23,9 +23,9 @@
 
 | Key | Current value | New value |
 |---|---|---|
-| `accent` | `'#00FDDC'` | `'#E6AE00'` |
-| `accent-dim` | *(missing)* | `'#E6AE0026'` — add new key |
-| `on-accent` | *(missing)* | `'#111'` — add new key |
+| `accent` | `'#00FDDC'` | `'#00FDDC'` — reverted from gold |
+| `accent-dim` | *(missing)* | `'#00FDDC26'` — add new key |
+| `on-accent` | *(missing)* | `'#152D42'` — add new key |
 | `surface.DEFAULT` | `'#3A4D45'` | `'#1C3A54'` |
 | `surface.2` | `'#4A5E56'` | `'#254862'` |
 | `surface.3` | `'#3D4E44'` | `'#254862'` |
@@ -37,10 +37,10 @@
 | `gray.500` | *(not set)* | `'#7AAAB8'` |
 | `gray.600` | *(not set)* | `'#7AAAB8'` |
 | `gray.700` | *(not set)* | `'#2E5674'` |
-| `primary.500` | `'#5A6E66'` | `'#E6AE00'` — remap to accent gold |
-| `primary.600` | `'#4A5C54'` | `'oklch(72% 0.16 85)'` — slightly darker gold for hover |
-| `secondary.50` | `'#22293A'` | `'#E6AE0026'` — remap to accent-dim |
-| `secondary.500` | `'#CDD1DE'` | `'#E6AE00'` — remap to accent gold |
+| `primary.500` | `'#5A6E66'` | `'#00FDDC'` — remap to accent mint |
+| `primary.600` | `'#4A5C54'` | `'#00D4B8'` — slightly darker mint for hover |
+| `secondary.50` | `'#22293A'` | `'#00FDDC26'` — remap to accent-dim |
+| `secondary.500` | `'#CDD1DE'` | `'#00FDDC'` — remap to accent mint |
 
 Keep the `primary` and `secondary` keys — just remap the slots used in components so class names in JSX don't need to change.
 

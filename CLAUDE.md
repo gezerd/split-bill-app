@@ -76,7 +76,7 @@ An `Assignment` links a `Person` to an `Item` with a `share_count`. The item pri
 Tailwind theme is extended in `frontend/tailwind.config.js`. Key tokens:
 - `background` → `#152D42` (dark blue page bg)
 - `surface` → `#1C3A54` (card bg)
-- `accent` → `#E6AE00` (gold — primary interactive color)
+- `accent` → `#00FDDC` (mint — primary interactive color)
 - `border` → `#2E5674`
 
 Font: Plus Jakarta Sans (loaded via CDN in `index.html`).

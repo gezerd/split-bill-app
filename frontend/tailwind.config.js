@@ -11,9 +11,9 @@ export default {
       },
       colors: {
         background: '#152D42',
-        accent: '#E6AE00',
-        'accent-dim': '#E6AE0026',
-        'on-accent': '#111111',
+        accent: '#00FDDC',
+        'accent-dim': '#00FDDC26',
+        'on-accent': '#152D42',
         surface: {
           DEFAULT: '#1C3A54',
           2: '#254862',
@@ -30,12 +30,12 @@ export default {
           700: '#2E5674',
         },
         primary: {
-          500: '#E6AE00',
-          600: '#C99B00',
+          500: '#00FDDC',
+          600: '#00D4B8',
         },
         secondary: {
-          50: '#E6AE0026',
-          500: '#E6AE00',
+          50: '#00FDDC26',
+          500: '#00FDDC',
         },
       },
     },
