@@ -105,7 +105,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 7 — FinalBreakdown.jsx
+## ~~Step 7 — FinalBreakdown.jsx~~ ✅
 
 **File:** `frontend/src/components/FinalBreakdown.jsx`
 

@@ -152,7 +152,7 @@ export default function FinalBreakdown({ billId, people, tipPercentage, onBack }
         </button>
         <button
           onClick={() => window.location.reload()}
-          className="flex-1 px-5 py-2.5 bg-accent text-background font-semibold rounded-lg hover:bg-accent/90 transition-colors"
+          className="flex-1 px-5 py-2.5 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent/90 transition-colors"
         >
           Start New Bill
         </button>
