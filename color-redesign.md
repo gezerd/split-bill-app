@@ -121,7 +121,7 @@ Replace `AVATAR_COLORS` array:
 
 ---
 
-## Step 9 — AssignmentModal.jsx
+## ~~Step 9 — AssignmentModal.jsx~~ ✅
 
 **File:** `frontend/src/components/AssignmentModal.jsx`
 

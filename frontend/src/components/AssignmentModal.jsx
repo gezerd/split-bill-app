@@ -56,7 +56,7 @@ export default function AssignmentModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-surface rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-700">
+        <div className="p-6 border-b border-border">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-xl font-semibold text-gray-100">{item.name}</h3>
@@ -112,8 +112,8 @@ export default function AssignmentModal({
                       isSelected
                         ? 'border-secondary-500 bg-secondary-50'
                         : isDisabled
-                        ? 'border-gray-700 bg-surface-2 opacity-50'
-                        : 'border-gray-700 hover:border-gray-600'
+                        ? 'border-border bg-surface-2 opacity-50'
+                        : 'border-border hover:border-border'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -137,7 +137,7 @@ export default function AssignmentModal({
                             max={shareCount + remainingShares}
                             value={shareCount}
                             onChange={(e) => handleShareCountChange(person.id, e.target.value)}
-                            className="w-16 px-2 py-1 border border-gray-600 rounded text-center focus:outline-none focus:ring-2 bg-surface-2 text-gray-100 focus:ring-primary-500"
+                            className="w-16 px-2 py-1 border border-border rounded text-center focus:outline-none focus:ring-2 bg-surface-2 text-gray-100 focus:ring-primary-500"
                           />
                         </div>
                       )}
@@ -162,7 +162,7 @@ export default function AssignmentModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-700 bg-surface">
+        <div className="p-6 border-t border-border bg-surface">
           {selectedPeople.size > 0 && (
             <div className="mb-3 text-sm text-gray-400">
               {selectedPeople.size === 1
@@ -174,14 +174,14 @@ export default function AssignmentModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-surface-2 transition-colors"
+              className="flex-1 px-4 py-2 border border-border text-gray-300 rounded-lg hover:bg-surface-2 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={people.length === 0}
-              className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:bg-surface-2 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 bg-primary-500 text-on-accent rounded-lg hover:bg-primary-600 disabled:bg-surface-2 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               Save
             </button>
