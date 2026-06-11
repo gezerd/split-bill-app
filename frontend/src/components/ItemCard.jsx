@@ -6,7 +6,7 @@ export default function ItemCard({
   item,
   people,
   assignments,
-  onAssignClick,
+
   onUpdateItem,
   onDeleteItem,
   onAssignmentSave,

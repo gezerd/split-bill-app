@@ -6,7 +6,6 @@ import ItemList from './components/ItemList';
 import PeopleManager from './components/PeopleManager';
 import TipTaxInput from './components/TipTaxInput';
 import FinalBreakdown from './components/FinalBreakdown';
-import AssignmentModal from './components/AssignmentModal';
 
 export default function App() {
   const {
@@ -32,7 +31,6 @@ export default function App() {
   } = useBillData();
 
   const [step, setStep] = useState(1);
-  const [selectedItem, setSelectedItem] = useState(null);
 
   const allAssigned =
     items &&
@@ -142,7 +140,7 @@ export default function App() {
                 onAddItem={handleCreateItem}
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
-                onAssignClick={setSelectedItem}
+
                 onAssignmentSave={handleAssignmentSave}
               />
             </div>
@@ -193,16 +191,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Assignment Modal */}
-      {selectedItem && (
-        <AssignmentModal
-          item={selectedItem}
-          people={people}
-          currentAssignments={assignments}
-          onClose={() => setSelectedItem(null)}
-          onSave={handleAssignmentSave}
-        />
-      )}
     </div>
   );
 }
