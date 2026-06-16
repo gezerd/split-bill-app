@@ -94,12 +94,13 @@ All design files live in `designs/`. The handoff is **high-fidelity** — final 
 |------|--------|
 | `screens/index.html` | Contact sheet — thumbnails linking all screens |
 | `screens/01-upload.html` | Step 1 — upload dropzone (idle) |
-| `screens/02-assign.html` | Step 2 — people added, all items assigned (inline cycle) |
+| `screens/02-assign-complete.html` | Step 2 — every item fully assigned → "All assigned ✓" |
+| `screens/02-assign-partial.html` | Step 2 — some quantities unfilled → "2 unassigned" |
 | `screens/03-taxtip.html` | Step 3 — tax field, 20% tip, Total pill |
 | `screens/04-breakdown-cards.html` | Step 4 — per-person cards layout |
 | `screens/05-breakdown-receipt.html` | Step 4 — paper-receipt layout |
 
-**Component source** (`designs/src/components/`): `ItemCard.tsx`, `AssignModal.tsx`, `StepBar.tsx`, `Stepper.tsx`, `Avatar.tsx`, `steps/UploadStep.tsx`, `steps/AssignStep.tsx`, `steps/TaxTipStep.tsx`, `steps/BreakdownStep.tsx`, `breakdown/CardBreakdown.tsx`, `breakdown/ReceiptBreakdown.tsx`.
+**Component source** (`designs/src/components/`): `SplitBillApp.tsx`, `ItemCard.tsx`, `AssignModal.tsx`, `StepBar.tsx`, `Stepper.tsx`, `Avatar.tsx`, `steps/UploadStep.tsx`, `steps/AssignStep.tsx`, `steps/TaxTipStep.tsx`, `steps/BreakdownStep.tsx`, `breakdown/CardBreakdown.tsx`, `breakdown/ReceiptBreakdown.tsx`.
 
 **Full interactive prototype**: `designs/reference/Split Bill App.html` — open in a browser for live reference.
 

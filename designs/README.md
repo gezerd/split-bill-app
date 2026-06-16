@@ -24,7 +24,8 @@ Static, **full-height** snapshots of each screen, captured straight from the liv
 |------|--------|
 | `screens/index.html` | Contact sheet — thumbnails linking all screens |
 | `screens/01-upload.html` | Step 1 — upload dropzone (idle) |
-| `screens/02-assign.html` | Step 2 — people added, all items assigned (inline cycle) |
+| `screens/02-assign-complete.html` | Step 2 — every item fully assigned (Large Soda ×3 split 2 / 1) → "All assigned ✓" |
+| `screens/02-assign-partial.html` | Step 2 — some quantities unfilled (Cheeseburger ×2 with 1 share, Large Soda ×3 with 2) → "2 unassigned" |
 | `screens/03-taxtip.html` | Step 3 — tax field, 20% tip, Total pill |
 | `screens/04-breakdown-cards.html` | Step 4 — per-person cards layout |
 | `screens/05-breakdown-receipt.html` | Step 4 — paper-receipt layout |
@@ -156,12 +157,12 @@ The flow is a 4-step linear state machine (`step` 0→3 in `SplitBillApp`). A `S
 ### 2 · Assign (`AssignStep`)
 - **Purpose:** Add the people splitting, then assign every item.
 - **Layout:** Name input + "Add" button row → wrap of removable people chips → "Items from receipt" label with an unassigned/all-assigned status pill → responsive grid of `ItemCard`s → right-aligned Next button.
-- **Behavior:** Enter or "+ Add" appends a person (`id: Date.now()`); removing a person also strips them from all assignments. Next is disabled until `people.length > 0` **and** every item has ≥1 assignee; the button label reflects what's blocking.
+- **Behavior:** Enter or "+ Add" appends a person (`id: Date.now()`); removing a person also strips them from all assignments. **Assignment is quantity-aware:** an item counts as assigned only when the shares on it cover its `quantity` (sum of shares ≥ quantity). A qty-2 item with one share is *partial* — its card is **not** highlighted and it counts toward the "# unassigned" pill. Next is disabled until `people.length > 0` **and** every item is fully assigned; the button label reflects what's blocking (e.g. "2 items remaining").
 - **`ItemCard` has three assignment UIs** (selected by config):
   - `inline` + `cycle` *(default)* — tap an avatar to cycle shares `0→1→…→max→0`; a `×N` badge shows counts >1 (`max = max(quantity, 2)`).
   - `inline` + `stepper` — tap an unfilled avatar to add at 1, then a small −/+ `Stepper` appears in an accent pill.
   - `modal` — avatars + an "Assign" button open `AssignModal` (per-person steppers, live "pays $X", running share total, Cancel/Save).
-  - Card border turns accent once assigned.
+  - Card border turns accent only once the item is **fully assigned** (shares ≥ quantity); a partially-assigned card keeps the default border.
 
 ### 3 · Tax & Tip (`TaxTipStep`)
 - **Purpose:** Confirm tax and choose a tip.

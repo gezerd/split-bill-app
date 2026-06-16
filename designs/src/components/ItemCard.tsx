@@ -28,6 +28,9 @@ export function ItemCard({ item, people, assignments, onSave, assignStyle, inlin
   const assignedList = Object.entries(itemMap).map(([pid, n]) => ({ pid: Number(pid), count: n }));
   const isAssigned = assignedList.length > 0;
   const total = assignedList.reduce((s, x) => s + x.count, 0);
+  // An item is "fully assigned" only when its shares cover its quantity.
+  // Partial assignment (e.g. 1 share on a qty-2 item) does NOT highlight the card.
+  const isFull = total >= item.quantity;
 
   const setPersonShare = (pid: number, n: number) =>
     onSave(
@@ -50,7 +53,7 @@ export function ItemCard({ item, people, assignments, onSave, assignStyle, inlin
   return (
     <div
       className="rounded-[18px] bg-surface px-[18px] py-4 transition-colors duration-200"
-      style={{ border: `1.5px solid ${isAssigned ? 'var(--accent)' : 'var(--border)'}` }}
+      style={{ border: `1.5px solid ${isFull ? 'var(--accent)' : 'var(--border)'}` }}
     >
       {/* Header row: name + modifiers, price */}
       <div className="mb-3 flex items-start justify-between">

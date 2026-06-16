@@ -46,7 +46,10 @@ export function AssignStep({
   const onSave = (id: number, shareMap: Record<number, number>) =>
     setAssignments(prev => ({ ...prev, [id]: shareMap }));
 
-  const unassigned = items.filter(it => Object.keys(assignments[it.id] || {}).length === 0).length;
+  const unassigned = items.filter(it => {
+    const m = assignments[it.id] || {};
+    return Object.values(m).reduce((s, v) => s + v, 0) < it.quantity;
+  }).length;
   const canNext = people.length > 0 && unassigned === 0;
 
   return (
