@@ -73,6 +73,8 @@ An `Assignment` links a `Person` to an `Item` with a `share_count`. The item pri
 
 ## UI Verification Rule
 
+**Trigger:** Follow this rule after any UI change, AND whenever asked to "verify the frontend", "check the UI", "make it match the design", or similar — treat that as an instruction to run the full verification loop below and fix every deviation found before reporting done.
+
 **After making any UI change**, verify the result matches the design handoff before considering the task complete. Follow these steps every time:
 
 1. **Run the app** — start the Vite dev server (`cd frontend && npm run dev`) if not already running.
