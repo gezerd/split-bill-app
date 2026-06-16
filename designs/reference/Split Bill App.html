@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #152D42;
+  --surface: #1C3A54;
+  --surface-hi: #254862;
+  --border: #2E5674;
+  --accent: oklch(78% 0.16 85);
+  --accent-dim: oklch(78% 0.16 85 / 0.15);
+  --text: #EEF4FA;
+  --text-muted: #A0C4DC;
+  --text-dim: #7AAAB8;
+}
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+input  { font-family: inherit; }
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes scaleIn  { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.fade-up  { animation: fadeUp .3s ease both; }
+.scale-in { animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+// tweaks-panel inline
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;
+    border-radius:50%;background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;height:22px;border-radius:6px;cursor:default;padding:0}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((key, val) => {
+    setValues(prev => ({ ...prev, [key]: val }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+  const clamp = React.useCallback(() => {
+    const panel = dragRef.current; if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    offsetRef.current = {
+      x: Math.min(Math.max(PAD, window.innerWidth - w - PAD), Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(Math.max(PAD, window.innerHeight - h - PAD), Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+  React.useEffect(() => {
+    const onMsg = e => {
+      if (e?.data?.type === '__activate_edit_mode') setOpen(true);
+      else if (e?.data?.type === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  const dismiss = () => { setOpen(false); window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); };
+  const onDragStart = e => {
+    const panel = dragRef.current; if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const sr = window.innerWidth - r.right, sb = window.innerHeight - r.bottom;
+    const move = ev => { offsetRef.current = { x: sr-(ev.clientX-sx), y: sb-(ev.clientY-sy) }; clamp(); };
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+  };
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" onMouseDown={e => e.stopPropagation()} onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+function TweakSection({ label, children }) {
+  return <><div className="twk-sect">{label}</div>{children}</>;
+}
+
+function TweakRow({ label, value, children }) {
+  return (
+    <div className="twk-row">
+      <div className="twk-lbl"><span>{label}</span>{value != null && <span className="twk-val">{value}</span>}</div>
+      {children}
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map(o => typeof o === 'object' ? o : { value: o, label: o });
+  const idx = Math.max(0, opts.findIndex(o => o.value === value));
+  const n = opts.length;
+  const valueRef = React.useRef(value); valueRef.current = value;
+  const segAt = cx => {
+    const r = trackRef.current.getBoundingClientRect();
+    const i = Math.floor(((cx - r.left - 2) / (r.width - 4)) * n);
+    return opts[Math.max(0, Math.min(n-1, i))].value;
+  };
+  const onPointerDown = e => {
+    setDragging(true);
+    const v0 = segAt(e.clientX); if (v0 !== valueRef.current) onChange(v0);
+    const move = ev => { const v = segAt(ev.clientX); if (v !== valueRef.current) onChange(v); };
+    const up = () => { setDragging(false); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} className={dragging ? 'twk-seg dragging' : 'twk-seg'} onPointerDown={onPointerDown}>
+        <div className="twk-seg-thumb" style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`, width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map(o => <button key={o.value} type="button">{o.label}</button>)}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'} onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value} onChange={e => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+Object.assign(window, { useTweaks, TweaksPanel, TweakSection, TweakRow, TweakRadio, TweakToggle, TweakColor });
+</script>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg">
+    <rect width="120" height="84" fill="#232E27"/>
+    <rect x="35" y="20" width="50" height="44" rx="8" fill="#2A3830"/>
+    <rect x="44" y="29" width="32" height="4" rx="2" fill="#4ADE80"/>
+    <rect x="44" y="38" width="24" height="3" rx="1.5" fill="#3A4D3F"/>
+    <rect x="44" y="45" width="28" height="3" rx="1.5" fill="#3A4D3F"/>
+    <rect x="44" y="52" width="20" height="3" rx="1.5" fill="#3A4D3F"/>
+  </svg>
+</template>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Palette ───────────────────────────────────────────────────────────────
+const AVATAR_COLORS = ['#F87171','#60A5FA','#A78BFA','#4ADE80','#FBBF24','#F472B6','#FB923C','#38BDF8'];
+
+// ── Mock data ─────────────────────────────────────────────────────────────
+const MOCK_ITEMS = [
+  { id: 1, name: "Double Double",      price: 5.45, quantity: 1, modifiers: ["Protein Style"] },
+  { id: 2, name: "Cheeseburger",       price: 3.75, quantity: 2, modifiers: [] },
+  { id: 3, name: "Animal Style Fries", price: 2.95, quantity: 1, modifiers: ["Grilled Onions"] },
+  { id: 4, name: "Strawberry Shake",   price: 3.25, quantity: 1, modifiers: [] },
+  { id: 5, name: "Large Soda",         price: 2.00, quantity: 3, modifiers: [] },
+];
+const MOCK_TAX = 1.87;
+
+// ── Tweaks ────────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "assignStyle": "inline",
+  "inlineMode": "cycle",
+  "breakdownStyle": "cards",
+  "accentColor": "cyan",
+  "textContrast": "balanced"
+}/*EDITMODE-END*/;
+
+const TEXT_CONTRAST = {
+  subtle:   { muted: '#7AAAC4', dim: '#4A7898' },
+  balanced: { muted: '#A0C4DC', dim: '#7AAAB8' },
+  bright:   { muted: '#C4DCF0', dim: '#9BBAD0' },
+};
+
+const ACCENTS = {
+  mint:  { color: 'oklch(76% 0.22 148)', dim: 'oklch(76% 0.22 148 / 0.15)' },
+  gold:  { color: 'oklch(78% 0.16 85)',  dim: 'oklch(78% 0.16 85 / 0.15)'  },
+  coral: { color: 'oklch(70% 0.18 25)',  dim: 'oklch(70% 0.18 25 / 0.15)'  },
+  cyan:  { color: '#00FDDC',             dim: 'oklch(92% 0.14 185 / 0.15)' },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+const initials = name => name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const fmt      = n => `$${parseFloat(n || 0).toFixed(2)}`;
+
+// Assignments shape: { [itemId]: { [personId]: shareCount } }
+const shareCount   = (assignments, itemId, pid) => (assignments[itemId]?.[pid]) || 0;
+const totalShares  = (assignments, itemId)      => Object.values(assignments[itemId] || {}).reduce((s, v) => s + v, 0);
+const assignedPids = (assignments, itemId)      => Object.keys(assignments[itemId] || {}).map(Number);
+function setShare(assignments, itemId, pid, count) {
+  const next = { ...assignments };
+  const itemMap = { ...(next[itemId] || {}) };
+  if (count <= 0) delete itemMap[pid];
+  else itemMap[pid] = count;
+  if (Object.keys(itemMap).length === 0) delete next[itemId];
+  else next[itemId] = itemMap;
+  return next;
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────
+function Avatar({ person, index, size = 32, filled = false, onClick }) {
+  const c = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  return (
+    <button
+      title={person.name}
+      onClick={onClick}
+      style={{
+        width: size, height: size, borderRadius: '50%', flexShrink: 0,
+        background: filled ? c : 'transparent',
+        border: `2px solid ${c}`,
+        color: filled ? '#111' : c,
+        fontSize: size * 0.33, fontWeight: 800,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all .15s ease',
+        userSelect: 'none',
+      }}
+    >{initials(person.name)}</button>
+  );
+}
+
+// ── Step indicator ────────────────────────────────────────────────────────
+const STEP_LABELS = ['Upload', 'Assign', 'Tax & Tip', 'Done'];
+
+function StepBar({ step }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 40 }}>
+      {STEP_LABELS.map((label, i) => (
+        <React.Fragment key={i}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: '50%',
+              background: i <= step ? 'var(--accent)' : 'var(--surface-hi)',
+              color: i <= step ? '#111' : 'var(--text-dim)',
+              fontSize: 13, fontWeight: 800,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all .35s cubic-bezier(.4,0,.2,1)',
+              boxShadow: i === step ? '0 0 0 5px var(--accent-dim)' : 'none',
+            }}>{i < step ? '✓' : i + 1}</div>
+            <span style={{
+              fontSize: 11, fontWeight: i === step ? 700 : 400,
+              color: i === step ? 'var(--accent)' : i < step ? 'var(--text-muted)' : 'var(--text-dim)',
+              whiteSpace: 'nowrap', transition: 'color .3s',
+            }}>{label}</span>
+          </div>
+          {i < STEP_LABELS.length - 1 && (
+            <div style={{
+              flex: 1, height: 2, marginTop: 16,
+              background: i < step ? 'var(--accent)' : 'var(--border)',
+              transition: 'background .35s',
+            }} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+// ── Step 1: Upload ────────────────────────────────────────────────────────
+function UploadStep({ onComplete }) {
+  const [state, setState] = useState('idle');
+  const [drag, setDrag] = useState(false);
+
+  const simulate = () => {
+    if (state !== 'idle') return;
+    setState('uploading');
+    setTimeout(() => { setState('done'); setTimeout(onComplete, 700); }, 2000);
+  };
+
+  return (
+    <div className="fade-up" style={{ maxWidth: 540, margin: '0 auto', paddingTop: 16 }}>
+      <h1 style={{ fontSize: 34, fontWeight: 800, letterSpacing: -.5, marginBottom: 8 }}>Split the bill.</h1>
+      <p style={{ color: 'var(--text-muted)', fontSize: 15, marginBottom: 40, lineHeight: 1.5 }}>
+        Upload a receipt and AI extracts every item automatically.
+      </p>
+
+      <div
+        onClick={simulate}
+        onDragEnter={e => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={e => { e.preventDefault(); setDrag(false); }}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); setDrag(false); simulate(); }}
+        style={{
+          borderRadius: 24,
+          border: `2px dashed ${drag || state === 'done' ? 'var(--accent)' : 'var(--border)'}`,
+          background: drag ? 'var(--accent-dim)' : 'var(--surface)',
+          padding: '72px 40px',
+          textAlign: 'center',
+          cursor: state === 'idle' ? 'pointer' : 'default',
+          transition: 'all .2s ease',
+          position: 'relative',
+        }}
+      >
+        {state === 'idle' && (
+          <div className="fade-up">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 20px' }}>
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Drop your receipt here</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>or click to browse · PNG, JPG, HEIC up to 10MB</p>
+          </div>
+        )}
+        {state === 'uploading' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--accent)', animation: 'spin .7s linear infinite' }} />
+            <p style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Scanning with AI…</p>
+          </div>
+        )}
+        {state === 'done' && (
+          <div className="scale-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#111', fontWeight: 800 }}>✓</div>
+            <p style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 16 }}>5 items found!</p>
+          </div>
+        )}
+      </div>
+      <p style={{ textAlign: 'center', marginTop: 16, color: 'var(--text-dim)', fontSize: 12 }}>
+        Demo: click to simulate a receipt upload
+      </p>
+    </div>
+  );
+}
+
+// ── Assignment Modal ──────────────────────────────────────────────────────
+function AssignModal({ item, people, assignments, onSave, onClose }) {
+  const [shares, setShares] = useState(() => ({ ...(assignments[item.id] || {}) }));
+
+  const total = Object.values(shares).reduce((s, v) => s + v, 0);
+  const totalPaid = (item.price * item.quantity);
+
+  const setN = (pid, n) => {
+    const next = { ...shares };
+    if (n <= 0) delete next[pid]; else next[pid] = n;
+    setShares(next);
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}
+    >
+      <div
+        className="scale-in"
+        onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--surface)', borderRadius: 22, width: '100%', maxWidth: 420, border: '1px solid var(--border)', overflow: 'hidden' }}
+      >
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 17 }}>{item.name}</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 3 }}>{fmt(totalPaid)} total{item.quantity > 1 ? ` · ${item.quantity} available` : ''}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 24, lineHeight: 1, padding: '0 2px' }}>×</button>
+        </div>
+        <div style={{ padding: '16px 24px', maxHeight: 360, overflowY: 'auto' }}>
+          {people.length === 0
+            ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '24px 0' }}>Add people first</p>
+            : people.map((p, i) => {
+              const n = shares[p.id] || 0;
+              const owes = total > 0 && n > 0 ? totalPaid * n / total : 0;
+              return (
+                <div key={p.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                  borderRadius: 14, marginBottom: 8,
+                  background: n > 0 ? 'var(--accent-dim)' : 'var(--surface-hi)',
+                  border: `1.5px solid ${n > 0 ? 'var(--accent)' : 'transparent'}`,
+                  transition: 'all .15s',
+                }}>
+                  <Avatar person={p} index={i} size={36} filled={n > 0} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
+                    {n > 0 && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>pays {fmt(owes)}</div>}
+                  </div>
+                  <Stepper value={n} onChange={v => setN(p.id, v)} />
+                </div>
+              );
+            })
+          }
+          {total > 0 && (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-hi)', fontSize: 12, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+              <span>{total} share{total !== 1 ? 's' : ''} total</span>
+              <span>{item.quantity > 1 ? `${item.quantity} items` : 'split'}</span>
+            </div>
+          )}
+        </div>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 12, background: 'var(--surface-hi)', border: 'none', color: 'var(--text)', fontWeight: 600, fontSize: 14 }}>Cancel</button>
+          <button
+            onClick={() => { onSave(item.id, shares); onClose(); }}
+            style={{ flex: 1, padding: 12, borderRadius: 12, background: 'var(--accent)', border: 'none', color: '#111', fontWeight: 700, fontSize: 14 }}
+          >Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Stepper ───────────────────────────────────────────────────────────────
+function Stepper({ value, onChange, size = 'md' }) {
+  const isSm = size === 'sm';
+  const h = isSm ? 26 : 32;
+  const w = isSm ? 22 : 28;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface)', borderRadius: 99, border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0 }}>
+      <button
+        onClick={() => onChange(Math.max(0, value - 1))}
+        disabled={value <= 0}
+        style={{
+          width: w, height: h, border: 'none', background: 'transparent',
+          color: value > 0 ? 'var(--text)' : 'var(--text-dim)',
+          fontSize: isSm ? 14 : 16, fontWeight: 700, lineHeight: 1, cursor: value > 0 ? 'pointer' : 'not-allowed',
+        }}
+      >−</button>
+      <span style={{
+        minWidth: isSm ? 18 : 22, textAlign: 'center', fontWeight: 700,
+        fontSize: isSm ? 12 : 13, color: value > 0 ? 'var(--accent)' : 'var(--text-muted)',
+        fontVariantNumeric: 'tabular-nums',
+      }}>{value}</span>
+      <button
+        onClick={() => onChange(value + 1)}
+        style={{
+          width: w, height: h, border: 'none', background: 'transparent',
+          color: 'var(--text)', fontSize: isSm ? 14 : 16, fontWeight: 700, lineHeight: 1, cursor: 'pointer',
+        }}
+      >+</button>
+    </div>
+  );
+}
+
+// ── Item Card ─────────────────────────────────────────────────────────────
+function ItemCard({ item, people, assignments, onSave, assignStyle, inlineMode }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const itemMap = assignments[item.id] || {};
+  const assignedList = Object.entries(itemMap).map(([pid, n]) => ({ pid: Number(pid), count: n }));
+  const isAssigned = assignedList.length > 0;
+  const total = assignedList.reduce((s, x) => s + x.count, 0);
+
+  const setPersonShare = (pid, n) => onSave(item.id, (() => {
+    const next = { ...itemMap };
+    if (n <= 0) delete next[pid]; else next[pid] = n;
+    return next;
+  })());
+
+  // Cycle mode: tap cycles 0 → 1 → 2 → ... → quantity → 0
+  const cycleClick = pid => {
+    const curr = itemMap[pid] || 0;
+    const max = Math.max(item.quantity, 2); // allow at least 2 for sharing qty=1 items
+    setPersonShare(pid, curr >= max ? 0 : curr + 1);
+  };
+
+  return (
+    <div style={{
+      background: 'var(--surface)', borderRadius: 18, padding: '16px 18px',
+      border: `1.5px solid ${isAssigned ? 'var(--accent)' : 'var(--border)'}`,
+      transition: 'border-color .2s',
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {item.modifiers.map((m, i) => (
+              <span key={i} style={{ fontSize: 10, background: 'var(--surface-hi)', color: 'var(--text-muted)', borderRadius: 6, padding: '2px 7px' }}>{m}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 16 }}>{fmt(item.price * item.quantity)}</div>
+          {item.quantity > 1 && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>×{item.quantity} @ {fmt(item.price)}</div>}
+        </div>
+      </div>
+
+      {/* Assignment UI */}
+      {assignStyle === 'modal' ? (
+        <>
+          {isAssigned && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
+              {assignedList.map(({ pid, count }) => {
+                const idx = people.findIndex(p => p.id === pid);
+                const person = people[idx];
+                return person ? (
+                  <div key={pid} style={{ position: 'relative' }}>
+                    <Avatar person={person} index={idx} size={26} filled />
+                    {count > 1 && (
+                      <span style={{
+                        position: 'absolute', bottom: -3, right: -4,
+                        background: 'var(--accent)', color: '#111',
+                        fontSize: 9, fontWeight: 800,
+                        minWidth: 16, height: 16, padding: '0 4px',
+                        borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '1.5px solid var(--surface)',
+                      }}>×{count}</span>
+                    )}
+                  </div>
+                ) : null;
+              })}
+              {total > 1 && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', alignSelf: 'center', marginLeft: 4 }}>
+                  {total} share{total !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          )}
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              width: '100%', padding: '9px', borderRadius: 11,
+              background: isAssigned ? 'var(--accent-dim)' : 'var(--surface-hi)',
+              border: `1px solid ${isAssigned ? 'var(--accent)' : 'transparent'}`,
+              color: isAssigned ? 'var(--accent)' : 'var(--text-muted)',
+              fontWeight: 600, fontSize: 12, cursor: 'pointer', transition: 'all .15s',
+            }}
+          >{isAssigned ? `${assignedList.length} assigned · change` : '+ Assign to people'}</button>
+        </>
+      ) : (
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 7, fontWeight: 500, display: 'flex', justifyContent: 'space-between' }}>
+            <span>{people.length === 0 ? 'Add people to assign' : inlineMode === 'stepper' ? 'Assign shares:' : 'Tap to add a share:'}</span>
+            {total > 0 && <span style={{ color: 'var(--text-muted)' }}>{total} share{total !== 1 ? 's' : ''}</span>}
+          </div>
+          {inlineMode === 'stepper' ? (
+            /* ── B: Stepper mode ── */
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
+              {people.map((p, i) => {
+                const n = itemMap[p.id] || 0;
+                if (n > 0) {
+                  return (
+                    <div key={p.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      background: 'var(--accent-dim)',
+                      border: '1.5px solid var(--accent)',
+                      borderRadius: 99, padding: '2px 2px 2px 4px',
+                    }}>
+                      <Avatar person={p} index={i} size={26} filled />
+                      <Stepper value={n} onChange={v => setPersonShare(p.id, v)} size="sm" />
+                    </div>
+                  );
+                }
+                return (
+                  <Avatar key={p.id} person={p} index={i} size={34} filled={false} onClick={() => setPersonShare(p.id, 1)} />
+                );
+              })}
+            </div>
+          ) : (
+            /* ── A: Cycle mode ── */
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+              {people.map((p, i) => {
+                const n = itemMap[p.id] || 0;
+                return (
+                  <div key={p.id} style={{ position: 'relative' }}>
+                    <Avatar person={p} index={i} size={34} filled={n > 0} onClick={() => cycleClick(p.id)} />
+                    {n > 1 && (
+                      <span style={{
+                        position: 'absolute', bottom: -3, right: -4,
+                        background: 'var(--accent)', color: '#111',
+                        fontSize: 10, fontWeight: 800,
+                        minWidth: 18, height: 18, padding: '0 4px',
+                        borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '2px solid var(--surface)',
+                        pointerEvents: 'none',
+                      }}>×{n}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {modalOpen && (
+        <AssignModal item={item} people={people} assignments={assignments} onSave={onSave} onClose={() => setModalOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+// ── Step 2: People + Items ────────────────────────────────────────────────
+function AssignStep({ people, setPeople, items, assignments, setAssignments, assignStyle, inlineMode, onNext }) {
+  const [name, setName] = useState('');
+  const inputRef = useRef(null);
+
+  const addPerson = () => {
+    if (!name.trim()) return;
+    setPeople(prev => [...prev, { id: Date.now(), name: name.trim() }]);
+    setName('');
+    inputRef.current?.focus();
+  };
+
+  const onSave = (id, shareMap) => setAssignments(prev => ({ ...prev, [id]: shareMap }));
+  const unassigned = items.filter(it => Object.keys(assignments[it.id] || {}).length === 0).length;
+  const canNext = people.length > 0 && unassigned === 0;
+
+  return (
+    <div className="fade-up">
+      <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Who's splitting?</h2>
+      <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 28 }}>Add everyone, then tap each item to assign it.</p>
+
+      {/* Add person */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <input
+          ref={inputRef} value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && addPerson()}
+          placeholder="Enter a name…"
+          style={{
+            flex: 1, padding: '12px 16px', borderRadius: 13,
+            background: 'var(--surface)', border: '1.5px solid var(--border)',
+            color: 'var(--text)', fontSize: 14, outline: 'none',
+            transition: 'border-color .15s',
+          }}
+          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+        />
+        <button
+          onClick={addPerson} disabled={!name.trim()}
+          style={{
+            padding: '12px 20px', borderRadius: 13, border: 'none',
+            background: name.trim() ? 'var(--accent)' : 'var(--surface-hi)',
+            color: name.trim() ? '#111' : 'var(--text-dim)',
+            fontWeight: 700, fontSize: 14, transition: 'all .15s',
+          }}
+        >+ Add</button>
+      </div>
+
+      {/* People chips */}
+      {people.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
+          {people.map((p, i) => (
+            <div key={p.id} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px',
+              borderRadius: 100, background: 'var(--surface)', border: '1.5px solid var(--border)',
+            }}>
+              <Avatar person={p} index={i} size={26} filled />
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</span>
+              <button
+                onClick={() => { setPeople(prev => prev.filter(x => x.id !== p.id)); setAssignments(prev => { const next = {}; Object.entries(prev).forEach(([k, m]) => { const nm = { ...m }; delete nm[p.id]; if (Object.keys(nm).length > 0) next[k] = nm; }); return next; }); }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: 17, lineHeight: 1, cursor: 'pointer', padding: '0 2px', marginLeft: 2 }}
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Items label */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Items from receipt</span>
+        {unassigned > 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--surface-hi)', padding: '3px 10px', borderRadius: 100 }}>{unassigned} unassigned</span>}
+        {unassigned === 0 && items.length > 0 && <span style={{ fontSize: 12, color: 'var(--accent)', background: 'var(--accent-dim)', padding: '3px 10px', borderRadius: 100, fontWeight: 600 }}>All assigned ✓</span>}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 12, marginBottom: 32 }}>
+        {items.map(item => (
+          <ItemCard key={item.id} item={item} people={people} assignments={assignments} onSave={onSave} assignStyle={assignStyle} inlineMode={inlineMode} />
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          onClick={onNext} disabled={!canNext}
+          style={{
+            padding: '14px 32px', borderRadius: 14, border: 'none', fontSize: 15, fontWeight: 700,
+            background: canNext ? 'var(--accent)' : 'var(--surface-hi)',
+            color: canNext ? '#111' : 'var(--text-dim)',
+            cursor: canNext ? 'pointer' : 'not-allowed', transition: 'all .2s',
+          }}
+        >{!people.length ? 'Add people first' : unassigned > 0 ? `${unassigned} item${unassigned > 1 ? 's' : ''} remaining` : 'Next: Tax & Tip →'}</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Tax & Tip ─────────────────────────────────────────────────────
+const TIP_PRESETS = [15, 18, 20, 22, 25];
+
+function TaxTipStep({ subtotal, tax, setTax, setTip, onNext, onBack }) {
+  const [taxVal, setTaxVal] = useState(String(tax));
+  const [tipMode, setTipMode] = useState('pct');
+  const [tipPct, setTipPct] = useState(18);
+  const [customTipVal, setCustomTipVal] = useState('');
+
+  const taxNum = parseFloat(taxVal) || 0;
+  const tipAmt = tipMode === 'pct' ? subtotal * tipPct / 100 : parseFloat(customTipVal) || 0;
+  const total = subtotal + taxNum + tipAmt;
+
+  const handleNext = () => { setTax(taxNum); setTip(tipAmt); onNext(); };
+
+  return (
+    <div className="fade-up" style={{ maxWidth: 500 }}>
+      <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Tax & tip</h2>
+      <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 28 }}>These are split proportionally based on what each person ordered.</p>
+
+      <div style={{ background: 'var(--surface)', borderRadius: 22, padding: 24, marginBottom: 16, border: '1px solid var(--border)' }}>
+        {/* Subtotal row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Subtotal</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>{fmt(subtotal)}</span>
+        </div>
+
+        {/* Tax */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: .5 }}>Tax</div>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-hi)', borderRadius: 12, padding: '0 16px', border: '1.5px solid var(--border)' }}>
+            <span style={{ color: 'var(--text-muted)', marginRight: 8, fontSize: 15 }}>$</span>
+            <input
+              type="number" step="0.01" min="0" value={taxVal}
+              onChange={e => setTaxVal(e.target.value)}
+              style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 16, fontWeight: 600, padding: '11px 0', outline: 'none' }}
+            />
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 5 }}>Auto-extracted from receipt, tap to edit</p>
+        </div>
+
+        {/* Tip */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: .5 }}>Tip</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {TIP_PRESETS.map(p => (
+              <button key={p} onClick={() => { setTipMode('pct'); setTipPct(p); }} style={{
+                padding: '8px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: tipMode === 'pct' && tipPct === p ? 'var(--accent)' : 'var(--surface-hi)',
+                color: tipMode === 'pct' && tipPct === p ? '#111' : 'var(--text-muted)',
+                transition: 'all .15s',
+              }}>{p}%</button>
+            ))}
+            <button onClick={() => setTipMode('custom')} style={{
+              padding: '8px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: tipMode === 'custom' ? 'var(--accent)' : 'var(--surface-hi)',
+              color: tipMode === 'custom' ? '#111' : 'var(--text-muted)',
+              transition: 'all .15s',
+            }}>Custom</button>
+          </div>
+          {tipMode === 'pct'
+            ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>= {fmt(subtotal * tipPct / 100)}</p>
+            : (
+              <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-hi)', borderRadius: 12, padding: '0 16px', border: '1.5px solid var(--border)' }}>
+                <span style={{ color: 'var(--text-muted)', marginRight: 8, fontSize: 15 }}>$</span>
+                <input
+                  type="number" step="0.01" min="0" placeholder="0.00" value={customTipVal}
+                  onChange={e => setCustomTipVal(e.target.value)}
+                  style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text)', fontSize: 16, fontWeight: 600, padding: '11px 0', outline: 'none' }}
+                  autoFocus
+                />
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      {/* Total pill */}
+      <div style={{ background: 'var(--accent)', borderRadius: 18, padding: '18px 24px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 700, fontSize: 16, color: '#111' }}>Total</span>
+        <span style={{ fontWeight: 800, fontSize: 28, color: '#111', letterSpacing: -1 }}>{fmt(total)}</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={onBack} style={{ padding: '14px 24px', borderRadius: 14, border: 'none', background: 'var(--surface-hi)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>← Back</button>
+        <button onClick={handleNext} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: '#111', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>See Breakdown →</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 4: Breakdown ─────────────────────────────────────────────────────
+function calcBreakdown(items, people, assignments, tax, tip) {
+  const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
+  return people.map((person, i) => {
+    const myItems = items.flatMap(it => {
+      const map = assignments[it.id] || {};
+      const myShares = map[person.id] || 0;
+      if (myShares <= 0) return [];
+      const total = Object.values(map).reduce((s, v) => s + v, 0);
+      const itemTotal = it.price * it.quantity;
+      return [{ name: it.name, amount: itemTotal * myShares / total, myShares, totalShares: total }];
+    });
+    const sub = myItems.reduce((s, x) => s + x.amount, 0);
+    const ratio = subtotal > 0 ? sub / subtotal : 0;
+    return { person, colorIndex: i, items: myItems, subtotal: sub, tax: tax * ratio, tip: tip * ratio, total: sub + tax * ratio + tip * ratio };
+  });
+}
+
+function CardBreakdown({ data }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
+      {data.map(d => (
+        <div key={d.person.id} style={{ background: 'var(--surface)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)' }}>
+          <div style={{ padding: '16px 20px', background: 'var(--surface-hi)', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)' }}>
+            <Avatar person={d.person} index={d.colorIndex} size={42} filled />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>{d.person.name}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>{d.items.length} item{d.items.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div style={{ fontWeight: 800, fontSize: 22, color: 'var(--accent)' }}>{fmt(d.total)}</div>
+          </div>
+          <div style={{ padding: '14px 20px' }}>
+            {d.items.map((it, j) => (
+              <div key={j} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
+                <span style={{ color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
+                  {it.name}
+                  {it.totalShares > 1 && <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 4 }}>({it.myShares}/{it.totalShares})</span>}
+                </span>
+                <span style={{ fontWeight: 600, flexShrink: 0 }}>{fmt(it.amount)}</span>
+              </div>
+            ))}
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {[['Subtotal', d.subtotal], ['Tax', d.tax], ['Tip', d.tip]].filter(([, v]) => v > 0.005).map(([lbl, v]) => (
+                <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-dim)' }}>
+                  <span>{lbl}</span><span>{fmt(v)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReceiptBreakdown({ data, tax, tip }) {
+  const subtotal = data.reduce((s, d) => s + d.subtotal, 0);
+  const zigzag = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 8 L8 0 L16 8' fill='%23232E27' stroke='none'/%3E%3C/svg%3E")`;
+  return (
+    <div style={{ maxWidth: 380, margin: '0 auto' }}>
+      <div style={{ height: 16, backgroundImage: zigzag, backgroundRepeat: 'repeat-x', backgroundSize: '16px 8px', backgroundPosition: 'bottom' }} />
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderTop: 'none', borderBottom: 'none', padding: '28px 32px', fontFamily: "'Courier New', monospace" }}>
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: 3, textTransform: 'uppercase' }}>SPLIT BILL</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>itemized receipt</div>
+        </div>
+        <div style={{ borderBottom: '1px dashed var(--border)', marginBottom: 18 }} />
+        {data.map((d, i) => (
+          <div key={d.person.id} style={{ marginBottom: 18 }}>
+            <div style={{ fontWeight: 700, fontSize: 12, color: AVATAR_COLORS[d.colorIndex % AVATAR_COLORS.length], textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 9 }}>{d.person.name}</div>
+            {d.items.map((it, j) => (
+              <div key={j} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+                <span style={{ color: 'var(--text-muted)', flex: 1, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {it.name}
+                  {it.totalShares > 1 && ` (${it.myShares}/${it.totalShares})`}
+                </span>
+                <span>{fmt(it.amount)}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted var(--border)', paddingTop: 5, marginTop: 5, fontWeight: 700, fontSize: 13 }}>
+              <span>TOTAL</span>
+              <span style={{ color: 'var(--accent)' }}>{fmt(d.total)}</span>
+            </div>
+            {i < data.length - 1 && <div style={{ borderBottom: '1px dashed var(--border)', marginTop: 14 }} />}
+          </div>
+        ))}
+        <div style={{ borderTop: '2px solid var(--border)', marginTop: 18, paddingTop: 16 }}>
+          {[['SUBTOTAL', subtotal], ['TAX', tax], ['TIP', tip]].map(([l, v]) => (
+            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
+              <span>{l}</span><span>{fmt(v)}</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14, marginTop: 10, borderTop: '1px dashed var(--border)', paddingTop: 10 }}>
+            <span>GRAND TOTAL</span>
+            <span style={{ color: 'var(--accent)' }}>{fmt(subtotal + tax + tip)}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ height: 16, backgroundImage: zigzag, backgroundRepeat: 'repeat-x', backgroundSize: '16px 8px', transform: 'scaleY(-1)' }} />
+    </div>
+  );
+}
+
+function BreakdownStep({ items, people, assignments, tax, tip, defaultStyle, onReset, onBack }) {
+  const [style, setStyle] = useState(defaultStyle);
+  useEffect(() => { setStyle(defaultStyle); }, [defaultStyle]);
+  const data = calcBreakdown(items, people, assignments, tax, tip);
+
+  return (
+    <div className="fade-up">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>All settled!</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Here's what everyone owes.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 6, background: 'var(--surface)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
+          {['cards', 'receipt'].map(s => (
+            <button key={s} onClick={() => setStyle(s)} style={{
+              padding: '7px 16px', borderRadius: 9, border: 'none', fontSize: 12, fontWeight: 700,
+              background: style === s ? 'var(--accent)' : 'transparent',
+              color: style === s ? '#111' : 'var(--text-muted)',
+              cursor: 'pointer', textTransform: 'capitalize', transition: 'all .15s',
+            }}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      {style === 'cards' ? <CardBreakdown data={data} /> : <ReceiptBreakdown data={data} tax={tax} tip={tip} />}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 32 }}>
+        <button onClick={onBack} style={{ padding: '14px 24px', borderRadius: 14, border: 'none', background: 'var(--surface-hi)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>← Back</button>
+        <button onClick={onReset} style={{ flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Start New Bill</button>
+      </div>
+    </div>
+  );
+}
+
+// ── App shell ─────────────────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [step, setStep]               = useState(0);
+  const [people, setPeople]           = useState([]);
+  const [items, setItems]             = useState([]);
+  const [assignments, setAssignments] = useState({});
+  const [tax, setTax]                 = useState(MOCK_TAX);
+  const [tip, setTip]                 = useState(0);
+
+  // Apply accent color CSS vars
+  useEffect(() => {
+    const a = ACCENTS[tweaks.accentColor] || ACCENTS.mint;
+    document.documentElement.style.setProperty('--accent', a.color);
+    document.documentElement.style.setProperty('--accent-dim', a.dim);
+    const t = TEXT_CONTRAST[tweaks.textContrast] || TEXT_CONTRAST.balanced;
+    document.documentElement.style.setProperty('--text-muted', t.muted);
+    document.documentElement.style.setProperty('--text-dim', t.dim);
+  }, [tweaks.accentColor, tweaks.textContrast]);
+
+  const reset = () => { setStep(0); setPeople([]); setItems([]); setAssignments({}); setTax(MOCK_TAX); setTip(0); };
+  const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
+
+  return (
+    <div style={{ minHeight: '100vh', padding: '36px 20px 80px' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        {/* Wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 44 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontWeight: 800, fontSize: 17, color: '#111' }}>$</span>
+          </div>
+          <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: -.3 }}>splitbill</span>
+        </div>
+
+        {step > 0 && <StepBar step={step - 1} />}
+
+        {step === 0 && <UploadStep onComplete={() => { setItems(MOCK_ITEMS); setStep(1); }} />}
+        {step === 1 && <AssignStep people={people} setPeople={setPeople} items={items} assignments={assignments} setAssignments={setAssignments} assignStyle={tweaks.assignStyle} inlineMode={tweaks.inlineMode} onNext={() => setStep(2)} />}
+        {step === 2 && <TaxTipStep subtotal={subtotal} tax={tax} setTax={setTax} setTip={setTip} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+        {step === 3 && <BreakdownStep items={items} people={people} assignments={assignments} tax={tax} tip={tip} defaultStyle={tweaks.breakdownStyle} onReset={reset} onBack={() => setStep(2)} />}
+      </div>
+
+      <TweaksPanel>
+        <TweakSection label="Assignment style" />
+        <TweakRadio label="Method" value={tweaks.assignStyle} options={['inline', 'modal']} onChange={v => setTweak('assignStyle', v)} />
+        {tweaks.assignStyle === 'inline' && (
+          <TweakRadio label="Inline mode" value={tweaks.inlineMode} options={['cycle', 'stepper']} onChange={v => setTweak('inlineMode', v)} />
+        )}
+        <TweakSection label="Breakdown view" />
+        <TweakRadio label="Layout" value={tweaks.breakdownStyle} options={['cards', 'receipt']} onChange={v => setTweak('breakdownStyle', v)} />
+        <TweakSection label="Secondary text" />
+        <TweakRadio label="Brightness" value={tweaks.textContrast} options={['subtle', 'balanced', 'bright']} onChange={v => setTweak('textContrast', v)} />
+        <TweakSection label="Accent color" />
+        <TweakRadio label="Color" value={tweaks.accentColor} options={['mint', 'gold', 'coral', 'cyan']} onChange={v => setTweak('accentColor', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

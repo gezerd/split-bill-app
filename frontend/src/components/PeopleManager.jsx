@@ -11,6 +11,17 @@ export const AVATAR_COLORS = [
   'bg-[#38BDF8]',
 ];
 
+export const AVATAR_COLORS_OUTLINE = [
+  'border-[#F87171] text-[#F87171]',
+  'border-[#60A5FA] text-[#60A5FA]',
+  'border-[#A78BFA] text-[#A78BFA]',
+  'border-[#4ADE80] text-[#4ADE80]',
+  'border-[#FBBF24] text-[#FBBF24]',
+  'border-[#F472B6] text-[#F472B6]',
+  'border-[#FB923C] text-[#FB923C]',
+  'border-[#38BDF8] text-[#38BDF8]',
+];
+
 export function getInitials(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -55,7 +66,7 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
             value={newPersonName}
             onChange={(e) => setNewPersonName(e.target.value)}
             placeholder="Enter a name…"
-            className="flex-1 px-4 py-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 bg-surface-2 text-gray-100 focus:ring-accent"
+            className="flex-1 px-4 py-2 border-[1.5px] border-border rounded-lg focus:outline-none focus:ring-2 bg-surface text-gray-100 focus:ring-accent"
             disabled={adding}
           />
           <button

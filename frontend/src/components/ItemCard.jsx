@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ItemForm from './ItemForm';
-import { getInitials, AVATAR_COLORS } from './PeopleManager';
+import { getInitials, AVATAR_COLORS, AVATAR_COLORS_OUTLINE } from './PeopleManager';
 
 export default function ItemCard({
   item,
@@ -74,8 +74,8 @@ export default function ItemCard({
 
   return (
     <div
-      className={`bg-surface rounded-lg p-4 border-l-4 transition-all ${
-        isFullyAssigned ? 'border-accent' : 'border-transparent'
+      className={`bg-surface rounded-lg p-4 border-[1.5px] transition-colors duration-200 ${
+        isFullyAssigned ? 'border-accent' : 'border-border'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
@@ -143,14 +143,16 @@ export default function ItemCard({
                 <button
                   key={person.id}
                   onClick={() => handlePersonClick(person)}
-                  className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold text-white transition-opacity ${
-                    AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]
-                  } ${assigned ? 'opacity-100' : 'opacity-40'}`}
+                  className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
+                    assigned
+                      ? `${AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]} text-black border-transparent`
+                      : `bg-transparent border-[1.5px] ${AVATAR_COLORS_OUTLINE[colorIndex % AVATAR_COLORS_OUTLINE.length]}`
+                  }`}
                   title={person.name}
                 >
                   {getInitials(person.name)}
                   {shares > 1 && (
-                    <span className="absolute -bottom-1 -right-1 bg-accent text-black text-[9px] font-bold px-1 rounded-full leading-4">
+                    <span className="absolute -bottom-1 -right-1 bg-accent text-black text-[9px] font-extrabold px-1 rounded-full leading-4">
                       ×{shares}
                     </span>
                   )}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill — Screen Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #152D42; color: #EEF4FA; padding: 48px 24px 80px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { margin-bottom: 40px; }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -.5px; display: flex; align-items: center; gap: 12px; }
+  .mark { width: 36px; height: 36px; border-radius: 9px; background: #00FDDC; color: #111; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+  header p { color: #A0C4DC; font-size: 15px; margin-top: 10px; max-width: 620px; line-height: 1.5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; }
+  .card { background: #1C3A54; border: 1px solid #2E5674; border-radius: 18px; overflow: hidden; transition: border-color .15s, transform .15s; }
+  .card:hover { border-color: #00FDDC; transform: translateY(-2px); }
+  a.card { text-decoration: none; color: inherit; display: block; }
+  .frame { height: 280px; background: #152D42; overflow: hidden; border-bottom: 1px solid #2E5674; position: relative; }
+  .frame iframe { width: 200%; height: 200%; border: 0; transform: scale(.5); transform-origin: top left; pointer-events: none; background: #152D42; }
+  .meta { padding: 16px 20px; display: flex; align-items: baseline; gap: 10px; }
+  .num { font-size: 12px; font-weight: 800; color: #00FDDC; font-variant-numeric: tabular-nums; }
+  .name { font-size: 15px; font-weight: 700; }
+  .desc { font-size: 12.5px; color: #A0C4DC; padding: 0 20px 18px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="mark">$</span> Split Bill — Screen Reference</h1>
+    <p>Static, full-height snapshots of each screen, captured from the live prototype. Open any one directly to inspect exact spacing, color, and type in your browser's dev tools. Scripts are stripped, so each stays frozen on its state.</p>
+  </header>
+  <div class="grid">
+    <a class="card" href="01-upload.html">
+      <div class="frame"><iframe src="01-upload.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="num">01</span><span class="name">Upload</span></div>
+      <div class="desc">Dropzone (idle state) — receipt scan entry point.</div>
+    </a>
+    <a class="card" href="02-assign.html">
+      <div class="frame"><iframe src="02-assign.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="num">02</span><span class="name">Assign</span></div>
+      <div class="desc">People added; all five items assigned via inline (cycle) avatars.</div>
+    </a>
+    <a class="card" href="03-taxtip.html">
+      <div class="frame"><iframe src="03-taxtip.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="num">03</span><span class="name">Tax &amp; Tip</span></div>
+      <div class="desc">Editable tax, 20% tip preset selected, live Total pill.</div>
+    </a>
+    <a class="card" href="04-breakdown-cards.html">
+      <div class="frame"><iframe src="04-breakdown-cards.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="num">04</span><span class="name">Breakdown — Cards</span></div>
+      <div class="desc">Per-person settlement cards (default breakdown layout).</div>
+    </a>
+    <a class="card" href="05-breakdown-receipt.html">
+      <div class="frame"><iframe src="05-breakdown-receipt.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="num">05</span><span class="name">Breakdown — Receipt</span></div>
+      <div class="desc">Alternate paper-receipt layout with torn edges.</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
