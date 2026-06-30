@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill · 4 Breakdown (receipt)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="container">
+
+    <div class="wordmark">
+      <div class="wordmark__badge">$</div>
+      <span class="wordmark__name">splitbill</span>
+    </div>
+
+    <!-- Step bar: all done · Done active -->
+    <div class="stepbar">
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Upload</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Assign</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Tax &amp; Tip</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--active">4</div><span class="step__label step__label--active">Done</span></div>
+    </div>
+
+    <div class="fade-up">
+      <div class="breakdown-head">
+        <div>
+          <h2 class="h2">All settled!</h2>
+          <p class="subhead" style="margin-bottom:0;">Here's what everyone owes.</p>
+        </div>
+        <div class="toggle">
+          <button class="toggle__btn">cards</button>
+          <button class="toggle__btn toggle__btn--active">receipt</button>
+        </div>
+      </div>
+
+      <div class="receipt">
+        <div class="receipt__edge receipt__edge--top"></div>
+        <div class="receipt__paper">
+
+          <div class="receipt__title">
+            <div class="receipt__brand">SPLIT BILL</div>
+            <div class="receipt__sub">itemized receipt</div>
+          </div>
+          <div class="dash" style="margin-bottom:18px;"></div>
+
+          <div class="receipt__person">
+            <div class="receipt__pname ac-red">Alex</div>
+            <div class="rline"><span class="rline__name">Double Double</span><span>$5.45</span></div>
+            <div class="rline"><span class="rline__name">Strawberry Shake</span><span>$3.25</span></div>
+            <div class="rtotal"><span>TOTAL</span><span class="rtotal__amt">$11.09</span></div>
+            <div class="dash" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="receipt__person">
+            <div class="receipt__pname ac-blue">Sam</div>
+            <div class="rline"><span class="rline__name">Cheeseburger</span><span>$7.50</span></div>
+            <div class="rline"><span class="rline__name">Large Soda</span><span>$6.00</span></div>
+            <div class="rtotal"><span>TOTAL</span><span class="rtotal__amt">$17.20</span></div>
+            <div class="dash" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="receipt__person">
+            <div class="receipt__pname ac-purple">Jordan</div>
+            <div class="rline"><span class="rline__name">Animal Style Fries</span><span>$2.95</span></div>
+            <div class="rtotal"><span>TOTAL</span><span class="rtotal__amt">$3.76</span></div>
+          </div>
+
+          <div class="receipt__grand">
+            <div class="gline"><span>SUBTOTAL</span><span>$25.15</span></div>
+            <div class="gline"><span>TAX</span><span>$1.87</span></div>
+            <div class="gline"><span>TIP</span><span>$5.03</span></div>
+            <div class="gtotal"><span>GRAND TOTAL</span><span class="gtotal__amt">$32.05</span></div>
+          </div>
+
+        </div>
+        <div class="receipt__edge receipt__edge--bottom"></div>
+      </div>
+
+      <div class="btn-row mt-32">
+        <button class="btn btn--secondary">← Back</button>
+        <button class="btn btn--ghost btn--block">Start New Bill</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

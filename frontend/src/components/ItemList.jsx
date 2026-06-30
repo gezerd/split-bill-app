@@ -20,17 +20,8 @@ export default function ItemList({
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-        >
-          {showAddForm ? 'Cancel' : '+ Add Item'}
-        </button>
-      </div>
-
       {showAddForm && (
-        <div className="mb-4">
+        <div style={{ marginBottom: 12 }}>
           <ItemForm onSubmit={handleAddItem} onCancel={() => setShowAddForm(false)} />
         </div>
       )}
@@ -40,14 +31,17 @@ export default function ItemList({
           <p>No items found. Upload a receipt or add items manually.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: 12, marginBottom: 32,
+        }}>
           {items.map((item) => (
             <ItemCard
               key={item.id}
               item={item}
               people={people}
               assignments={assignments}
-
               onUpdateItem={onUpdateItem}
               onDeleteItem={onDeleteItem}
               onAssignmentSave={onAssignmentSave}
@@ -55,6 +49,19 @@ export default function ItemList({
           ))}
         </div>
       )}
+
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          style={{
+            fontSize: 13, fontWeight: 600, color: '#7AAAB8',
+            padding: '6px 12px', borderRadius: 9,
+            border: '1px solid #2E5674', background: 'none',
+          }}
+        >
+          {showAddForm ? 'Cancel' : '+ Add Item'}
+        </button>
+      </div>
     </div>
   );
 }

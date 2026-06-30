@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill · 1 Upload (scanning)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="container">
+
+    <div class="wordmark">
+      <div class="wordmark__badge">$</div>
+      <span class="wordmark__name">splitbill</span>
+    </div>
+
+    <div class="fade-up" style="max-width: 540px; margin: 0 auto; padding-top: 16px;">
+      <h1 class="h1">Split the bill.</h1>
+      <p class="lede">Upload a receipt and AI extracts every item automatically.</p>
+
+      <!-- State: scanning (after a file is dropped, ~2s) -->
+      <div class="dropzone">
+        <div class="upload-state upload-state--scanning">
+          <div class="spinner"></div>
+          <p class="spinner-text">Scanning with AI…</p>
+        </div>
+      </div>
+
+      <p class="note">Demo: click to simulate a receipt upload</p>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

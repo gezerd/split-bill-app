@@ -74,7 +74,7 @@ export default function ItemCard({
 
   return (
     <div
-      className={`bg-surface rounded-lg p-4 border-[1.5px] transition-colors duration-200 ${
+      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-colors duration-200 ${
         isFullyAssigned ? 'border-accent' : 'border-border'
       }`}
     >
@@ -84,7 +84,7 @@ export default function ItemCard({
           {item.customModifiers && item.customModifiers.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {item.customModifiers.map((mod, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-surface-2 text-gray-400 rounded-full">
+                <span key={i} className="text-xs px-2 py-0.5 bg-surface-2 text-gray-400 rounded-[6px]">
                   {mod}
                 </span>
               ))}
@@ -131,7 +131,12 @@ export default function ItemCard({
         <div className="mt-3 text-xs text-gray-400">Add people to assign</div>
       ) : (
         <div className="mt-3">
-          <span className="text-xs text-gray-400">Tap to add a share:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-400">Tap to add a share:</span>
+            {totalShares > 0 && (
+              <span className="text-xs text-gray-400">{totalShares} share{totalShares !== 1 ? 's' : ''}</span>
+            )}
+          </div>
           <div className="mt-1.5 flex flex-wrap gap-2">
             {people.map((person) => {
               const colorIndex = people.findIndex((p) => p.id === person.id);
@@ -152,7 +157,10 @@ export default function ItemCard({
                 >
                   {getInitials(person.name)}
                   {shares > 1 && (
-                    <span className="absolute -bottom-1 -right-1 bg-accent text-black text-[9px] font-extrabold px-1 rounded-full leading-4">
+                    <span
+                      className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center"
+                      style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
+                    >
                       ×{shares}
                     </span>
                   )}

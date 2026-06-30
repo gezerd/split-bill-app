@@ -81,8 +81,9 @@ An `Assignment` links a `Person` to an `Item` with a `share_count`. The item pri
 2. **Navigate** to `http://localhost:5173` and reach the affected screen/step.
 3. **Screenshot** the current UI state.
 4. **Read the reference** — the pixel-perfect screenshot and component source for that screen (see map below).
-5. **Compare** — check colors, spacing, typography, radius, layout, and interactive states against the reference.
+5. **Compare** — check colors, spacing, typography, radius, layout, and interactive states against the reference. **Dynamic data (item names, prices, people names, dollar amounts) does not need to match the design exactly — only the structure, formatting, and visual design do.**
 6. **Fix and repeat** — make the necessary code changes and loop back to step 3 until the live UI matches exactly.
+7. **Tear down** — stop the dev server once verification is complete.
 
 If no reference exists for the changed area, note that and skip.
 
@@ -90,37 +91,39 @@ If no reference exists for the changed area, note that and skip.
 
 All design files live in `designs/`. The handoff is **high-fidelity** — final colors, typography, spacing, radii, interactions, and copy are all settled. Recreate pixel-for-pixel.
 
-**Screen reference** (`designs/screens/`): Static full-height HTML snapshots — open in a browser and use dev tools to inspect exact spacing, color, and type off any element. All render with the **cyan (default) accent**.
+**Screen reference** (`designs/`): Standalone HTML files sharing one stylesheet (`designs/styles.css`) — open any in a browser and use dev tools to inspect exact spacing, color, and type. All render with the **cyan (default) accent**. Start at `designs/index.html`.
 
 | File | Screen |
 |------|--------|
-| `screens/index.html` | Contact sheet — thumbnails linking all screens |
-| `screens/01-upload.html` | Step 1 — upload dropzone (idle) |
-| `screens/02-assign-complete.html` | Step 2 — every item fully assigned → "All assigned ✓" |
-| `screens/02-assign-partial.html` | Step 2 — some quantities unfilled → "2 unassigned" |
-| `screens/03-taxtip.html` | Step 3 — tax field, 20% tip, Total pill |
-| `screens/04-breakdown-cards.html` | Step 4 — per-person cards layout |
-| `screens/05-breakdown-receipt.html` | Step 4 — paper-receipt layout |
+| `index.html` | Contact sheet — thumbnails linking all screens |
+| `01-upload.html` | Step 1 — upload dropzone (idle) |
+| `01-upload-scanning.html` | Step 1 — scanning state (spinner + "Scanning with AI…") |
+| `01-upload-processed.html` | Step 1 — processed state (check + item count) |
+| `02-assign-complete.html` | Step 2 — every item fully assigned → "All assigned ✓" |
+| `02-assign-partial.html` | Step 2 — some quantities unfilled → "2 unassigned" |
+| `03-taxtip.html` | Step 3 — tax field, "Add tip" selected with presets visible, Total pill |
+| `03-taxtip-notip.html` | Step 3 — "No tip" selected, presets hidden, lower Total pill |
+| `04-breakdown-cards.html` | Step 4 — per-person cards layout |
+| `04-breakdown-receipt.html` | Step 4 — paper-receipt layout |
 
-**Component source** (`designs/src/components/`): `SplitBillApp.tsx`, `ItemCard.tsx`, `AssignModal.tsx`, `StepBar.tsx`, `Stepper.tsx`, `Avatar.tsx`, `steps/UploadStep.tsx`, `steps/AssignStep.tsx`, `steps/TaxTipStep.tsx`, `steps/BreakdownStep.tsx`, `breakdown/CardBreakdown.tsx`, `breakdown/ReceiptBreakdown.tsx`.
-
-**Full interactive prototype**: `designs/reference/Split Bill App.html` — open in a browser for live reference.
+**Shared stylesheet**: `designs/styles.css` — CSS variables (design tokens), all component classes, no build step required.
 
 ### Design tokens (source of truth)
 
-Colors are CSS-variable-backed. Use the semantic Tailwind names from `designs/tailwind.config.js`:
+CSS variables defined in `:root` in `designs/styles.css`:
 
-| CSS var | Value | Tailwind class | Role |
-|---------|-------|----------------|------|
-| `--bg` | `#152D42` | `bg-canvas` | Page background (deep navy) |
-| `--surface` | `#1C3A54` | `bg-surface` | Card / panel |
-| `--surface-hi` | `#254862` | `bg-surface-hi` | Elevated / inset surface |
-| `--border` | `#2E5674` | `border-line` | Borders, dividers |
-| `--accent` | `#00FDDC` (cyan) | `bg-accent` / `text-accent` | Primary brand — CTAs, totals, active |
-| `--accent-dim` | `oklch(92% 0.14 185 / .15)` | `bg-accent-dim` | Accent tint (selected backgrounds) |
-| `--text` | `#EEF4FA` | `text-ink` | Primary text |
-| `--text-muted` | `#A0C4DC` | `text-ink-muted` | Secondary text |
-| `--text-dim` | `#7AAAB8` | `text-ink-dim` | Tertiary text |
+| CSS var | Value | Role |
+|---------|-------|------|
+| `--bg` | `#152D42` | Page background (deep navy) |
+| `--surface` | `#1C3A54` | Card / panel |
+| `--surface-hi` | `#254862` | Elevated / inset surface |
+| `--border` | `#2E5674` | Borders, dividers |
+| `--accent` | `#00FDDC` (cyan) | Primary brand — CTAs, totals, active |
+| `--accent-dim` | `oklch(92% 0.14 185 / .15)` | Accent tint (selected backgrounds) |
+| `--on-accent` | `#111111` | Text/icons on accent fills |
+| `--text` | `#EEF4FA` | Primary text |
+| `--text-muted` | `#A0C4DC` | Secondary text |
+| `--text-dim` | `#7AAAB8` | Tertiary text |
 
 - On-accent foreground: `text-[#111]` (near-black on any accent fill)
 - Avatar colors (cycled by person index): `#F87171` `#60A5FA` `#A78BFA` `#4ADE80` `#FBBF24` `#F472B6` `#FB923C` `#38BDF8`
@@ -157,7 +160,7 @@ Colors are CSS-variable-backed. Use the semantic Tailwind names from `designs/ta
 
 **Step 2 — Assign:** Name input + "Add" row → wrap of removable people chips → status pill (unassigned/all-assigned) → item card grid → right-aligned Next button. Next disabled until ≥1 person and all items assigned. ItemCard border turns accent when assigned.
 
-**Step 3 — Tax & Tip:** Max-500px panel. Subtotal row → editable Tax `$` field → Tip preset buttons (15/18/20/22/25% + Custom) → full-width **accent Total pill** (28px figure). Back + "See Breakdown".
+**Step 3 — Tax & Tip:** Max-500px panel. Subtotal row → editable Tax `$` field → **No tip / Add tip** segmented toggle → when "Add tip": preset buttons (15/18/20/22/25% + Custom) + computed tip amount; when "No tip": presets hidden, tip zeroed → full-width **accent Total pill** (28px figure). Back + "See Breakdown".
 
 **Step 4 — Breakdown:** "All settled!" heading + Cards/Receipt segmented toggle. Cards: grid of per-person cards with avatar, item count, accent total, itemized lines with `(myShares/totalShares)`, Subtotal/Tax/Tip footer. Receipt: 380px monospace with torn SVG edges, dashed dividers, per-person colored names.
 

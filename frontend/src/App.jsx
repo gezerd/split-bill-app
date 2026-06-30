@@ -33,8 +33,7 @@ export default function App() {
   const [step, setStep] = useState(1);
 
   const allAssigned =
-    items &&
-    items.length > 0 &&
+    items != null &&
     items.every((item) => {
       const itemAssignments = assignments ? assignments.filter((a) => a.item_id === item.id) : [];
       const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
@@ -47,9 +46,10 @@ export default function App() {
       : null;
 
   const handleUpload = async (file) => {
-    await handleUploadReceipt(file);
-    setStep(2);
+    return await handleUploadReceipt(file);
   };
+
+  const handleUploadDone = () => setStep(2);
 
   const handleAssignmentSave = async (itemId, selectedPeople) => {
     const existingAssignments = assignments.filter((a) => a.item_id === itemId);
@@ -62,53 +62,43 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-background font-bold text-lg leading-none">$</span>
+    <div className="min-h-screen bg-background" style={{ padding: '36px 20px 80px' }}>
+      <div className="mx-auto" style={{ maxWidth: 760 }}>
+
+        {/* Wordmark */}
+        <div className="flex items-center gap-2.5 mb-11">
+          <div className="flex items-center justify-center bg-accent" style={{ width: 34, height: 34, borderRadius: 9 }}>
+            <span className="font-extrabold leading-none" style={{ fontSize: 17, color: '#111' }}>$</span>
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">splitbill</span>
+          <span className="font-extrabold" style={{ fontSize: 17, letterSpacing: '-0.3px' }}>splitbill</span>
         </div>
+
+        {/* Step Indicator */}
         {billId && (
-          <span className="text-xs text-gray-400 font-medium tracking-widest uppercase">
-            Step {step} of 4
-          </span>
-        )}
-      </header>
-
-      {/* Step Indicator */}
-      {billId && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          <StepIndicator currentStep={step} />
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-            <p className="text-red-400">{error}</p>
+          <div className="mb-10">
+            <StepIndicator currentStep={step} />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Step Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        {/* Error */}
+        {error && (
+          <div className="mb-4">
+            <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
+              <p className="text-red-400">{error}</p>
+            </div>
+          </div>
+        )}
 
         {/* Step 1: Upload */}
         {step === 1 && (
-          <ReceiptUpload onUpload={handleUpload} />
+          <ReceiptUpload onUpload={handleUpload} onDone={handleUploadDone} />
         )}
 
         {/* Step 2: Assign */}
         {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Who's splitting?</h1>
-              <p className="text-gray-400 mt-1">Add everyone, then tap each item to assign it.</p>
-            </div>
+          <div className="fade-up">
+            <h2 className="font-extrabold mb-1" style={{ fontSize: 26 }}>Who's splitting?</h2>
+            <p className="text-gray-400 mb-7" style={{ fontSize: 14 }}>Add everyone, then tap each item to assign it.</p>
 
             <PeopleManager
               people={people}
@@ -117,12 +107,19 @@ export default function App() {
             />
 
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-                  Items from Receipt
+              <div className="flex items-center justify-between mb-3.5">
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#A0C4DC', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Items from receipt
                 </span>
-                {allAssigned && (
-                  <span className="text-xs font-semibold text-accent">All assigned ✓</span>
+                {items.length > 0 && (
+                  allAssigned
+                    ? <span className="text-accent bg-accent-dim font-semibold" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>All assigned ✓</span>
+                    : <span className="text-gray-400 bg-surface-2" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>
+                        {items.filter(item => {
+                          const shares = assignments.filter(a => a.item_id === item.id).reduce((s, a) => s + (a.share_count || 1), 0);
+                          return shares < (item.quantity || 1);
+                        }).length} unassigned
+                      </span>
                 )}
               </div>
 
@@ -140,7 +137,6 @@ export default function App() {
                 onAddItem={handleCreateItem}
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
-
                 onAssignmentSave={handleAssignmentSave}
               />
             </div>
@@ -148,10 +144,20 @@ export default function App() {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setStep(3)}
-                disabled={!allAssigned}
-                className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                disabled={!allAssigned || people.length === 0}
+                className={`font-bold transition-all ${
+                  allAssigned && people.length > 0
+                    ? 'bg-accent text-on-accent accent-hover'
+                    : 'bg-surface-2 text-gray-500 cursor-not-allowed'
+                }`}
+                style={{ padding: '14px 32px', borderRadius: 14, fontSize: 15 }}
               >
-                Next: Tax &amp; Tip →
+                {!allAssigned && people.length > 0
+                  ? `${items.filter(item => {
+                      const shares = assignments.filter(a => a.item_id === item.id).reduce((s, a) => s + (a.share_count || 1), 0);
+                      return shares < (item.quantity || 1);
+                    }).length} items remaining`
+                  : 'Next →'}
               </button>
             </div>
           </div>
@@ -179,10 +185,11 @@ export default function App() {
             onBack={() => setStep(3)}
           />
         )}
-      </main>
 
-      {/* Loading Overlay */}
-      {loading && (
+      </div>
+
+      {/* Loading Overlay — step 1 skipped; ReceiptUpload shows its own scanning state */}
+      {loading && step > 1 && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-40">
           <div className="bg-surface rounded-lg p-6 flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>

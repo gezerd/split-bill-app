@@ -1,60 +1,67 @@
 import { useState } from 'react';
 
-export default function ReceiptUpload({ onUpload }) {
+export default function ReceiptUpload({ onUpload, onDone }) {
   const [uploading, setUploading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
   const [dragActive, setDragActive] = useState(false);
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
-    if (file) {
-      await uploadFile(file);
-    }
+    if (file) await uploadFile(file);
   };
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
   };
 
   const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      await uploadFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) await uploadFile(e.dataTransfer.files[0]);
   };
 
   const uploadFile = async (file) => {
     setUploading(true);
     try {
-      await onUpload(file);
+      const data = await onUpload(file);
+      setUploading(false);
+      setItemCount(data?.items?.length ?? 0);
+      setDone(true);
+      setTimeout(() => onDone(), 700);
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload receipt. Please try again.');
-    } finally {
       setUploading(false);
     }
   };
 
+  const isActive = dragActive || done;
+  const dropzoneStyle = {
+    border: `2px dashed ${isActive || uploading ? '#00FDDC' : '#2E5674'}`,
+    background: dragActive ? '#00FDDC26' : '#1C3A54',
+    borderRadius: 24,
+    padding: '72px 40px',
+    textAlign: 'center',
+    cursor: uploading || done ? 'default' : 'pointer',
+    transition: '0.2s',
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto pt-8">
-      <h1 className="text-4xl font-bold text-gray-100 mb-3">Split the bill.</h1>
-      <p className="text-gray-400 mb-8">
+    <div className="fade-up mx-auto" style={{ maxWidth: 540, paddingTop: 16 }}>
+      <h1 className="font-extrabold" style={{ fontSize: 34, letterSpacing: '-0.5px', marginBottom: 8 }}>
+        Split the bill.
+      </h1>
+      <p className="text-gray-400" style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 40 }}>
         Upload a receipt and AI extracts every item automatically.
       </p>
 
       <div
-        className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-          dragActive
-            ? 'border-accent bg-accent-dim'
-            : 'border-border hover:border-gray-500'
-        }`}
+        style={dropzoneStyle}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -65,47 +72,57 @@ export default function ReceiptUpload({ onUpload }) {
           id="receipt-upload"
           accept="image/*"
           onChange={handleFileChange}
-          disabled={uploading}
+          disabled={uploading || done}
           className="hidden"
         />
 
-        <label
-          htmlFor="receipt-upload"
-          className="cursor-pointer flex flex-col items-center"
-        >
-          <svg
-            className="w-12 h-12 text-gray-400 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-
-          <p className="text-lg font-semibold text-gray-100 mb-1">
-            {uploading ? 'Uploading...' : 'Drop your receipt here'}
-          </p>
-          <p className="text-sm text-gray-400">
-            or click to browse · PNG, JPG, HEIC up to 10MB
-          </p>
-        </label>
-
-        {uploading && (
-          <div className="absolute inset-0 bg-surface bg-opacity-90 flex items-center justify-center rounded-xl">
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-              <p className="mt-4 text-sm text-gray-400">Processing receipt...</p>
-            </div>
+        {uploading ? (
+          <div className="flex flex-col items-center" style={{ gap: 18 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: '50%',
+              border: '3px solid #2E5674', borderTopColor: '#00FDDC',
+              animation: 'spin .7s linear infinite',
+            }} />
+            <p className="font-semibold text-gray-400">Scanning with AI…</p>
           </div>
+        ) : done ? (
+          <div className="flex flex-col items-center" style={{ gap: 14 }}>
+            <div
+              className="scale-in flex items-center justify-center font-extrabold"
+              style={{ width: 52, height: 52, borderRadius: '50%', background: '#00FDDC', color: '#111', fontSize: 22 }}
+            >
+              ✓
+            </div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#00FDDC' }}>
+              {itemCount} item{itemCount !== 1 ? 's' : ''} found!
+            </p>
+          </div>
+        ) : (
+          <label htmlFor="receipt-upload" className="cursor-pointer flex flex-col items-center">
+            <svg
+              width="52" height="52" viewBox="0 0 24 24" fill="none"
+              stroke="#A0C4DC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ marginBottom: 20 }}
+            >
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <p className="font-bold" style={{ fontSize: 18, marginBottom: 8 }}>
+              Drop your receipt here
+            </p>
+            <p className="text-gray-400" style={{ fontSize: 13 }}>
+              or click to browse · PNG, JPG, HEIC up to 10MB
+            </p>
+          </label>
         )}
       </div>
 
-      <p className="text-center text-xs text-gray-500 mt-4">Powered by Claude AI</p>
+      <p className="text-center text-gray-500" style={{ fontSize: 12, marginTop: 16 }}>
+        Powered by Claude AI
+      </p>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

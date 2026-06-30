@@ -22,12 +22,15 @@ export const AVATAR_COLORS_OUTLINE = [
   'border-[#38BDF8] text-[#38BDF8]',
 ];
 
+const AVATAR_PLAIN_COLORS = [
+  '#F87171','#60A5FA','#A78BFA','#4ADE80',
+  '#FBBF24','#F472B6','#FB923C','#38BDF8',
+];
+
 export function getInitials(name) {
   const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name[0].toUpperCase();
 }
 
 export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
@@ -37,7 +40,6 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newPersonName.trim()) return;
-
     setAdding(true);
     try {
       await onAddPerson(newPersonName.trim());
@@ -57,52 +59,76 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
     }
   };
 
+  const canAdd = !adding && !!newPersonName.trim();
+
   return (
     <div>
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newPersonName}
-            onChange={(e) => setNewPersonName(e.target.value)}
-            placeholder="Enter a name…"
-            className="flex-1 px-4 py-2 border-[1.5px] border-border rounded-lg focus:outline-none focus:ring-2 bg-surface text-gray-100 focus:ring-accent"
-            disabled={adding}
-          />
-          <button
-            type="submit"
-            disabled={adding || !newPersonName.trim()}
-            className="px-5 py-2 bg-accent text-background font-semibold rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {adding ? 'Adding...' : '+ Add'}
-          </button>
-        </div>
+      {/* Add row */}
+      <form onSubmit={handleSubmit} className="flex gap-2" style={{ marginBottom: 18 }}>
+        <input
+          type="text"
+          value={newPersonName}
+          onChange={(e) => setNewPersonName(e.target.value)}
+          placeholder="Enter a name…"
+          disabled={adding}
+          style={{
+            flex: 1, padding: '12px 16px', borderRadius: 13,
+            background: '#1C3A54', border: '1.5px solid #2E5674',
+            color: '#EEF4FA', fontSize: 14, outline: 'none',
+          }}
+          onFocus={e => e.target.style.borderColor = '#00FDDC'}
+          onBlur={e => e.target.style.borderColor = '#2E5674'}
+        />
+        <button
+          type="submit"
+          disabled={!canAdd}
+          className={canAdd ? 'accent-hover' : ''}
+          style={{
+            padding: '12px 20px', borderRadius: 13, fontSize: 15, fontWeight: 700,
+            background: canAdd ? '#00FDDC' : '#254862',
+            color: canAdd ? '#111' : '#7AAAB8',
+            cursor: canAdd ? 'pointer' : 'not-allowed',
+            transition: '0.15s',
+          }}
+        >
+          {adding ? 'Adding…' : '+ Add'}
+        </button>
       </form>
 
+      {/* People chips */}
       {people.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {people.map((person, index) => (
-            <div
-              key={person.id}
-              className="flex items-center gap-2 bg-surface rounded-full pl-1 pr-3 py-1"
-            >
+        <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 32 }}>
+          {people.map((person, index) => {
+            const color = AVATAR_PLAIN_COLORS[index % AVATAR_PLAIN_COLORS.length];
+            return (
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                  AVATAR_COLORS[index % AVATAR_COLORS.length]
-                }`}
+                key={person.id}
+                className="flex items-center"
+                style={{
+                  gap: 8, padding: '6px 10px 6px 6px',
+                  borderRadius: 100, background: '#1C3A54',
+                  border: '1.5px solid #2E5674',
+                }}
               >
-                {getInitials(person.name)}
+                <div
+                  className="flex items-center justify-center font-extrabold shrink-0"
+                  style={{
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: color, color: '#111', fontSize: 10,
+                  }}
+                >
+                  {getInitials(person.name)}
+                </div>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{person.name}</span>
+                <button
+                  onClick={() => handleDelete(person.id)}
+                  style={{ color: '#7AAAB8', fontSize: 17, lineHeight: 1, padding: '0 2px', marginLeft: 2 }}
+                >
+                  ×
+                </button>
               </div>
-              <span className="text-sm font-medium text-gray-200">{person.name}</span>
-              <button
-                onClick={() => handleDelete(person.id)}
-                className="text-gray-500 hover:text-gray-300 transition-colors ml-1 leading-none"
-                title="Remove person"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

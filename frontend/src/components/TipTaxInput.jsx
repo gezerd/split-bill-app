@@ -3,21 +3,18 @@ import { useState, useEffect } from 'react';
 const TIP_PRESETS = ['15', '18', '20', '22', '25'];
 
 function getInitialPreset(tip, subtotal) {
-  if (!tip) return 'none';
-  if (!subtotal) return null;
+  if (!tip || !subtotal) return null;
   const pct = ((tip / subtotal) * 100).toFixed(0);
   return TIP_PRESETS.includes(pct) ? pct : 'custom';
 }
 
 export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateTip, onBack, onNext }) {
   const [taxValue, setTaxValue] = useState(tax || 0);
+  const [tipMode, setTipMode] = useState(() => (tip > 0 ? 'add' : 'none'));
   const [selectedPreset, setSelectedPreset] = useState(() => getInitialPreset(tip, subtotal));
   const [customTip, setCustomTip] = useState(tip || '');
 
-  useEffect(() => {
-    setTaxValue(tax || 0);
-  }, [tax]);
-
+  useEffect(() => { setTaxValue(tax || 0); }, [tax]);
   useEffect(() => {
     setSelectedPreset(getInitialPreset(tip, subtotal));
     setCustomTip(tip || '');
@@ -25,138 +22,179 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
 
   const handleTaxBlur = () => onUpdateTax(parseFloat(taxValue) || 0);
 
+  const handleTipModeChange = (mode) => {
+    setTipMode(mode);
+    if (mode === 'none') {
+      setSelectedPreset(null);
+      onUpdateTip(0);
+    }
+  };
+
   const handlePresetClick = (preset) => {
     setSelectedPreset(preset);
-    if (preset === 'none') {
-      onUpdateTip(0);
-    } else if (preset !== 'custom') {
+    if (preset !== 'custom') {
       const amount = parseFloat(((subtotal * parseInt(preset)) / 100).toFixed(2));
       onUpdateTip(amount);
     }
   };
 
-  const handleCustomBlur = () => {
-    onUpdateTip(parseFloat(customTip) || 0);
-  };
+  const handleCustomBlur = () => onUpdateTip(parseFloat(customTip) || 0);
 
-  const computedTip = selectedPreset === 'none' ? 0
+  const computedTip = tipMode === 'none' ? 0
     : selectedPreset && selectedPreset !== 'custom'
       ? (subtotal * parseInt(selectedPreset)) / 100
       : parseFloat(customTip) || 0;
 
   const total = parseFloat(subtotal || 0) + parseFloat(taxValue || 0) + computedTip;
 
-  return (
-    <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-white mb-1">Tax &amp; tip</h2>
-      <p className="text-sm text-gray-400 mb-6">These are split proportionally based on what each person ordered.</p>
+  const fieldStyle = {
+    display: 'flex', alignItems: 'center',
+    background: '#254862', borderRadius: 12,
+    padding: '0 16px', border: '1.5px solid #2E5674',
+  };
+  const inputStyle = {
+    flex: 1, background: 'none', border: 'none',
+    color: '#EEF4FA', fontSize: 16, fontWeight: 600,
+    padding: '11px 0', outline: 'none',
+  };
 
-      <div className="bg-surface rounded-xl p-5 space-y-5">
+  return (
+    <div className="fade-up mx-auto" style={{ maxWidth: 500 }}>
+      <h2 className="font-extrabold" style={{ fontSize: 26, marginBottom: 4 }}>Tax &amp; tip</h2>
+      <p className="text-gray-400" style={{ fontSize: 14, marginBottom: 28 }}>
+        These are split proportionally based on what each person ordered.
+      </p>
+
+      {/* Panel */}
+      <div style={{
+        background: '#1C3A54', borderRadius: 22, padding: 24,
+        border: '1px solid #2E5674', marginBottom: 16,
+      }}>
         {/* Subtotal */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-400 uppercase tracking-wide">Subtotal</span>
-          <span className="text-gray-100 font-semibold">${parseFloat(subtotal || 0).toFixed(2)}</span>
+        <div className="flex justify-between items-center" style={{ paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #2E5674' }}>
+          <span style={{ color: '#A0C4DC', fontSize: 14 }}>Subtotal</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>${parseFloat(subtotal || 0).toFixed(2)}</span>
         </div>
 
-        <hr className="border-border" />
-
         {/* Tax */}
-        <div>
-          <span className="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Tax</span>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#A0C4DC', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Tax</div>
+          <div style={fieldStyle}>
+            <span style={{ color: '#A0C4DC', marginRight: 8, fontSize: 15 }}>$</span>
             <input
-              type="number"
-              step="0.01"
-              min="0"
+              type="number" step="0.01" min="0"
               value={taxValue}
               onChange={(e) => setTaxValue(e.target.value)}
               onBlur={handleTaxBlur}
-              className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-border rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
+              style={inputStyle}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1.5">Auto-extracted from receipt. Tap to edit.</p>
+          <p style={{ fontSize: 12, color: '#7AAAB8', marginTop: 5 }}>Auto-extracted from receipt, tap to edit</p>
         </div>
 
         {/* Tip */}
         <div>
-          <span className="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Tip</span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handlePresetClick('none')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                selectedPreset === 'none'
-                  ? 'bg-accent text-on-accent'
-                  : 'bg-surface-2 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              No tip
-            </button>
-            {TIP_PRESETS.map((pct) => (
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#A0C4DC', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Tip</div>
+
+          {/* No tip / Add tip toggle */}
+          <div className="flex" style={{ gap: 6, marginBottom: 12 }}>
+            {['none', 'add'].map((mode) => (
               <button
-                key={pct}
-                onClick={() => handlePresetClick(pct)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedPreset === pct
-                    ? 'bg-accent text-on-accent'
-                    : 'bg-surface-2 text-gray-400 hover:text-gray-200'
-                }`}
+                key={mode}
+                onClick={() => handleTipModeChange(mode)}
+                className={tipMode === mode ? 'accent-hover' : ''}
+                style={{
+                  flex: 1, padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  background: tipMode === mode ? '#00FDDC' : '#254862',
+                  color: tipMode === mode ? '#111' : '#A0C4DC',
+                  transition: '0.15s',
+                }}
               >
-                {pct}%
+                {mode === 'none' ? 'No tip' : 'Add tip'}
               </button>
             ))}
-            <button
-              onClick={() => handlePresetClick('custom')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                selectedPreset === 'custom'
-                  ? 'bg-accent text-on-accent'
-                  : 'bg-surface-2 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Custom
-            </button>
           </div>
 
-          {selectedPreset === 'custom' && (
-            <div className="relative mt-3">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={customTip}
-                onChange={(e) => setCustomTip(e.target.value)}
-                onBlur={handleCustomBlur}
-                placeholder="0.00"
-                className="w-full pl-7 pr-4 py-2.5 bg-surface-2 border border-border rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
-                autoFocus
-              />
-            </div>
-          )}
+          {/* Presets — only when adding tip */}
+          {tipMode === 'add' && (
+            <>
+              <div className="flex flex-wrap" style={{ gap: 6, marginBottom: 12 }}>
+                {TIP_PRESETS.map((pct) => (
+                  <button
+                    key={pct}
+                    onClick={() => handlePresetClick(pct)}
+                    style={{
+                      padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                      background: selectedPreset === pct ? '#00FDDC' : '#254862',
+                      color: selectedPreset === pct ? '#111' : '#A0C4DC',
+                      transition: '0.15s',
+                    }}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePresetClick('custom')}
+                  style={{
+                    padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                    background: selectedPreset === 'custom' ? '#00FDDC' : '#254862',
+                    color: selectedPreset === 'custom' ? '#111' : '#A0C4DC',
+                    transition: '0.15s',
+                  }}
+                >
+                  Custom
+                </button>
+              </div>
 
-          {selectedPreset && selectedPreset !== 'none' && (
-            <p className="text-sm text-gray-400 mt-2">= ${computedTip.toFixed(2)}</p>
+              {selectedPreset === 'custom' && (
+                <div style={{ ...fieldStyle, marginBottom: 8 }}>
+                  <span style={{ color: '#A0C4DC', marginRight: 8, fontSize: 15 }}>$</span>
+                  <input
+                    type="number" step="0.01" min="0"
+                    value={customTip}
+                    onChange={(e) => setCustomTip(e.target.value)}
+                    onBlur={handleCustomBlur}
+                    placeholder="0.00"
+                    autoFocus
+                    style={inputStyle}
+                  />
+                </div>
+              )}
+
+              {selectedPreset && (
+                <p style={{ fontSize: 13, color: '#A0C4DC' }}>= ${computedTip.toFixed(2)}</p>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Total bar */}
-      <div className="bg-accent rounded-xl px-5 py-4 flex items-center justify-between mt-4">
-        <span className="text-background font-bold text-lg">Total</span>
-        <span className="text-background font-extrabold text-3xl">${total.toFixed(2)}</span>
+      {/* Total pill */}
+      <div className="flex justify-between items-center" style={{
+        background: '#00FDDC', borderRadius: 18, padding: '18px 24px', marginBottom: 24,
+      }}>
+        <span style={{ fontWeight: 700, fontSize: 16, color: '#111' }}>Total</span>
+        <span style={{ fontWeight: 800, fontSize: 28, color: '#111', letterSpacing: -1 }}>${total.toFixed(2)}</span>
       </div>
 
-      {/* Footer */}
-      <div className="flex gap-3 mt-4">
+      {/* Buttons */}
+      <div className="flex" style={{ gap: 10 }}>
         <button
           onClick={onBack}
-          className="px-5 py-2.5 bg-surface text-gray-300 font-bold rounded-lg hover:bg-surface-2 transition-colors"
+          style={{
+            padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
+            background: '#254862', color: '#A0C4DC', transition: '0.2s',
+          }}
         >
           ← Back
         </button>
         <button
           onClick={onNext}
-          className="flex-1 px-5 py-2.5 bg-accent text-on-accent font-bold rounded-lg hover:bg-accent/90 transition-colors"
+          className="accent-hover"
+          style={{
+            flex: 1, padding: '14px 24px', borderRadius: 14, fontSize: 15, fontWeight: 700,
+            background: '#00FDDC', color: '#111', transition: '0.2s',
+          }}
         >
           See Breakdown →
         </button>

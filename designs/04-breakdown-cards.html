@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill · 4 Breakdown (cards)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="container">
+
+    <div class="wordmark">
+      <div class="wordmark__badge">$</div>
+      <span class="wordmark__name">splitbill</span>
+    </div>
+
+    <!-- Step bar: all done · Done active -->
+    <div class="stepbar">
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Upload</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Assign</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Tax &amp; Tip</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--active">4</div><span class="step__label step__label--active">Done</span></div>
+    </div>
+
+    <div class="fade-up">
+      <div class="breakdown-head">
+        <div>
+          <h2 class="h2">All settled!</h2>
+          <p class="subhead" style="margin-bottom:0;">Here's what everyone owes.</p>
+        </div>
+        <div class="toggle">
+          <button class="toggle__btn toggle__btn--active">cards</button>
+          <button class="toggle__btn">receipt</button>
+        </div>
+      </div>
+
+      <div class="person-grid">
+
+        <!-- Alex -->
+        <div class="person-card">
+          <div class="person-card__head">
+            <button class="avatar avatar--lg ac-red avatar--filled">A</button>
+            <div style="flex:1;">
+              <div class="person-card__name">Alex</div>
+              <div class="person-card__meta">2 items</div>
+            </div>
+            <div class="person-card__total">$11.09</div>
+          </div>
+          <div class="person-card__body">
+            <div class="line"><span class="line__name">Double Double</span><span class="line__amt">$5.45</span></div>
+            <div class="line"><span class="line__name">Strawberry Shake</span><span class="line__amt">$3.25</span></div>
+            <div class="person-card__totals">
+              <div class="subline"><span>Subtotal</span><span>$8.70</span></div>
+              <div class="subline"><span>Tax</span><span>$0.65</span></div>
+              <div class="subline"><span>Tip</span><span>$1.74</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sam -->
+        <div class="person-card">
+          <div class="person-card__head">
+            <button class="avatar avatar--lg ac-blue avatar--filled">S</button>
+            <div style="flex:1;">
+              <div class="person-card__name">Sam</div>
+              <div class="person-card__meta">2 items</div>
+            </div>
+            <div class="person-card__total">$17.20</div>
+          </div>
+          <div class="person-card__body">
+            <div class="line"><span class="line__name">Cheeseburger</span><span class="line__amt">$7.50</span></div>
+            <div class="line"><span class="line__name">Large Soda</span><span class="line__amt">$6.00</span></div>
+            <div class="person-card__totals">
+              <div class="subline"><span>Subtotal</span><span>$13.50</span></div>
+              <div class="subline"><span>Tax</span><span>$1.00</span></div>
+              <div class="subline"><span>Tip</span><span>$2.70</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jordan -->
+        <div class="person-card">
+          <div class="person-card__head">
+            <button class="avatar avatar--lg ac-purple avatar--filled">J</button>
+            <div style="flex:1;">
+              <div class="person-card__name">Jordan</div>
+              <div class="person-card__meta">1 item</div>
+            </div>
+            <div class="person-card__total">$3.76</div>
+          </div>
+          <div class="person-card__body">
+            <div class="line"><span class="line__name">Animal Style Fries</span><span class="line__amt">$2.95</span></div>
+            <div class="person-card__totals">
+              <div class="subline"><span>Subtotal</span><span>$2.95</span></div>
+              <div class="subline"><span>Tax</span><span>$0.22</span></div>
+              <div class="subline"><span>Tip</span><span>$0.59</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="btn-row mt-32">
+        <button class="btn btn--secondary">← Back</button>
+        <button class="btn btn--ghost btn--block">Start New Bill</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

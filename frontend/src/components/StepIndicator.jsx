@@ -12,24 +12,28 @@ export default function StepIndicator({ currentStep }) {
           <div key={stepNum} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  isCompleted || isActive
-                    ? 'bg-accent text-on-accent'
-                    : 'bg-surface-2 text-gray-400'
+                className={`flex items-center justify-center transition-all font-extrabold ${
+                  isCompleted || isActive ? 'bg-accent' : 'bg-surface-2'
                 }`}
+                style={{
+                  width: 34, height: 34, borderRadius: '50%',
+                  fontSize: 13,
+                  color: isCompleted || isActive ? '#111' : '#7AAAB8',
+                  boxShadow: isActive ? '0 0 0 5px #00FDDC26' : undefined,
+                  transition: '0.35s cubic-bezier(0.4,0,0.2,1)',
+                }}
               >
-                {isCompleted ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  stepNum
-                )}
+                {isCompleted ? '✓' : stepNum}
               </div>
               <span
-                className={`mt-1 text-xs font-medium whitespace-nowrap ${
-                  isActive ? 'text-accent' : isCompleted ? 'text-gray-400' : 'text-gray-500'
-                }`}
+                style={{
+                  marginTop: 7,
+                  fontSize: 11,
+                  whiteSpace: 'nowrap',
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? '#00FDDC' : isCompleted ? '#A0C4DC' : '#7AAAB8',
+                  transition: 'color 0.3s',
+                }}
               >
                 {label}
               </span>
@@ -37,9 +41,12 @@ export default function StepIndicator({ currentStep }) {
 
             {index < STEPS.length - 1 && (
               <div
-                className={`flex-1 h-px mx-2 mb-4 ${
-                  isCompleted ? 'bg-accent' : 'bg-surface-2'
-                }`}
+                className="flex-1 mb-4 mx-2"
+                style={{
+                  height: 2,
+                  background: isCompleted ? '#00FDDC' : '#2E5674',
+                  transition: 'background 0.35s',
+                }}
               />
             )}
           </div>

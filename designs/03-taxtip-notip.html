@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill · 3 Tax &amp; Tip (no tip)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="container">
+
+    <div class="wordmark">
+      <div class="wordmark__badge">$</div>
+      <span class="wordmark__name">splitbill</span>
+    </div>
+
+    <!-- Step bar: Upload, Assign done · Tax & Tip active -->
+    <div class="stepbar">
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Upload</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Assign</span></div>
+      <div class="step__line step__line--done"></div>
+      <div class="step"><div class="step__dot step__dot--active">3</div><span class="step__label step__label--active">Tax &amp; Tip</span></div>
+      <div class="step__line"></div>
+      <div class="step"><div class="step__dot">4</div><span class="step__label">Done</span></div>
+    </div>
+
+    <div class="fade-up container--narrow">
+      <h2 class="h2">Tax &amp; tip</h2>
+      <p class="subhead">These are split proportionally based on what each person ordered.</p>
+
+      <div class="panel">
+        <div class="row-between panel__divider">
+          <span style="color:var(--text-muted);font-size:14px;">Subtotal</span>
+          <span style="font-weight:700;font-size:14px;">$25.15</span>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Tax</div>
+          <div class="field">
+            <span class="field__prefix">$</span>
+            <input class="field__input" type="number" step="0.01" min="0" value="1.87">
+          </div>
+          <p class="field-hint">Auto-extracted from receipt, tap to edit</p>
+        </div>
+
+        <div>
+          <div class="field-label">Tip</div>
+          <!-- "No tip" selected → percentage/custom options are hidden -->
+          <div class="tip-toggle">
+            <button class="tip-toggle__btn tip-toggle__btn--active">No tip</button>
+            <button class="tip-toggle__btn">Add tip</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="total-pill">
+        <span class="total-pill__label">Total</span>
+        <span class="total-pill__amount">$27.02</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn--secondary">← Back</button>
+        <button class="btn btn--primary btn--block">See Breakdown →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

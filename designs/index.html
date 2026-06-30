@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Bill — Screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .sheet { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+  .sheet__head { margin-bottom: 36px; }
+  .sheet__head h1 { font-size: 30px; font-weight: 800; letter-spacing: -.5px; display: flex; align-items: center; gap: 12px; }
+  .sheet__head p { color: var(--text-muted); font-size: 15px; margin-top: 10px; max-width: 640px; line-height: 1.5; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; }
+  .ref { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; text-decoration: none; color: inherit; display: block; transition: border-color .15s, transform .15s; }
+  .ref:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ref__frame { height: 280px; background: var(--bg); overflow: hidden; border-bottom: 1px solid var(--border); }
+  .ref__frame iframe { width: 200%; height: 200%; border: 0; transform: scale(.5); transform-origin: top left; pointer-events: none; background: var(--bg); }
+  .ref__meta { padding: 16px 20px; display: flex; align-items: baseline; gap: 10px; }
+  .ref__num { font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .ref__name { font-size: 15px; font-weight: 700; }
+  .ref__desc { font-size: 12.5px; color: var(--text-muted); padding: 0 20px 18px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="sheet__head">
+    <h1><span class="wordmark__badge">$</span> Split Bill — Screens</h1>
+    <p>Each screen is a standalone HTML page sharing one <code>styles.css</code>. Open any page directly to inspect exact spacing, color, and type in dev tools, or read the markup — class names map 1:1 to the stylesheet.</p>
+  </div>
+  <div class="cards">
+    <a class="ref" href="01-upload.html">
+      <div class="ref__frame"><iframe src="01-upload.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">01</span><span class="ref__name">Upload — idle</span></div>
+      <div class="ref__desc">Dropzone idle — receipt scan entry point.</div>
+    </a>
+    <a class="ref" href="01-upload-scanning.html">
+      <div class="ref__frame"><iframe src="01-upload-scanning.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">01</span><span class="ref__name">Upload — scanning</span></div>
+      <div class="ref__desc">After a file drops: spinner + “Scanning with AI…” (~2s).</div>
+    </a>
+    <a class="ref" href="01-upload-processed.html">
+      <div class="ref__frame"><iframe src="01-upload-processed.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">01</span><span class="ref__name">Upload — processed</span></div>
+      <div class="ref__desc">Scan complete: accent check + “5 items found!” before advancing.</div>
+    </a>
+    <a class="ref" href="02-assign-complete.html">
+      <div class="ref__frame"><iframe src="02-assign-complete.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">02</span><span class="ref__name">Assign — all assigned</span></div>
+      <div class="ref__desc">Every quantity claimed (Large Soda ×3 split 2 / 1) → all cards highlighted, “All assigned ✓”.</div>
+    </a>
+    <a class="ref" href="02-assign-partial.html">
+      <div class="ref__frame"><iframe src="02-assign-partial.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">02</span><span class="ref__name">Assign — partial</span></div>
+      <div class="ref__desc">Cheeseburger ×2 (1 share) &amp; Large Soda ×3 (2 shares) under-filled → not highlighted, “2 unassigned”.</div>
+    </a>
+    <a class="ref" href="03-taxtip.html">
+      <div class="ref__frame"><iframe src="03-taxtip.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">03</span><span class="ref__name">Tax &amp; Tip — with tip</span></div>
+      <div class="ref__desc">“Add tip” selected → percentage presets + Custom shown, 20% tip, live Total pill.</div>
+    </a>
+    <a class="ref" href="03-taxtip-notip.html">
+      <div class="ref__frame"><iframe src="03-taxtip-notip.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">03</span><span class="ref__name">Tax &amp; Tip — no tip</span></div>
+      <div class="ref__desc">“No tip” selected → percentage/custom options hidden, tip is $0, Total drops to $27.02.</div>
+    </a>
+    <a class="ref" href="04-breakdown-cards.html">
+      <div class="ref__frame"><iframe src="04-breakdown-cards.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">04</span><span class="ref__name">Breakdown — Cards</span></div>
+      <div class="ref__desc">Per-person settlement cards (default layout).</div>
+    </a>
+    <a class="ref" href="04-breakdown-receipt.html">
+      <div class="ref__frame"><iframe src="04-breakdown-receipt.html" scrolling="no" tabindex="-1"></iframe></div>
+      <div class="ref__meta"><span class="ref__num">04</span><span class="ref__name">Breakdown — Receipt</span></div>
+      <div class="ref__desc">Alternate paper-receipt layout with torn edges.</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
