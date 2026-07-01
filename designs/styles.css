@@ -195,6 +195,76 @@ input  { font-family: inherit; }
 .assign-label__count { color: var(--text-muted); }
 .share-row { display: flex; gap: 7px; flex-wrap: wrap; }
 
+/* item-card right column: price stacked above the edit / delete actions row */
+.item-card__aside { display: flex; align-items: flex-start; gap: 12px; flex-shrink: 0; }
+.item-card__actions { display: flex; gap: 2px; align-items: center; height: 20px; }
+.icon-btn {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 14px; line-height: 1; transition: 0.15s;
+}
+.icon-btn:hover { background: var(--surface-hi); color: var(--text); }
+.icon-btn--danger:hover { background: rgba(255, 90, 80, 0.14); color: #ff6b5e; }
+
+/* dashed "add missing item" card that trails the grid */
+.add-item-card {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 84px; border-radius: 16px; cursor: pointer;
+  background: transparent; border: 1.5px dashed var(--border);
+  color: var(--text-muted); font-weight: 700; font-size: 14px; transition: 0.15s;
+}
+.add-item-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.add-item-card__plus { font-size: 18px; line-height: 1; }
+
+/* ---- Modals (add / edit item · delete confirm) ---- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72);
+  display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.modal {
+  background: var(--surface); border-radius: 22px; width: 100%; max-width: 420px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.modal--sm { max-width: 360px; border-radius: 20px; }
+.modal__head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+.modal__title { font-weight: 800; font-size: 17px; }
+.modal__sub { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+.modal__x { color: var(--text-muted); font-size: 24px; line-height: 1; padding: 0 2px; }
+.modal__body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.modal__foot { padding: 0 24px 24px; display: flex; gap: 10px; }
+.modal__row { display: flex; gap: 12px; }
+.modal-field {
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  background: var(--surface-hi); border: 1.5px solid var(--border);
+  color: var(--text); font-size: 15px; outline: none; transition: border-color 0.15s;
+}
+.modal-field:focus { border-color: var(--accent); }
+.modal-field--focus { border-color: var(--accent); }   /* static demo of focus state */
+.field-label__opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* modifier tags inside the add/edit modal */
+.mod-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.mod-tag {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; background: var(--accent-dim); color: var(--accent);
+  border-radius: 8px; padding: 4px 6px 4px 10px; font-weight: 600;
+}
+.mod-tag__x { color: var(--accent); font-size: 15px; line-height: 1; }
+
+/* static stepper for the Qty control */
+.stepper {
+  display: flex; align-items: center; background: var(--surface); border-radius: 99px;
+  border: 1px solid var(--border); overflow: hidden; height: 47px;
+}
+.stepper__btn { width: 30px; height: 100%; font-size: 16px; font-weight: 700; color: var(--text); }
+.stepper__btn:disabled { color: var(--text-dim); cursor: not-allowed; }
+.stepper__val { min-width: 24px; text-align: center; font-weight: 700; font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.btn--danger { background: #ff6b5e; color: #fff; cursor: pointer; }
+.btn--modal { padding: 13px; border-radius: 13px; font-size: 14px; font-weight: 700; }
+.btn--flex2 { flex: 2; }
+.confirm-name { color: var(--text); font-weight: 700; }
+
 /* ---- Tax & Tip (step 3) ---- */
 .panel { background: var(--surface); border-radius: 22px; padding: 24px; border: 1px solid var(--border); margin-bottom: 16px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; }

@@ -28,3 +28,26 @@ code {
 }
 .scale-in { animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; }
 @media (prefers-reduced-motion: reduce) { .fade-up { animation: none; } }
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* Icon buttons on item cards */
+.icon-btn {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #A0C4DC; font-size: 14px; line-height: 1; transition: 0.15s;
+}
+.icon-btn:hover { background: #254862; color: #EEF4FA; }
+.icon-btn--danger:hover { background: rgba(255, 90, 80, 0.14); color: #ff6b5e; }
+
+/* Dashed "Add missing item" card in the item grid */
+.add-item-card {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 84px; border-radius: 16px; cursor: pointer;
+  background: transparent; border: 1.5px dashed #2E5674;
+  color: #A0C4DC; font-weight: 700; font-size: 14px; transition: 0.15s;
+}
+.add-item-card:hover { border-color: #00FDDC; color: #00FDDC; background: #00FDDC26; }

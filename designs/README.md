@@ -16,6 +16,9 @@ handoff/
 ├── 01-upload-processed.html    ← Step 1 · processed ("5 items found!" check)
 ├── 02-assign-complete.html     ← Step 2 · all quantities assigned → "All assigned ✓"
 ├── 02-assign-partial.html      ← Step 2 · some quantities unfilled → "2 unassigned"
+├── 02-assign-additem.html      ← Step 2 · "Add missing item" modal (name/price/qty/modifiers)
+├── 02-assign-edititem.html     ← Step 2 · ✎ edit-item modal (pre-filled)
+├── 02-assign-delete.html       ← Step 2 · ✕ delete-item confirmation dialog
 ├── 03-taxtip.html              ← Step 3 · "Add tip" → tax field + tip presets + Total pill
 ├── 03-taxtip-notip.html        ← Step 3 · "No tip" → tip options hidden, tip $0
 ├── 04-breakdown-cards.html     ← Step 4 · per-person cards

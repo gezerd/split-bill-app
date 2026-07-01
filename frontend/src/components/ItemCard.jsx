@@ -1,55 +1,29 @@
-import { useState } from 'react';
-import ItemForm from './ItemForm';
 import { getInitials, AVATAR_COLORS, AVATAR_COLORS_OUTLINE } from './PeopleManager';
 
 export default function ItemCard({
   item,
   people,
   assignments,
-
-  onUpdateItem,
-  onDeleteItem,
+  onEdit,
+  onDeleteRequest,
   onAssignmentSave,
 }) {
-  const [editing, setEditing] = useState(false);
-
   const itemAssignments = assignments.filter((a) => a.item_id === item.id);
   const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
   const isFullyAssigned = totalShares >= (item.quantity || 1);
-
-  const assignedPeople = itemAssignments
-    .map((assignment) => {
-      const person = people.find((p) => p.id === assignment.person_id);
-      return person ? { ...person, shareCount: assignment.share_count } : null;
-    })
-    .filter(Boolean);
-
-  const handleUpdate = async (updates) => {
-    await onUpdateItem(item.id, updates);
-    setEditing(false);
-  };
-
-  const handleDelete = async () => {
-    if (window.confirm(`Delete "${item.name}"? Assignments will be removed.`)) {
-      await onDeleteItem(item.id);
-    }
-  };
 
   const handlePersonClick = async (person) => {
     const quantity = item.quantity || 1;
     const currentAssignment = itemAssignments.find((a) => a.person_id === person.id);
     const currentShares = currentAssignment?.share_count || 0;
-
     const otherShares = itemAssignments
       .filter((a) => a.person_id !== person.id)
       .reduce((sum, a) => sum + (a.share_count || 1), 0);
-    const remainingShares = quantity - otherShares;
+    const maxShares = quantity - otherShares;
 
     const newShareMap = new Map(
       itemAssignments.map((a) => [a.person_id, a.share_count || 1])
     );
-
-    const maxShares = remainingShares; // quantity - otherShares = max this person can hold
 
     if (currentShares > 0 && currentShares >= maxShares) {
       newShareMap.delete(person.id);
@@ -62,15 +36,7 @@ export default function ItemCard({
     await onAssignmentSave(item.id, newShareMap);
   };
 
-  if (editing) {
-    return (
-      <ItemForm
-        initialData={item}
-        onSubmit={handleUpdate}
-        onCancel={() => setEditing(false)}
-      />
-    );
-  }
+  const totalPrice = parseFloat(item.price) * (item.quantity || 1);
 
   return (
     <div
@@ -78,9 +44,11 @@ export default function ItemCard({
         isFullyAssigned ? 'border-accent' : 'border-border'
       }`}
     >
+      {/* Card header */}
       <div className="flex items-start justify-between mb-2">
+        {/* Left: name + modifiers */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-100">{item.name}</h3>
+          <h3 style={{ fontWeight: 700, fontSize: 15 }}>{item.name}</h3>
           {item.customModifiers && item.customModifiers.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {item.customModifiers.map((mod, i) => (
@@ -92,41 +60,32 @@ export default function ItemCard({
           )}
         </div>
 
-        <div className="flex items-start gap-1 ml-2 shrink-0">
-          <div className="text-right mr-1">
-            <div className="font-semibold text-gray-100">
-              ${(parseFloat(item.price) * (item.quantity || 1)).toFixed(2)}
-            </div>
+        {/* Right: price + action buttons */}
+        <div className="flex items-start shrink-0" style={{ gap: 12, marginLeft: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>${totalPrice.toFixed(2)}</div>
             {item.quantity > 1 && (
-              <div className="text-xs text-gray-400">
+              <div style={{ color: '#A0C4DC', fontSize: 12 }}>
                 ×{item.quantity} @ ${parseFloat(item.price).toFixed(2)}
               </div>
             )}
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
-            className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-surface-2 rounded transition-colors"
-            title="Edit item"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
-            title="Delete item"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          <div className="flex items-center" style={{ gap: 2, height: 20 }}>
+            <button
+              onClick={e => { e.stopPropagation(); onEdit(item); }}
+              className="icon-btn"
+              title="Edit item"
+            >✎</button>
+            <button
+              onClick={e => { e.stopPropagation(); onDeleteRequest(item); }}
+              className="icon-btn icon-btn--danger"
+              title="Delete item"
+            >✕</button>
+          </div>
         </div>
       </div>
 
-      {/* Person pills */}
+      {/* Assignment row */}
       {people.length === 0 ? (
         <div className="mt-3 text-xs text-gray-400">Add people to assign</div>
       ) : (
@@ -158,7 +117,7 @@ export default function ItemCard({
                   {getInitials(person.name)}
                   {shares > 1 && (
                     <span
-                      className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center"
+                      className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center rounded-full"
                       style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
                     >
                       ×{shares}

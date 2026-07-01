@@ -101,6 +101,9 @@ All design files live in `designs/`. The handoff is **high-fidelity** — final 
 | `01-upload-processed.html` | Step 1 — processed state (check + item count) |
 | `02-assign-complete.html` | Step 2 — every item fully assigned → "All assigned ✓" |
 | `02-assign-partial.html` | Step 2 — some quantities unfilled → "2 unassigned" |
+| `02-assign-additem.html` | Step 2 — "Add an item" modal open (name / price / qty stepper / modifiers) |
+| `02-assign-edititem.html` | Step 2 — "Edit item" modal open (pre-filled, save shows "Save · $X.XX") |
+| `02-assign-delete.html` | Step 2 — delete confirmation modal ("Delete item?" with item name) |
 | `03-taxtip.html` | Step 3 — tax field, "Add tip" selected with presets visible, Total pill |
 | `03-taxtip-notip.html` | Step 3 — "No tip" selected, presets hidden, lower Total pill |
 | `04-breakdown-cards.html` | Step 4 — per-person cards layout |
@@ -158,7 +161,7 @@ CSS variables defined in `:root` in `designs/styles.css`:
 
 **Step 1 — Upload:** Centered max-540px. H1 "Split the bill." + subtitle. Large dashed dropzone (radius 24, padding ~72×40). States: idle → uploading (spinner + "Scanning with AI…") → done (accent check + item count) → auto-advance. Border turns accent on drag-over and success; bg becomes `accent-dim` while dragging.
 
-**Step 2 — Assign:** Name input + "Add" row → wrap of removable people chips → status pill (unassigned/all-assigned) → item card grid → right-aligned Next button. Next disabled until ≥1 person and all items assigned. ItemCard border turns accent when assigned.
+**Step 2 — Assign:** Name input + "Add" row → wrap of removable people chips → status pill (unassigned/all-assigned) → item card grid → right-aligned Next button. Next disabled until ≥1 person and all items assigned. ItemCard border turns accent when assigned. Each card has ✎ (edit) and ✕ (delete) icon buttons; a dashed "Add missing item" card trails the grid. Edit/add open a modal (name, price, qty stepper, optional modifiers); delete opens a compact confirmation modal.
 
 **Step 3 — Tax & Tip:** Max-500px panel. Subtotal row → editable Tax `$` field → **No tip / Add tip** segmented toggle → when "Add tip": preset buttons (15/18/20/22/25% + Custom) + computed tip amount; when "No tip": presets hidden, tip zeroed → full-width **accent Total pill** (28px figure). Back + "See Breakdown".
 
