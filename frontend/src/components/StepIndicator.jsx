@@ -23,7 +23,7 @@ export default function StepIndicator({ currentStep }) {
                   transition: '0.35s cubic-bezier(0.4,0,0.2,1)',
                 }}
               >
-                {isCompleted ? '✓' : stepNum}
+                {isCompleted || (isActive && stepNum === 4) ? '✓' : stepNum}
               </div>
               <span
                 style={{

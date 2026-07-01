@@ -141,7 +141,17 @@ export default function App() {
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between pt-2">
+              <button
+                onClick={() => setStep(1)}
+                className="btn-back"
+                style={{
+                  padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
+                  background: '#254862', color: '#A0C4DC', transition: '0.2s',
+                }}
+              >
+                ← Back
+              </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={!allAssigned || people.length === 0}

@@ -133,18 +133,25 @@ export default function FinalBreakdown({ billId, people, onBack }) {
           <p className="text-gray-400" style={{ fontSize: 14, margin: 0 }}>Here's what everyone owes.</p>
         </div>
         <div className="flex shrink-0" style={{
-          gap: 6, background: '#1C3A54', borderRadius: 12, padding: 4, border: '1px solid #2E5674',
+          position: 'relative', background: '#1C3A54', borderRadius: 12, padding: 4, border: '1px solid #2E5674',
         }}>
+          {/* Sliding pill */}
+          <div style={{
+            position: 'absolute', top: 4, bottom: 4, left: 4,
+            width: 'calc(50% - 4px)', borderRadius: 9,
+            background: '#00FDDC', pointerEvents: 'none',
+            transform: view === 'receipt' ? 'translateX(100%)' : 'translateX(0)',
+            transition: 'transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+          }} />
           {['cards', 'receipt'].map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={view === v ? 'accent-hover' : ''}
               style={{
-                padding: '7px 16px', borderRadius: 9, fontSize: 12, fontWeight: 700,
-                background: view === v ? '#00FDDC' : 'none',
-                color: view === v ? '#111' : '#A0C4DC',
-                textTransform: 'capitalize', transition: '0.15s',
+                flex: 1, padding: '7px 16px', borderRadius: 9, fontSize: 12, fontWeight: 700,
+                background: 'none', color: view === v ? '#111' : '#A0C4DC',
+                textTransform: 'capitalize', transition: 'color 0.2s',
+                position: 'relative', zIndex: 1,
               }}
             >
               {v === 'cards' ? 'Cards' : 'Receipt'}
@@ -240,6 +247,7 @@ export default function FinalBreakdown({ billId, people, onBack }) {
       <div className="flex" style={{ gap: 10, marginTop: 32 }}>
         <button
           onClick={onBack}
+          className="btn-back"
           style={{
             padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
             background: '#254862', color: '#A0C4DC', transition: '0.2s',
@@ -249,9 +257,10 @@ export default function FinalBreakdown({ billId, people, onBack }) {
         </button>
         <button
           onClick={() => window.location.reload()}
+          className="accent-hover"
           style={{
             flex: 1, padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
-            background: 'none', border: '1.5px solid #2E5674', color: '#A0C4DC', transition: '0.2s',
+            background: '#00FDDC', color: '#111', transition: '0.2s',
           }}
         >
           Start New Bill

@@ -181,6 +181,7 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
       <div className="flex" style={{ gap: 10 }}>
         <button
           onClick={onBack}
+          className="btn-back"
           style={{
             padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
             background: '#254862', color: '#A0C4DC', transition: '0.2s',
