@@ -73,7 +73,16 @@ An `Assignment` links a `Person` to an `Item` with a `share_count`. The item pri
 
 ## UI Verification Rule
 
-**Trigger:** Follow this rule after any UI change, AND whenever asked to "verify the frontend", "check the UI", "make it match the design", or similar — treat that as an instruction to run the full verification loop below and fix every deviation found before reporting done.
+**Trigger:** Follow this rule after any UI change, AND whenever asked to "verify the frontend", "check the UI", "make it match the design", or similar — treat that as an instruction to run the full verification loop below and fix every deviation found before reporting done. **Also trigger** whenever the user shares a claude.ai artifact link (`claude.ai/artifact/...` or `claude.ai/code/artifact/...`) for the design handoff — treat that as a new/updated reference to import (see below) before doing anything else.
+
+### Importing design updates from claude.ai
+
+The `designs/` folder originates from a claude.ai Design artifact. When the user shares that artifact's link, pull the files in directly instead of asking them to export/paste anything by hand:
+
+1. `Artifact` tool, `action: "list"`, `scope: "files"`, `url: <the link>` — list the artifact's published files.
+2. `Artifact` tool, `action: "read"`, `paths: [...all published files...]`, `url: <the link>`, `out_dir: "designs"` — fetch every file (each screen's `.html`, `styles.css`, `index.html`, etc.) and save it directly into this repo's `designs/` folder, overwriting the previous versions in place.
+3. Diff the fetched file list against the **Screen reference** table below and against `designs/README.md`'s file list — add rows for new screens, drop/update stale ones for removed or renamed screens.
+4. Continue into the verification loop below using the freshly imported files as the reference.
 
 **After making any UI change**, verify the result matches the design handoff before considering the task complete. Follow these steps every time:
 

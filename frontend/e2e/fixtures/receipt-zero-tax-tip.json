@@ -1,0 +1,11 @@
+{
+  "bill_id": "33333333-3333-3333-3333-333333333333",
+  "items": [
+    { "id": "cccccccc-cccc-cccc-cccc-cccccccccccc", "name": "Coffee", "price": 3.5, "quantity": 2, "customModifiers": [] },
+    { "id": "dddddddd-dddd-dddd-dddd-dddddddddddd", "name": "Muffin", "price": 2.75, "quantity": 1, "customModifiers": [] }
+  ],
+  "tax_amount": 0,
+  "tip_amount": 0,
+  "subtotal": 9.75,
+  "total": 9.75
+}

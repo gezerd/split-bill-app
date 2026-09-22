@@ -1,0 +1,10 @@
+{
+  "bill_id": "11111111-1111-1111-1111-111111111111",
+  "items": [
+    { "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "name": "Burger", "price": 10.0, "quantity": 1, "customModifiers": [] }
+  ],
+  "tax_amount": 0,
+  "tip_amount": 0,
+  "subtotal": 10.0,
+  "total": 10.0
+}

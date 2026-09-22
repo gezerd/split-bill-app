@@ -9,5 +9,12 @@ export default defineConfig({
     watch: {
       usePolling: true
     }
-  }
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    globals: true,
+    // Playwright's e2e/*.spec.js files aren't Vitest tests — exclude them.
+    exclude: ['e2e/**', 'node_modules/**'],
+  },
 })

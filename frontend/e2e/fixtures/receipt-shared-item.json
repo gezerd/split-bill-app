@@ -1,0 +1,10 @@
+{
+  "bill_id": "22222222-2222-2222-2222-222222222222",
+  "items": [
+    { "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "name": "Pizza", "price": 9.0, "quantity": 3, "customModifiers": [] }
+  ],
+  "tax_amount": 0,
+  "tip_amount": 0,
+  "subtotal": 27.0,
+  "total": 27.0
+}

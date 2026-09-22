@@ -1,0 +1,10 @@
+{
+  "bill_id": "44444444-4444-4444-4444-444444444444",
+  "items": [
+    { "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "name": "Entree", "price": 10.0, "quantity": 3, "customModifiers": [] }
+  ],
+  "tax_amount": 10.0,
+  "tip_amount": 0,
+  "subtotal": 30.0,
+  "total": 40.0
+}

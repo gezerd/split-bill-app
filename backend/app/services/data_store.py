@@ -225,6 +225,13 @@ class InMemoryStore:
         with self._lock:
             return self._assignments.pop(assignment_id, None) is not None
 
+    def reset(self) -> None:
+        with self._lock:
+            self._bills.clear()
+            self._items.clear()
+            self._people.clear()
+            self._assignments.clear()
+
 
 # Global singleton instance
 data_store = InMemoryStore()

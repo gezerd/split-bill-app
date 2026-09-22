@@ -41,3 +41,9 @@ Thumbs.db
 postgres_data/
 
 package-lock.json
+
+# Test artifacts
+.pytest_cache/
+.coverage
+frontend/test-results/
+frontend/playwright-report/

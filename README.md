@@ -228,6 +228,38 @@ ANTHROPIC_API_KEY=sk-ant-...
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+### Automated Tests
+
+**Backend (pytest):**
+```bash
+cd backend
+pytest              # run the suite
+pytest --cov=app    # with coverage
+```
+
+**Frontend unit tests (Vitest + React Testing Library):**
+```bash
+cd frontend
+npm test
+```
+
+**Frontend e2e (Playwright):**
+```bash
+cd frontend
+npx playwright install   # one-time browser install
+```
+Then, in a separate terminal, run the backend in mock mode:
+```bash
+cd backend
+MOCK_OCR=true uvicorn app.main:app --reload
+```
+And finally:
+```bash
+cd frontend
+npm run test:e2e
+```
+The e2e suite drives a real browser against the app, so it needs the mock-mode backend from above running in its own terminal — the same requirement as the manual mock-mode testing described earlier in this section.
+
 ## API Documentation
 
 Once the backend is running, view the interactive API docs at:

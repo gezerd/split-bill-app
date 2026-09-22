@@ -40,6 +40,12 @@ export default function App() {
       return totalShares >= (item.quantity || 1);
     });
 
+  const allPeopleAssigned =
+    people.length > 0 &&
+    people.every((person) => assignments && assignments.some((a) => a.person_id === person.id));
+
+  const canProceed = allAssigned && allPeopleAssigned;
+
   const tipPercentage =
     subtotal && parseFloat(subtotal) > 0 && tip && parseFloat(tip) > 0
       ? Math.round((parseFloat(tip) / parseFloat(subtotal)) * 100)
@@ -154,9 +160,9 @@ export default function App() {
               </button>
               <button
                 onClick={() => setStep(3)}
-                disabled={!allAssigned || people.length === 0}
+                disabled={!canProceed}
                 className={`font-bold transition-all ${
-                  allAssigned && people.length > 0
+                  canProceed
                     ? 'bg-accent text-on-accent accent-hover'
                     : 'bg-surface-2 text-gray-500 cursor-not-allowed'
                 }`}
@@ -167,6 +173,8 @@ export default function App() {
                       const shares = assignments.filter(a => a.item_id === item.id).reduce((s, a) => s + (a.share_count || 1), 0);
                       return shares < (item.quantity || 1);
                     }).length} items remaining`
+                  : !allPeopleAssigned
+                  ? `${people.filter(p => !assignments.some(a => a.person_id === p.id)).length} people unassigned`
                   : 'Next →'}
               </button>
             </div>

@@ -1,11 +1,44 @@
 from typing import List, Dict
 from uuid import UUID
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from .data_store import data_store
 
 
 class CalculationService:
     """Service for calculating bill splits with shared items and proportional tax/tip"""
+
+    @staticmethod
+    def _distribute(
+        total_amount: Decimal, raw_subtotals: List[Decimal], total_subtotal: Decimal
+    ) -> List[Decimal]:
+        """
+        Distribute total_amount proportionally across raw_subtotals using the
+        largest-remainder method, so the returned amounts sum exactly to
+        round(total_amount, 2) instead of drifting from independent rounding.
+        """
+        n = len(raw_subtotals)
+        if total_subtotal <= 0 or total_amount == 0:
+            return [Decimal("0.00")] * n
+
+        total_cents = int((total_amount * 100).to_integral_value())
+
+        raw_share_cents = [
+            (raw_subtotals[i] / total_subtotal) * total_amount * 100 for i in range(n)
+        ]
+        floor_cents = [
+            int(raw_share_cents[i].to_integral_value(rounding=ROUND_DOWN)) for i in range(n)
+        ]
+        remainder_cents = total_cents - sum(floor_cents)
+
+        remainders = sorted(
+            range(n), key=lambda i: (raw_share_cents[i] - floor_cents[i]), reverse=True
+        )
+
+        result_cents = list(floor_cents)
+        for i in remainders[:remainder_cents]:
+            result_cents[i] += 1
+
+        return [Decimal(cents) / 100 for cents in result_cents]
 
     @staticmethod
     def calculate_breakdown(bill_id: UUID) -> Dict:
@@ -30,6 +63,7 @@ class CalculationService:
             return {"people": []}
 
         breakdown = []
+        raw_subtotals = []
         total_subtotal = Decimal("0.00")
 
         # Calculate each person's share
@@ -69,6 +103,7 @@ class CalculationService:
                 person_subtotal += share_amount
 
             total_subtotal += person_subtotal
+            raw_subtotals.append(person_subtotal)
 
             breakdown.append(
                 {
@@ -79,15 +114,14 @@ class CalculationService:
                 }
             )
 
-        # Calculate proportional tax and tip for each person
-        for entry in breakdown:
-            if total_subtotal > 0:
-                percentage = Decimal(entry["subtotal"]) / total_subtotal
-            else:
-                percentage = Decimal("0.00")
+        # Distribute tax and tip proportionally so per-person amounts sum
+        # exactly to the bill's tax/tip (no penny-drift from independent rounding)
+        tax_amounts = CalculationService._distribute(bill.tax_amount, raw_subtotals, total_subtotal)
+        tip_amounts = CalculationService._distribute(bill.tip_amount, raw_subtotals, total_subtotal)
 
-            entry["tax_amount"] = round(bill.tax_amount * percentage, 2)
-            entry["tip_amount"] = round(bill.tip_amount * percentage, 2)
+        for entry, tax_amount, tip_amount in zip(breakdown, tax_amounts, tip_amounts):
+            entry["tax_amount"] = tax_amount
+            entry["tip_amount"] = tip_amount
             entry["total"] = round(
                 Decimal(entry["subtotal"]) + entry["tax_amount"] + entry["tip_amount"], 2
             )
