@@ -185,3 +185,17 @@ Tailwind theme is extended in `frontend/tailwind.config.js`. Key tokens:
 - `border` → `#2E5674`
 
 Font: Plus Jakarta Sans (loaded via CDN in `index.html`).
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (gezerd/split-bill-app) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
