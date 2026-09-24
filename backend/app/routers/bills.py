@@ -17,16 +17,19 @@ calc_service = CalculationService()
 
 
 @router.post("/upload-receipt", response_model=dict)
-async def upload_receipt(file: UploadFile = File(...)):
+def upload_receipt(file: UploadFile = File(...)):
     """
     Upload a receipt image and extract items using OCR
+
+    Sync handler on purpose: FastAPI runs it in a threadpool, so the blocking
+    Claude API call doesn't stall the event loop for other requests.
 
     Returns:
         Dict with bill_id and extracted items, tax, tip, subtotal, total
     """
     try:
         # Read image file
-        image_bytes = await file.read()
+        image_bytes = file.file.read()
 
         # Extract receipt data using OCR
         receipt_data = ocr_service.extract_receipt_data(image_bytes)

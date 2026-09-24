@@ -93,11 +93,11 @@ class InMemoryStore:
 
     def delete_bill(self, bill_id: UUID) -> bool:
         with self._lock:
-            # Delete all associated data
+            # Collect the bill's item ids before deleting the items, so their
+            # assignments can still be found
+            item_ids = {item.id for item in self._items.values() if item.bill_id == bill_id}
             self._items = {k: v for k, v in self._items.items() if v.bill_id != bill_id}
             self._people = {k: v for k, v in self._people.items() if v.bill_id != bill_id}
-            # Delete assignments for items that were deleted
-            item_ids = {item.id for item in self._items.values() if item.bill_id == bill_id}
             self._assignments = {
                 k: v for k, v in self._assignments.items() if v.item_id not in item_ids
             }

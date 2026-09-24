@@ -2,13 +2,13 @@ import os
 import json
 import base64
 import re
-from pillow_heif import register_heif_opener, open_heif
+from pillow_heif import register_heif_opener
 register_heif_opener()
-from typing import Dict
+from typing import Dict, Tuple
 from decimal import Decimal
 from io import BytesIO
 import anthropic
-from PIL import Image
+from PIL import Image, ImageOps
 
 RECEIPT_PROMPT = """Read the text from this photo of a receipt and return only valid JSON with no other text.
 
@@ -40,6 +40,10 @@ Return JSON in exactly this format:
 
 # Formats natively supported by Claude's API
 _CLAUDE_SUPPORTED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+# Claude API rejects images over 5 MB, and downscales anything with a long edge
+# over 1568px itself, so larger images only add upload time
+_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+_MAX_LONG_EDGE = 1568
 
 
 _MOCK_DATA = {
@@ -83,31 +87,33 @@ class OCRService:
             return "image/heic"
         return "image/jpeg"
 
-    def _convert_heic_to_jpeg(self, image_bytes: bytes) -> bytes:
+    def _prepare_image(self, image_bytes: bytes) -> Tuple[bytes, str]:
+        """
+        Return (image_bytes, media_type) ready for the Claude API. Small images in
+        a supported format pass through untouched; anything else (HEIC, or a photo
+        over the API's per-image size limit) is re-encoded as a downscaled JPEG.
+        """
+        media_type = self._get_media_type(image_bytes)
+        if media_type in _CLAUDE_SUPPORTED_TYPES and len(image_bytes) <= _MAX_IMAGE_BYTES:
+            return image_bytes, media_type
+
         try:
-            heif_file = open_heif(BytesIO(image_bytes))
-            image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode).convert("RGB")
-            quality = 85
-            while True:
-                output = BytesIO()
-                image.save(output, format="JPEG", quality=quality)
-                result = output.getvalue()
-                if len(result) <= 5 * 1024 * 1024 or quality <= 30:
-                    return result
-                quality -= 15
+            image = Image.open(BytesIO(image_bytes))
+            # Phone photos store rotation in EXIF, which re-encoding drops
+            image = ImageOps.exif_transpose(image).convert("RGB")
+            image.thumbnail((_MAX_LONG_EDGE, _MAX_LONG_EDGE))
+            output = BytesIO()
+            image.save(output, format="JPEG", quality=85)
+            return output.getvalue(), "image/jpeg"
         except Exception as e:
             print(f"Image conversion error: {type(e).__name__}: {e}")
-            return image_bytes
+            return image_bytes, media_type
 
     def extract_receipt_data(self, image_bytes: bytes) -> Dict:
         if self._mock:
             return _MOCK_DATA
 
-        media_type = self._get_media_type(image_bytes)
-
-        if media_type not in _CLAUDE_SUPPORTED_TYPES:
-            image_bytes = self._convert_heic_to_jpeg(image_bytes)
-            media_type = "image/jpeg"
+        image_bytes, media_type = self._prepare_image(image_bytes)
 
         image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
 

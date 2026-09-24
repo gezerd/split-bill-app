@@ -76,6 +76,7 @@ def test_deleting_bill_cascades_items_people_and_assignments(client):
     assert data_store.get_item(item.id) is None
     assert data_store.get_person(alice.id) is None
     assert data_store.get_assignments_by_bill(bill.id) == []
+    assert data_store.get_assignments_by_item(item.id) == []
 
 
 def test_assignment_across_mismatched_bills_returns_400(client):
