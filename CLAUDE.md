@@ -4,32 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-### Docker (recommended)
+All commands run from the repo root and work the same on Windows and macOS. Prerequisites: Node 18+ and [uv](https://docs.astral.sh/uv/) (uv provides Python 3.12 via `backend/.python-version`).
+
 ```bash
-# Start all services (frontend, backend, postgres)
-docker-compose up --build
+npm run setup       # .env from .env.example, npm installs, `uv sync` backend, Playwright chromium
+npm run dev         # backend :8000 + frontend :5173 (concurrently), live OCR
+npm run dev:mock    # same with MOCK_OCR=true — no Anthropic API calls
+npm test            # pytest (backend) + vitest (frontend) — no servers needed
+npm run test:e2e    # Playwright; starts its own mock backend :8001 + Vite :5174
+npm run test:all    # test, then test:e2e
+```
 
-# Use mock OCR to avoid API calls during development
-MOCK_OCR=true docker-compose up --build
+Sub-scripts: `dev:backend`, `dev:frontend`, `test:backend`, `test:frontend`. Pass extra args after `--` (e.g. `npm run test:backend -- -k breakdown`).
 
-# Stop all services
+Backend Python deps are managed by uv (`backend/pyproject.toml` + `backend/uv.lock`, test deps in the `dev` group). Run backend tools with `uv run --directory backend <cmd>` — don't use pip. Lockfiles (`uv.lock`, both `package-lock.json`) are committed.
+
+### Docker
+
+```bash
+docker-compose up --build   # frontend, backend, postgres; reads root .env (set MOCK_OCR=true there for mock mode)
 docker-compose down
-```
-
-### Frontend (React + Vite)
-```bash
-cd frontend
-npm install
-npm run dev        # http://localhost:5173
-npm run build
-```
-
-### Backend (FastAPI)
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload          # http://localhost:8000
-MOCK_OCR=true uvicorn app.main:app --reload   # skip Anthropic API
 ```
 
 API docs available at `http://localhost:8000/docs` when running.
@@ -66,8 +60,8 @@ An `Assignment` links a `Person` to an `Item` with a `share_count`. The item pri
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `backend/.env` | Required for live OCR; get from platform.claude.com |
-| `MOCK_OCR` | shell / `.env` | Set to `true` to skip Claude API calls |
+| `ANTHROPIC_API_KEY` | root `.env` | Required for live OCR; get from platform.claude.com |
+| `MOCK_OCR` | root `.env` / `npm run dev:mock` | Set to `true` to skip Claude API calls |
 | `VITE_API_URL` | frontend env | Backend URL (default: `http://localhost:8000`) |
 | `CORS_ORIGINS` | backend env | Comma-separated allowed origins |
 
@@ -86,7 +80,7 @@ The `designs/` folder originates from a claude.ai Design artifact. When the user
 
 **After making any UI change**, verify the result matches the design handoff before considering the task complete. Follow these steps every time:
 
-1. **Run the app** — start the Vite dev server (`cd frontend && npm run dev`) if not already running.
+1. **Run the app** — start the app with `npm run dev:mock` from the repo root if not already running.
 2. **Navigate** to `http://localhost:5173` and reach the affected screen/step.
 3. **Screenshot** the current UI state.
 4. **Read the reference** — the pixel-perfect screenshot and component source for that screen (see map below).

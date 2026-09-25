@@ -22,243 +22,79 @@ A web application to split restaurant bills among multiple people using AI to au
 
 ## Prerequisites
 
-### For Docker (Recommended)
-- Docker and Docker Compose
-- Anthropic API key (get one at [platform.claude.com](https://platform.claude.com))
+Install these once per machine. After that, every command in this README is the same on Windows and macOS.
 
-### For Local Development
-- **Python 3.12** (required for backend development)
-- **Node.js 18+** (required for frontend development)
-- Anthropic API key
+| Tool | Windows | macOS |
+|---|---|---|
+| **Node.js 18+** | `winget install OpenJS.NodeJS.LTS` | `brew install node` |
+| **uv** (Python toolchain) | `winget install astral-sh.uv` | `brew install uv` |
+| **Docker** (optional, for the full stack) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
 
-## Python Installation (Local Development Only)
+You do **not** need to install Python yourself: uv reads `backend/.python-version` and downloads Python 3.12 automatically. Restart your terminal after installing uv so it's on your `PATH`.
 
-If you want to run the backend locally (without Docker), you need Python 3.12 installed.
-
-### Option 1: Using pyenv (Recommended)
-
-```bash
-# Install pyenv (if not already installed)
-# macOS
-brew install pyenv
-
-# Linux
-curl https://pyenv.run | bash
-
-# Install Python 3.12
-pyenv install 3.12.0
-
-# Set Python 3.12 for this project
-cd /path/to/split-bill-app
-pyenv local 3.12.0
-
-# Verify installation
-python --version  # Should show Python 3.12.0
-pip --version     # Should now work
-```
-
-### Option 2: Direct Installation
-
-**macOS:**
-```bash
-brew install python@3.12
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install python3.12 python3.12-venv python3-pip
-```
-
-**Windows:**
-Download from [python.org/downloads](https://www.python.org/downloads/) and install Python 3.12
-
-### Verify Installation
-
-```bash
-python --version  # or python3 --version
-pip --version     # or pip3 --version
-```
+You'll also need an Anthropic API key for live receipt scanning (get one at [platform.claude.com](https://platform.claude.com)). Mock mode works without one.
 
 ## Quick Start
-
-### 1. Clone the repository
 
 ```bash
 git clone <repository-url>
 cd split-bill-app
+npm run setup
 ```
 
-### 2. Set up your Anthropic API key
+`npm run setup` creates `.env` from `.env.example` (if missing), installs the root and frontend npm packages, creates the backend virtualenv with `uv sync` (fetching Python 3.12 if needed), and installs Chromium for Playwright. Re-run it any time dependencies change.
 
-```bash
-cd backend
-cp .env.example .env
-# Edit .env and set ANTHROPIC_API_KEY=your-api-key-here
+Then put your key in the root `.env`:
+```
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Get your API key at [platform.claude.com](https://platform.claude.com).
+## Commands
 
-### 3. Install dependencies
+Run everything from the repo root:
 
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt
+| Command | What it does |
+|---|---|
+| `npm run setup` | Install all dependencies (npm, uv, Playwright browser) |
+| `npm run dev` | Start backend (:8000) and frontend (:5173) together, using the Anthropic API |
+| `npm run dev:mock` | Same, but with mock OCR — no API key or credits needed |
+| `npm test` | Backend (pytest) + frontend unit tests (Vitest) — fast, no servers needed |
+| `npm run test:e2e` | Playwright end-to-end tests (starts its own servers) |
+| `npm run test:all` | `npm test`, then `npm run test:e2e` |
 
-# Frontend
-cd frontend
-npm install
-```
+Open http://localhost:5173 once `dev` is running. Stop it with Ctrl+C.
 
-### 4. Start the application
+Individual pieces are also available: `dev:backend`, `dev:frontend`, `test:backend`, `test:frontend`. Extra arguments go after `--`, e.g. `npm run test:backend -- --cov=app`.
 
-```bash
-docker-compose up --build
-```
-
-This will start three services:
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
-
-### 5. Access the application
-
-Open your browser and navigate to http://localhost:5173
-
-## Development
-
-### Setup for Local Development
-
-**1. Install Python 3.12** (see Python Installation section above)
-
-**2. Set up Python environment:**
-```bash
-# Navigate to project root
-cd split-bill-app
-
-# Set Python 3.12 for this project (if using pyenv)
-pyenv local 3.12.0
-
-# Verify Python version
-python --version  # Should show Python 3.12.x
-```
-
-**3. Install backend dependencies:**
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-**4. Create backend .env file:**
-```bash
-cd backend
-cp .env.example .env
-# Edit .env and set ANTHROPIC_API_KEY=your-api-key-here
-```
-
-### Frontend Development
+### Running with Docker
 
 ```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Runs at http://localhost:5173
-
-### Backend Development
-
-```bash
-cd backend
-
-# Make sure you're using Python 3.12
-python --version
-
-# Run the development server
-uvicorn app.main:app --reload
-```
-
-Runs at http://localhost:8000
-
-### Running with Docker (Recommended)
-
-```bash
-# Build and start all services
-docker-compose up --build
-
-# Stop all services
+docker-compose up --build   # frontend :5173, backend :8000, postgres :5432
 docker-compose down
 ```
 
-This approach ensures:
-- Consistent Python 3.12 environment
-- All dependencies installed correctly
-- No local Python version conflicts
+Docker Compose reads the root `.env`, so `ANTHROPIC_API_KEY` and `MOCK_OCR` are set there.
 
 ## Testing
 
 ### Mock Mode (no Anthropic API call)
 
-Set `MOCK_OCR=true` to bypass the Anthropic API and use hardcoded receipt data. The app behaves normally — items are created in the data store and all features (assignments, breakdown, etc.) work as usual.
+Mock mode bypasses the Anthropic API and uses hardcoded receipt data. The app behaves normally — items are created in the data store and all features (assignments, breakdown, etc.) work as usual.
 
-**Docker:**
-```bash
-MOCK_OCR=true docker-compose up --build
-```
-
-**Local backend:**
-```bash
-MOCK_OCR=true uvicorn app.main:app --reload
-```
+- **Local:** `npm run dev:mock`
+- **Docker:** set `MOCK_OCR=true` in the root `.env`, then `docker-compose up --build`
 
 The mock returns an In-N-Out order with 9 items including custom modifiers (e.g. "Protein Style", "Grilled Onions") so you can test the full UI without spending API credits.
 
 ### With the Anthropic API
 
-Make sure `ANTHROPIC_API_KEY` is set and `MOCK_OCR` is unset (or set to `false`). The backend will call Claude Haiku 4.5 to extract items from the uploaded receipt image.
-
-**Docker:** add your key to the root `.env` file:
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-**Local backend:** export it in your shell or add it to `backend/.env`:
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-```
+Set `ANTHROPIC_API_KEY` in the root `.env` and leave `MOCK_OCR` as `false`. Then run `npm run dev` (or Docker). The backend will call Claude Haiku 4.5 to extract items from the uploaded receipt image.
 
 ### Automated Tests
 
-**Backend (pytest):**
-```bash
-cd backend
-pytest              # run the suite
-pytest --cov=app    # with coverage
-```
-
-**Frontend unit tests (Vitest + React Testing Library):**
-```bash
-cd frontend
-npm test
-```
-
-**Frontend e2e (Playwright):**
-```bash
-cd frontend
-npx playwright install   # one-time browser install
-```
-Then, in a separate terminal, run the backend in mock mode:
-```bash
-cd backend
-MOCK_OCR=true uvicorn app.main:app --reload
-```
-And finally:
-```bash
-cd frontend
-npm run test:e2e
-```
-The e2e suite drives a real browser against the app, so it needs the mock-mode backend from above running in its own terminal — the same requirement as the manual mock-mode testing described earlier in this section.
+- `npm test` runs the backend pytest suite and the frontend Vitest + React Testing Library suite.
+- `npm run test:e2e` runs the Playwright suite in a real browser. It starts its own mock-OCR backend on **:8001** and Vite on **:5174**, so it never touches (or spends credits through) a dev session you have running on :8000/:5173.
+- `npm run test:all` runs both, stopping early if the fast tests fail.
 
 ## API Documentation
 
@@ -296,40 +132,28 @@ split-bill-app/
 
 ## Troubleshooting
 
-### "pip: command not found"
+### "uv: command not found" / "'uv' is not recognized"
 
-**Solution 1: Activate Python 3.12 with pyenv**
-```bash
-cd split-bill-app
-pyenv local 3.12.0
-python --version  # Verify it shows 3.12.x
-pip --version     # Should now work
-```
-
-**Solution 2: Use python -m pip**
-```bash
-python -m pip install -r backend/requirements.txt
-# or
-python3 -m pip install -r backend/requirements.txt
-```
+Restart your terminal (or VS Code) after installing uv so the updated `PATH` is picked up. Verify with `uv --version`.
 
 ### HEIC Image Upload Fails
 
 The app supports iPhone HEIC images. If conversion fails:
-1. Make sure `pillow-heif` is installed
+1. Make sure dependencies are up to date: `npm run setup`
 2. Try converting the HEIC to JPG first using macOS Preview or another tool
 3. Check backend logs for specific error messages
 
 ### Port Already in Use
 
 ```bash
-# Check what's using the port
-lsof -i :8000  # Backend
-lsof -i :5173  # Frontend
-lsof -i :5432  # PostgreSQL
+# macOS
+lsof -i :8000
 
-# Stop conflicting process or change ports in docker-compose.yml
+# Windows (PowerShell)
+Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
 ```
+
+Ports used: 8000 (backend), 5173 (frontend), 5432 (PostgreSQL), and 8001/5174 during `test:e2e`. Stop the conflicting process, or change ports in `docker-compose.yml`.
 
 ## Future Enhancements
 

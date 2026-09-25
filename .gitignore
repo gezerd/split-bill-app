@@ -12,7 +12,6 @@ venv/
 env/
 ENV/
 .venv
-.python-version
 
 # Node
 node_modules/
@@ -40,7 +39,6 @@ Thumbs.db
 # Postgres data
 postgres_data/
 
-package-lock.json
 
 # Test artifacts
 .pytest_cache/
