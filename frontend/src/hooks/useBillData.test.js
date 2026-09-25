@@ -47,6 +47,35 @@ describe('useBillData', () => {
     expect(result.current.error).toBe('boom');
   });
 
+  it('clears people and assignments from the previous bill on re-upload', async () => {
+    api.uploadReceipt
+      .mockResolvedValueOnce({ bill_id: 'bill-1', items: [{ id: 'item-1' }] })
+      .mockResolvedValueOnce({ bill_id: 'bill-2', items: [{ id: 'item-2' }] });
+    api.createPerson.mockResolvedValue({ id: 'p1', name: 'Ann', bill_id: 'bill-1' });
+    api.createAssignment.mockResolvedValue({
+      id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 1,
+    });
+
+    const { result } = renderHook(() => useBillData());
+
+    await act(async () => {
+      await result.current.handleUploadReceipt(new File(['x'], 'receipt.jpg'));
+    });
+    await act(async () => {
+      await result.current.handleCreatePerson('Ann');
+    });
+    await act(async () => {
+      await result.current.handleCreateAssignment('item-1', 'p1', 1);
+    });
+    await act(async () => {
+      await result.current.handleUploadReceipt(new File(['y'], 'receipt2.jpg'));
+    });
+
+    expect(result.current.billId).toBe('bill-2');
+    expect(result.current.people).toEqual([]);
+    expect(result.current.assignments).toEqual([]);
+  });
+
   it('replaces an existing (item, person) assignment locally instead of duplicating', async () => {
     api.createAssignment
       .mockResolvedValueOnce({ id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 1 })

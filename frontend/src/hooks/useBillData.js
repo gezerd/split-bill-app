@@ -20,6 +20,10 @@ export const useBillData = () => {
       const data = await api.uploadReceipt(file);
       setBillId(data.bill_id);
       setItems(data.items || []);
+      // A new upload is a new bill — people/assignments from the previous bill
+      // belong to it on the backend and would be rejected against the new items.
+      setPeople([]);
+      setAssignments([]);
       setTax(data.tax_amount || 0);
       setTip(data.tip_amount || 0);
       setSubtotal(data.subtotal || 0);
