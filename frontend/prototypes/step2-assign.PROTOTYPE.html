@@ -1,0 +1,856 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Not part of the app build. Open by double-clicking.
+  Question: does the weighted-share assignment model (ADR 0001) feel right on Step 2?
+  The <script id="model"> block is the pure, liftable part; everything else is a throwaway shell.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 2 Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #152D42; --surface: #1C3A54; --surface-hi: #254862; --border: #2E5674;
+    --accent: #00FDDC; --accent-dim: oklch(92% 0.14 185 / 0.15); --on-accent: #111111;
+    --text: #EEF4FA; --text-muted: #A0C4DC; --text-dim: #7AAAB8;
+    --warn: #FBBF24; --warn-dim: rgba(251, 191, 36, 0.12); --danger: #ff6b5e;
+    --font: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input { font-family: inherit; }
+
+  /* ---- prototype chrome ---- */
+  .proto-intro { max-width: 1180px; margin: 0 auto; padding: 24px 20px 0; }
+  .proto-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--on-accent); background: var(--warn); padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; }
+  .proto-intro h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .proto-intro p { color: var(--text-muted); font-size: 13px; line-height: 1.55; max-width: 820px; }
+  .layout { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; align-items: start; }
+  @media (max-width: 1060px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ---- Step 2 (mirrors designs/styles.css tokens) ---- */
+  .h2 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+  .subhead { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+  .add-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .field { flex: 1; min-width: 0; padding: 12px 16px; border-radius: 13px; background: var(--surface); border: 1.5px solid var(--border); color: var(--text); font-size: 14px; outline: none; }
+  .field:focus { border-color: var(--accent); }
+  .btn-accent { padding: 12px 20px; border-radius: 13px; font-size: 15px; font-weight: 700; background: var(--accent); color: var(--on-accent); }
+  .btn-accent:disabled { background: var(--surface-hi); color: var(--text-dim); cursor: not-allowed; }
+  .btn-back { padding: 14px 24px; border-radius: 14px; font-size: 14px; font-weight: 700; background: var(--surface-hi); color: var(--text-muted); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chip { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 100px; background: var(--surface); border: 1.5px solid var(--border); cursor: pointer; transition: .15s; }
+  .chip:hover { border-color: var(--text-dim); }
+  .chip--selected { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+  .chip__name { font-weight: 600; font-size: 13px; }
+  /* SVG instead of the "×" glyph, which sits below centre (designs/styles.css .person-chip__x has the same bug) */
+  .chip__x { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-dim); margin-left: 2px; }
+  .chip__x:hover { color: var(--danger); background: rgba(255, 90, 80, .14); }
+  .chips-hint { font-size: 12px; color: var(--text-dim); margin-bottom: 26px; }
+
+  .select-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; background: color-mix(in srgb, var(--c) 14%, transparent); border: 1.5px solid var(--c); font-size: 13px; }
+  .select-banner b { color: var(--c); }
+  .select-banner button { font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 9px; background: var(--c); color: var(--on-accent); }
+
+  .avatar { --sz: 32px; width: var(--sz); height: var(--sz); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border: 1.5px solid var(--c); color: var(--c); background: transparent; position: relative; transition: .15s; }
+  .avatar--filled { background: var(--c); color: var(--on-accent); border-color: transparent; }
+  .avatar--sm { --sz: 26px; font-size: 10px; background: var(--c); color: var(--on-accent); border: none; }
+  .avatar__badge { position: absolute; bottom: -5px; right: -6px; height: 18px; min-width: 18px; padding: 0 4px; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-size: 10px; font-weight: 800; border: 2px solid var(--surface); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+  .label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .pills { display: flex; gap: 6px; }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 100px; background: var(--surface-hi); color: var(--text-muted); }
+  .pill--ok { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .pill--warn { background: var(--warn-dim); color: var(--warn); font-weight: 600; }
+
+  .banner-warn { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--warn-dim); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); color: var(--warn); font-size: 13px; line-height: 1.45; margin-bottom: 14px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .card { background: var(--surface); border-radius: 18px; padding: 16px; border: 1.5px solid var(--border); transition: border-color .2s, box-shadow .2s; cursor: pointer; display: flex; flex-direction: column; }
+  .card:hover { background: color-mix(in srgb, var(--surface) 85%, var(--surface-hi)); }
+  .card--full { border-color: var(--accent); }
+  .card--partial { border-color: color-mix(in srgb, var(--warn) 70%, transparent); }
+  .card--mine { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 45%, transparent); }
+  .card { position: relative; }
+  .mine-badge { display: none; }
+
+  /* ---- "Calmer" look (body.calm) ----
+     1. Colour means "assigned": unassigned avatars are neutral grey rings, and colour appears only once someone holds a Share.
+     2. Selecting a person switches into a focus mode. Assignment-status borders go neutral, the selected person's cards
+        get a tint, a border and a "✓ Name" badge in their colour, and everything else fades back. Done restores the status colours. */
+  body.calm .avatar:not(.avatar--filled):not(.avatar--sm) { border-color: var(--border); color: var(--text-dim); }
+  body.calm .avatar:not(.avatar--filled):not(.avatar--sm):hover { border-color: var(--c); color: var(--c); }
+  body.calm .selecting .card { border-color: var(--border); box-shadow: none; opacity: .55; }
+  body.calm .selecting .card:hover { opacity: .85; }
+  body.calm .selecting .card--mine { opacity: 1; border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--surface)); }
+  body.calm .selecting .card__foot { display: none; }
+  body.calm .selecting .avatars { margin-bottom: 0; }
+  body.calm .mine-badge { display: block; position: absolute; top: -10px; left: 14px; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 100px; background: var(--c); color: var(--on-accent); }
+
+  .look-bar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 70; display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 14px; background: #0B1C2B; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(0,0,0,.4); font-size: 12px; }
+  .look-bar span { color: var(--text-dim); font-weight: 700; padding: 0 8px; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
+  .look-bar button { padding: 7px 14px; border-radius: 10px; font-weight: 700; color: var(--text-muted); }
+  .look-bar button.on { background: var(--accent); color: var(--on-accent); }
+
+  .card__head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .card__name { font-weight: 700; font-size: 15px; }
+  .mods { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .mod { font-size: 10px; padding: 2px 7px; background: var(--surface-hi); color: var(--text-muted); border-radius: 6px; }
+  .card__right { display: flex; align-items: flex-start; gap: 8px; text-align: right; }
+  .price { font-weight: 700; font-size: 14px; }
+  .unit { color: var(--text-muted); font-size: 12px; }
+  .icon-btn { width: 22px; height: 22px; border-radius: 6px; color: var(--text-dim); font-size: 12px; }
+  .icon-btn:hover { background: rgba(255, 90, 80, .14); color: var(--danger); }
+  .avatars { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .card__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+  .card__foot--warn .card__status { color: var(--warn); }
+  .card__foot--ok .card__status { color: var(--text-muted); }
+  .link { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; padding: 2px 0; }
+  .link:hover { text-decoration: underline; }
+  .add-item-card { border: 1.5px dashed var(--border); border-radius: 18px; min-height: 120px; color: var(--text-muted); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: .2s; }
+  .add-item-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .footer { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .footer__right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; }
+  .next-note { font-size: 12px; color: var(--warn); max-width: 280px; text-align: right; line-height: 1.4; }
+  .btn-next { padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 700; background: var(--accent); color: var(--on-accent); }
+  .btn-next:disabled { background: var(--surface-hi); color: var(--text-dim); cursor: not-allowed; }
+
+  /* ---- sheet / modal ---- */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 420px; overflow: hidden; }
+  @media (min-width: 1061px) { .overlay { padding-right: 440px; } }
+  .modal--enter { animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes scaleIn { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal__head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .modal__title { font-weight: 800; font-size: 17px; }
+  .modal__sub { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+  .modal__body { padding: 8px 24px; max-height: 60vh; overflow: auto; }
+  .modal__foot { padding: 16px 24px 22px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .row:last-child { border-bottom: none; }
+  .row__name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row__amt { width: 64px; text-align: right; font-weight: 700; font-size: 14px; }
+  .row__amt--zero { color: var(--text-dim); font-weight: 500; }
+  .stepper { display: flex; align-items: center; background: var(--surface-hi); border-radius: 100px; padding: 3px; }
+  .stepper button { width: 28px; height: 28px; border-radius: 50%; font-size: 16px; font-weight: 700; color: var(--text-muted); }
+  .stepper button:hover:not(:disabled) { background: var(--border); color: var(--text); }
+  .stepper button:disabled { opacity: .3; cursor: default; }
+  .stepper span { width: 26px; text-align: center; font-weight: 800; font-size: 14px; }
+  .sheet-status { font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+  .sheet-status--warn { color: var(--warn); }
+  /* add-item + confirm modals — copied from designs/styles.css (.modal__x, .modal-field, .field, .stepper, .btn--modal …) */
+  .modal--sm { max-width: 360px; border-radius: 20px; }
+  .modal__x { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-shrink: 0; }
+  .modal__x:hover { background: var(--surface-hi); color: var(--text); }
+  .modal__form { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .modal__actions { padding: 0 24px 24px; display: flex; gap: 10px; }
+  .modal__row { display: flex; gap: 12px; }
+  .field-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+  .field-label__opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
+  /* One field style for every control in the modal: same height, fill, border, type. */
+  .modal-field, .money-field { height: 46px; border-radius: 12px; background: var(--surface-hi); border: 1.5px solid var(--border); color: var(--text); font-size: 15px; transition: border-color .15s; }
+  .modal-field { width: 100%; padding: 0 14px; outline: none; }
+  .modal-field::placeholder, .money-field input::placeholder { color: var(--text-dim); }
+  .modal-field:focus, .money-field:focus-within { border-color: var(--accent); }
+  .money-field { display: flex; align-items: center; padding: 0 14px; }
+  .money-field span { color: var(--text-muted); margin-right: 6px; }
+  .money-field input { flex: 1; min-width: 0; height: 100%; background: none; border: none; color: inherit; font: inherit; outline: none; }
+  /* Quantity reuses the Share-sheet stepper, stretched to field height. */
+  .stepper--field { height: 46px; padding: 0 6px; border-radius: 12px; border: 1.5px solid var(--border); }
+  .stepper--field button { width: 32px; height: 32px; }
+  .stepper--field span { width: 30px; font-size: 15px; font-weight: 700; }
+  .mod-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .mod-tag { display: flex; align-items: center; gap: 5px; font-size: 12px; background: var(--accent-dim); color: var(--accent); border-radius: 8px; padding: 4px 6px 4px 10px; font-weight: 600; }
+  .mod-tag button { color: var(--accent); display: flex; }
+  .mod-add { height: 46px; padding: 0 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: 1.5px solid var(--accent); color: var(--accent); }
+  .mod-add:hover:not(:disabled) { background: var(--accent-dim); }
+  .mod-add:disabled { border-color: var(--border); color: var(--text-dim); cursor: not-allowed; }
+  .btn-modal { padding: 13px; border-radius: 13px; font-size: 14px; font-weight: 700; flex: 1; }
+  .btn-ghost { border: 1.5px solid var(--border); color: var(--text-muted); }
+  .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+  .btn-primary { background: var(--accent); color: var(--on-accent); flex: 2; }
+  .btn-primary:disabled { background: var(--surface-hi); color: var(--text-dim); cursor: not-allowed; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .confirm-body { padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .confirm-text { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+  .confirm-text b { color: var(--text); font-weight: 700; }
+
+  .form { padding: 18px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .form label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; display: flex; flex-direction: column; gap: 6px; }
+  .form .field { background: var(--surface-hi); font-size: 15px; }
+
+  /* ---- side panel ---- */
+  /* z-index above the modal overlay so walkthrough steps stay clickable while a sheet is open */
+  .side { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; z-index: 60; }
+  @media (max-width: 1060px) { .side { position: static; } }
+  .panel { background: #10263A; border: 1px solid var(--border); border-radius: 18px; padding: 18px; }
+  .panel h3 { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tab { font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 9px; background: var(--surface-hi); color: var(--text-muted); }
+  .tab--active { background: var(--accent); color: var(--on-accent); }
+  .wt-desc { font-size: 13px; line-height: 1.55; color: var(--text); margin-bottom: 8px; }
+  .wt-watch { font-size: 12px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px; }
+  .wt-watch b { color: var(--accent); }
+  .steps { display: flex; flex-direction: column; gap: 6px; }
+  .step-btn { text-align: left; font-size: 13px; padding: 9px 12px; border-radius: 10px; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-dim); display: flex; gap: 8px; }
+  .step-btn__n { font-weight: 800; width: 16px; flex-shrink: 0; }
+  .step-btn--next { border-color: var(--accent); color: var(--text); }
+  .step-btn--done { color: var(--text-dim); text-decoration: line-through; opacity: .7; }
+  .step-btn:disabled { cursor: default; }
+  .wt-restart { margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--accent); }
+  .last { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; background: var(--accent-dim); color: var(--text); margin-bottom: 14px; }
+  .st-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
+  .st-table td { padding: 5px 4px; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); vertical-align: top; }
+  .st-table td:last-child { text-align: right; white-space: nowrap; }
+  .st-table tr.changed td { background: var(--accent-dim); }
+  .st-sub { color: var(--text-dim); font-size: 11px; }
+  .tag { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 5px; letter-spacing: .3px; }
+  .tag--unassigned { background: var(--surface-hi); color: var(--text-muted); }
+  .tag--partial { background: var(--warn-dim); color: var(--warn); }
+  .tag--full { background: var(--accent-dim); color: var(--accent); }
+  .checks { font-size: 12px; line-height: 1.7; color: var(--text-muted); }
+  .checks b { color: var(--text); }
+  .reset { font-size: 12px; font-weight: 700; color: var(--text-muted); padding: 6px 10px; border-radius: 9px; background: var(--surface-hi); }
+</style>
+</head>
+<body>
+
+<div class="proto-intro">
+  <span class="proto-tag">PROTOTYPE · THROWAWAY</span>
+  <h1>Step 2: assigning items with weighted Shares</h1>
+  <p>
+    Does the new assignment model feel right? Each Person pays <b>item total × their Shares ÷ all Shares on the item</b>.
+    Tap an avatar to add or remove that person. Tap a card to open the Share sheet, where −/+ sets ×2 and up.
+    Click a name in the people row to select that person, then tap cards to add them to items or take them off.
+    Use the walkthroughs on the right for the awkward cases, or just play. Nothing is saved; reload to start over.
+  </p>
+</div>
+
+<div class="layout">
+  <main id="app"></main>
+  <aside class="side">
+    <section class="panel" id="walkthroughs"></section>
+    <section class="panel" id="state"></section>
+  </aside>
+</div>
+<div id="modal-root"></div>
+<div class="look-bar"><span>Look</span><button data-look="current">Current</button><button data-look="calm">Calmer</button></div>
+
+<script id="model">
+/* =====================================================================
+   Pure model — no DOM. Liftable into the real code (frontend/useBillData + backend calc).
+   ===================================================================== */
+const SplitModel = (() => {
+  const toCents = (d) => Math.round(d * 100);
+  const itemTotalCents = (item) => toCents(item.price) * item.qty;
+  const sharesOn = (state, itemId) => state.shares[itemId] || {};
+  const totalShares = (state, itemId) => Object.values(sharesOn(state, itemId)).reduce((a, b) => a + b, 0);
+
+  function status(state, item) {
+    const t = totalShares(state, item.id);
+    if (t === 0) return 'unassigned';
+    return t < item.qty ? 'partial' : 'full';
+  }
+
+  // Item total split by Share weight, in cents; largest remainder so it sums exactly.
+  function splitCents(state, item) {
+    const s = sharesOn(state, item.id);
+    const ids = state.people.map((p) => p.id).filter((id) => s[id] > 0);
+    const T = ids.reduce((a, id) => a + s[id], 0);
+    if (!T) return {};
+    const total = itemTotalCents(item);
+    const raw = ids.map((id) => (total * s[id]) / T);
+    const out = raw.map(Math.floor);
+    let rem = total - out.reduce((a, b) => a + b, 0);
+    const order = ids.map((_, i) => i).sort((a, b) => (raw[b] - out[b]) - (raw[a] - out[a]));
+    for (const i of order) { if (rem <= 0) break; out[i]++; rem--; }
+    return Object.fromEntries(ids.map((id, i) => [id, out[i]]));
+  }
+
+  const firstName = (p) => p.name.trim().split(/\s+/)[0];
+  function joinNames(names) {
+    if (names.length <= 1) return names.join('');
+    return names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+  }
+
+  // Plain-language description of who pays for an item.
+  function describe(state, item) {
+    const s = sharesOn(state, item.id);
+    const holders = state.people.filter((p) => s[p.id] > 0);
+    const T = totalShares(state, item.id);
+    const st = status(state, item);
+    if (st === 'unassigned') return { tone: 'dim', text: 'Tap a person to assign' };
+    const counts = holders.map((p) => s[p.id]);
+    const even = counts.every((c) => c === counts[0]);
+    const names = joinNames(holders.map(firstName));
+    const split = splitCents(state, item);
+    const amounts = holders.map((p) => `${firstName(p)} $${(split[p.id] / 100).toFixed(2)}`).join(' · ');
+    if (st === 'partial') {
+      const who = holders.length === 1 ? `${names} covers all ${item.qty}`
+        : even ? `${names} split all ${item.qty} evenly` : `${amounts} for all ${item.qty}`;
+      return { tone: 'warn', text: `${T} of ${item.qty} claimed — ${who}` };
+    }
+    if (holders.length === 1) return { tone: 'ok', text: `${names} pays` };
+    if (even) {
+      const each = split[holders[0].id];
+      return { tone: 'ok', text: `Split ${holders.length} ways · ~$${(each / 100).toFixed(2)} each` };
+    }
+    return { tone: 'ok', text: amounts };
+  }
+
+  function summary(state) {
+    const itemsSubtotalCents = state.items.reduce((a, i) => a + itemTotalCents(i), 0);
+    const personCents = Object.fromEntries(state.people.map((p) => [p.id, 0]));
+    const personItems = Object.fromEntries(state.people.map((p) => [p.id, 0]));
+    for (const item of state.items) {
+      for (const [pid, c] of Object.entries(splitCents(state, item))) { personCents[pid] += c; personItems[pid]++; }
+    }
+    const unassignedItems = state.items.filter((i) => status(state, i) === 'unassigned');
+    const partialItems = state.items.filter((i) => status(state, i) === 'partial');
+    const unassignedPeople = state.people.filter((p) => personItems[p.id] === 0);
+    const receiptCents = state.receiptSubtotal == null ? null : toCents(state.receiptSubtotal);
+    const mismatch = receiptCents != null && receiptCents !== itemsSubtotalCents;
+    const canProceed = state.people.length > 0 && state.items.length > 0 && unassignedItems.length === 0;
+    return { itemsSubtotalCents, receiptCents, mismatch, personCents, personItems, unassignedItems, partialItems, unassignedPeople, canProceed };
+  }
+
+  let seq = 1;
+  function reduce(state, a) {
+    const s = structuredClone(state);
+    const shareMap = (itemId) => (s.shares[itemId] ||= {});
+    switch (a.type) {
+      case 'addPerson': s.people.push({ id: 'p' + seq++, name: a.name }); break;
+      case 'removePerson':
+        s.people = s.people.filter((p) => p.id !== a.personId);
+        for (const k in s.shares) delete s.shares[k][a.personId];
+        if (s.selectedPersonId === a.personId) s.selectedPersonId = null;
+        break;
+      case 'selectPerson': s.selectedPersonId = s.selectedPersonId === a.personId ? null : a.personId; break;
+      case 'clearSelection': s.selectedPersonId = null; break;
+      case 'toggle': { const m = shareMap(a.itemId); if (m[a.personId]) delete m[a.personId]; else m[a.personId] = 1; break; }
+      case 'tapItem': { if (!s.selectedPersonId) break; const m = shareMap(a.itemId); if (m[s.selectedPersonId]) delete m[s.selectedPersonId]; else m[s.selectedPersonId] = 1; break; }
+      case 'increment': { const m = shareMap(a.itemId); m[a.personId] = (m[a.personId] || 0) + 1; break; }
+      case 'decrement': { const m = shareMap(a.itemId); if (m[a.personId] > 1) m[a.personId]--; else delete m[a.personId]; break; }
+      case 'addItem': s.items.push({ id: a.id || 'i' + seq++, name: a.name, price: a.price, qty: a.qty, mods: a.mods || [] }); break;
+      case 'deleteItem': s.items = s.items.filter((i) => i.id !== a.itemId); delete s.shares[a.itemId]; break;
+    }
+    return s;
+  }
+
+  return { reduce, status, splitCents, describe, summary, totalShares, itemTotalCents };
+})();
+</script>
+
+<script>
+/* =====================================================================
+   Throwaway page shell
+   ===================================================================== */
+const COLORS = ['#F87171', '#60A5FA', '#A78BFA', '#4ADE80', '#FBBF24', '#F472B6', '#FB923C', '#38BDF8'];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const X_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+const money = (c) => '$' + (c / 100).toFixed(2);
+const initials = (name) => { const p = name.trim().split(/\s+/); return (p.length >= 2 ? p[0][0] + p[p.length - 1][0] : p[0][0]).toUpperCase(); };
+
+// Mock In-N-Out receipt (backend/app/services/ocr_service.py _MOCK_DATA), quantities merged per line.
+const MOCK_ITEMS = [
+  { id: 'cb', name: 'Cheeseburger', price: 4.25, qty: 1, mods: ['Grilled Onion'] },
+  { id: 'dd1', name: 'Dbl-Dbl', price: 6.10, qty: 1, mods: ['Tomato'] },
+  { id: 'dd2', name: 'Dbl-Dbl', price: 6.10, qty: 1, mods: ['Grilled Onion', 'Protein Style'] },
+  { id: 'dd3', name: 'Dbl-Dbl', price: 6.10, qty: 1, mods: ['Onion', 'Grilled Onion'] },
+  { id: 'fry', name: 'Fry', price: 2.35, qty: 3, mods: [] },
+  { id: 'afry', name: 'Animal Fry', price: 4.75, qty: 2, mods: [] },
+  { id: 'coke', name: 'Med Coke', price: 2.30, qty: 1, mods: [] },
+  { id: 'rb', name: 'Med Root Beer', price: 2.30, qty: 1, mods: [] },
+  { id: 'shk', name: 'Reg Neapolitan Shk', price: 3.05, qty: 2, mods: [] },
+];
+const PEOPLE = [
+  { id: 'alex', name: 'Alex Kim' }, { id: 'sam', name: 'Sam Lee' },
+  { id: 'jo', name: 'Jo Park' }, { id: 'priya', name: 'Priya Shah' },
+];
+const baseState = () => ({
+  people: structuredClone(PEOPLE), items: structuredClone(MOCK_ITEMS),
+  shares: {}, selectedPersonId: null, receiptSubtotal: 49.80,
+});
+
+let state = baseState();
+let ui = { sheetItemId: null, addOpen: false, lastChange: 'Fresh bill: 4 people, 9 receipt lines, nothing assigned yet.' };
+let prevRows = {};
+
+const person = (id) => state.people.find((p) => p.id === id);
+const item = (id) => state.items.find((i) => i.id === id);
+const colorOf = (id) => COLORS[Math.max(0, state.people.findIndex((p) => p.id === id)) % COLORS.length];
+const itemLabel = (i) => i.name + (i.mods[0] ? ` (${i.mods[0]})` : '');
+
+function narrate(a, before) {
+  const P = (id) => (person(id) || before.people.find((p) => p.id === id))?.name.split(' ')[0];
+  const I = (id) => { const x = item(id) || before.items.find((i) => i.id === id); return x ? itemLabel(x) : '?'; };
+  const shares = (itemId, pid) => (state.shares[itemId] || {})[pid] || 0;
+  switch (a.type) {
+    case 'toggle': return shares(a.itemId, a.personId) ? `${P(a.personId)} now has a Share of ${I(a.itemId)}.` : `${P(a.personId)} was taken off ${I(a.itemId)}.`;
+    case 'tapItem': return before.selectedPersonId ? (shares(a.itemId, before.selectedPersonId) ? `${P(before.selectedPersonId)} added to ${I(a.itemId)}.` : `${P(before.selectedPersonId)} taken off ${I(a.itemId)}.`) : '';
+    case 'increment': return `${P(a.personId)} now has ×${shares(a.itemId, a.personId)} on ${I(a.itemId)}.`;
+    case 'decrement': { const n = shares(a.itemId, a.personId); return n ? `${P(a.personId)} down to ×${n} on ${I(a.itemId)}.` : `${P(a.personId)} no longer on ${I(a.itemId)}.`; }
+    case 'selectPerson': return state.selectedPersonId ? `Selected ${P(a.personId)}. Tapping a card now adds or removes ${P(a.personId)}.` : `Deselected ${P(a.personId)}. Tapping a card opens the Share sheet again.`;
+    case 'clearSelection': return 'Done with selection. Tapping a card opens the Share sheet again.';
+    case 'addPerson': return `Added ${a.name}.`;
+    case 'removePerson': return `Removed ${P(a.personId)} and every Share they held.`;
+    case 'addItem': return `Added ${a.name} (${a.qty} × $${a.price.toFixed(2)}).`;
+    case 'deleteItem': return `Deleted ${I(a.itemId)}.`;
+  }
+  return '';
+}
+
+function dispatch(a) {
+  const before = state;
+  state = SplitModel.reduce(state, a);
+  ui.lastChange = narrate(a, before) || ui.lastChange;
+  render();
+}
+
+/* ---------------- Step 2 view ---------------- */
+function renderApp() {
+  const sum = SplitModel.summary(state);
+  const sel = state.selectedPersonId ? person(state.selectedPersonId) : null;
+  const selColor = sel ? colorOf(sel.id) : '';
+
+  const chips = state.people.map((p) => `
+    <div class="chip ${state.selectedPersonId === p.id ? 'chip--selected' : ''}" style="--c:${colorOf(p.id)}" data-action="select" data-person="${p.id}" title="Select ${esc(p.name)} to tap their items">
+      <span class="avatar avatar--sm" style="--c:${colorOf(p.id)}">${esc(initials(p.name))}</span>
+      <span class="chip__name">${esc(p.name)}</span>
+      <button class="chip__x" data-action="remove-person" data-person="${p.id}" title="Remove">${X_ICON}</button>
+    </div>`).join('');
+
+  const cards = state.items.map((it) => {
+    const st = SplitModel.status(state, it);
+    const s = state.shares[it.id] || {};
+    const d = SplitModel.describe(state, it);
+    const mine = sel && s[sel.id] > 0;
+    const mineBadge = mine ? `<span class="mine-badge">✓ ${esc(sel.name.split(' ')[0])}${s[sel.id] > 1 ? ' ×' + s[sel.id] : ''}</span>` : '';
+    const avatars = state.people.map((p) => {
+      const n = s[p.id] || 0;
+      return `<button class="avatar ${n ? 'avatar--filled' : ''}" style="--c:${colorOf(p.id)}" data-action="avatar" data-item="${it.id}" data-person="${p.id}" title="${esc(p.name)}">${esc(initials(p.name))}${n > 1 ? `<span class="avatar__badge">×${n}</span>` : ''}</button>`;
+    }).join('');
+    return `
+      <div class="card ${st === 'full' ? 'card--full' : st === 'partial' ? 'card--partial' : ''} ${mine ? 'card--mine' : ''}" style="--c:${selColor}" data-action="card" data-item="${it.id}">
+        ${mineBadge}
+        <div class="card__head">
+          <div><div class="card__name">${esc(it.name)}</div>${it.mods.length ? `<div class="mods">${it.mods.map((m) => `<span class="mod">${esc(m)}</span>`).join('')}</div>` : ''}</div>
+          <div class="card__right">
+            <div><div class="price">${money(SplitModel.itemTotalCents(it))}</div>${it.qty > 1 ? `<div class="unit">×${it.qty} @ $${it.price.toFixed(2)}</div>` : ''}</div>
+            <button class="icon-btn" data-action="delete-item" data-item="${it.id}" title="Delete item">✕</button>
+          </div>
+        </div>
+        <div class="avatars">${state.people.length ? avatars : '<span class="card__status">Add people to assign</span>'}</div>
+        <div class="card__foot card__foot--${d.tone}">
+          <span class="card__status">${esc(d.text)}</span>
+          <button class="link" data-action="sheet" data-item="${it.id}">Shares ›</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const nUn = sum.unassignedItems.length, nPart = sum.partialItems.length;
+  const pills = !state.items.length ? '' :
+    (nUn ? `<span class="pill">${nUn} unassigned</span>` : '<span class="pill pill--ok">All assigned ✓</span>') +
+    (nPart ? `<span class="pill pill--warn">${nPart} partial</span>` : '');
+
+  const mismatch = sum.mismatch ? `
+    <div class="banner-warn"><span>⚠</span><span>Items add up to <b>${money(sum.itemsSubtotalCents)}</b>, but the receipt subtotal is <b>${money(sum.receiptCents)}</b>. A line may be missing or misread.</span></div>` : '';
+
+  const nextLabel = !state.people.length ? 'Add people first' : nUn ? `${nUn} item${nUn > 1 ? 's' : ''} remaining` : 'Next →';
+  // Only once every item has a Share; mid-assignment it's just noise.
+  const note = sum.unassignedPeople.length && state.people.length && !nUn
+    ? `${esc(joinFirst(sum.unassignedPeople))} ${sum.unassignedPeople.length > 1 ? 'have' : 'has'} nothing assigned — ${sum.unassignedPeople.length > 1 ? "they'll each owe" : "they'll owe"} $0.` : '';
+
+  const app = document.getElementById('app');
+  app.classList.toggle('selecting', !!sel);
+  app.innerHTML = `
+    <h2 class="h2">Who's splitting?</h2>
+    <p class="subhead">Add everyone, then tap each item to assign it.</p>
+    <form class="add-row" data-form="person">
+      <input class="field" name="name" placeholder="Enter a name…" autocomplete="off">
+      <button class="btn-accent" type="submit">+ Add</button>
+    </form>
+    <div class="chips">${chips}</div>
+    <div class="chips-hint">${state.people.length ? 'Tip: tap a name to select them, then tap everything they had.' : ''}</div>
+
+    ${sel ? `<div class="select-banner" style="--c:${selColor}"><span>Tapping items for <b>${esc(sel.name)}</b>. Tap a card to add them to it or take them off.</span><button data-action="clear-selection">Done</button></div>` : ''}
+
+    <div class="section-head"><span class="label">Items from receipt</span><div class="pills">${pills}</div></div>
+    ${mismatch}
+    <div class="grid">
+      ${cards}
+      <button class="add-item-card" data-action="open-add"><span style="font-size:18px;line-height:1">+</span> Add missing item</button>
+    </div>
+    <div class="footer">
+      <button class="btn-back" data-action="noop">← Back</button>
+      <div class="footer__right">
+        ${note ? `<span class="next-note">${note}</span>` : ''}
+        <button class="btn-next" ${sum.canProceed ? '' : 'disabled'} data-action="noop">${nextLabel}</button>
+      </div>
+    </div>`;
+}
+const joinFirst = (ps) => { const n = ps.map((p) => p.name.split(' ')[0]); return n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' & ' + n[n.length - 1]; };
+
+/* ---------------- sheet + add modal ---------------- */
+function renderModal() {
+  const root = document.getElementById('modal-root');
+  const key = ui.confirm ? 'confirm:' + ui.confirm.id : ui.sheetItemId ? 'sheet:' + ui.sheetItemId : ui.addOpen ? 'add' : '';
+  const enter = key && key !== renderModal.lastKey ? 'modal--enter' : '';
+  renderModal.lastKey = key;
+  if (ui.confirm) {
+    const c = ui.confirm;
+    const isItem = c.kind === 'item';
+    const target = isItem ? item(c.id) : person(c.id);
+    const title = isItem ? 'Delete item?' : 'Remove person?';
+    const text = isItem
+      ? `Remove <b>${esc(itemLabel(target))}</b> from the bill? This also clears anyone it was assigned to.`
+      : `Remove <b>${esc(target.name)}</b>? Their Shares on ${c.count} item${c.count === 1 ? '' : 's'} will be cleared.`;
+    root.innerHTML = `
+      <div class="overlay" data-action="close-modal">
+        <div class="modal modal--sm ${enter}">
+          <div class="confirm-body"><div class="modal__title">${title}</div><div class="confirm-text">${text}</div></div>
+          <div class="modal__actions">
+            <button class="btn-modal btn-ghost" data-action="close-modal">Cancel</button>
+            <button class="btn-modal btn-danger" data-action="confirm-yes">${isItem ? 'Delete' : 'Remove'}</button>
+          </div>
+        </div>
+      </div>`;
+  } else if (ui.sheetItemId && item(ui.sheetItemId)) {
+    const it = item(ui.sheetItemId);
+    const s = state.shares[it.id] || {};
+    const split = SplitModel.splitCents(state, it);
+    const T = SplitModel.totalShares(state, it.id);
+    const d = SplitModel.describe(state, it);
+    const rows = state.people.map((p) => {
+      const n = s[p.id] || 0;
+      return `<div class="row">
+        <span class="avatar avatar--sm" style="--c:${colorOf(p.id)}">${esc(initials(p.name))}</span>
+        <span class="row__name">${esc(p.name)}</span>
+        <div class="stepper">
+          <button data-action="dec" data-item="${it.id}" data-person="${p.id}" ${n ? '' : 'disabled'}>−</button>
+          <span>${n}</span>
+          <button data-action="inc" data-item="${it.id}" data-person="${p.id}">+</button>
+        </div>
+        <span class="row__amt ${n ? '' : 'row__amt--zero'}">${n ? money(split[p.id]) : '—'}</span>
+      </div>`;
+    }).join('');
+    root.innerHTML = `
+      <div class="overlay" data-action="close-modal">
+        <div class="modal ${enter}">
+          <div class="modal__head">
+            <div><div class="modal__title">${esc(it.name)}</div>
+              <div class="modal__sub">${money(SplitModel.itemTotalCents(it))}${it.qty > 1 ? ` · ${it.qty} × $${it.price.toFixed(2)}` : ''} · ${T} Share${T === 1 ? '' : 's'}</div></div>
+            <button class="modal__x" data-action="close-modal" title="Close">${X_ICON}</button>
+          </div>
+          <div class="modal__body">${rows || '<p class="sheet-status" style="padding:16px 0">Add people first.</p>'}</div>
+          <div class="modal__foot">
+            <div class="sheet-status ${d.tone === 'warn' ? 'sheet-status--warn' : ''}">${esc(d.text)}</div>
+            <button class="btn-accent" data-action="close-modal">Done</button>
+          </div>
+        </div>
+      </div>`;
+  } else if (ui.addOpen) {
+    // Mirrors designs/02-assign-additem.html. Typing only updates ui.draft (no re-render);
+    // the qty stepper and modifier buttons re-render from the draft.
+    const d = ui.draft;
+    const valid = draftValid(d);
+    const total = (parseFloat(d.price) || 0) * d.qty;
+    root.innerHTML = `
+      <div class="overlay" data-action="close-modal">
+        <form class="modal ${enter}" data-form="item">
+          <div class="modal__head">
+            <div><div class="modal__title">Add an item</div><div class="modal__sub">Missing from the scan? Add it manually.</div></div>
+            <button type="button" class="modal__x" data-action="close-modal" title="Close">${X_ICON}</button>
+          </div>
+          <div class="modal__form">
+            <div><div class="field-label">Item name</div><input class="modal-field" name="name" placeholder="e.g. Side of Ranch" autocomplete="off" value="${esc(d.name)}"></div>
+            <div class="modal__row">
+              <div style="flex:1;min-width:0"><div class="field-label">Price per item</div>
+                <div class="money-field"><span>$</span><input name="price" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off" value="${esc(d.price)}"></div></div>
+              <div><div class="field-label">Quantity</div>
+                <div class="stepper stepper--field"><button type="button" data-action="qty-dec" ${d.qty > 1 ? '' : 'disabled'}>−</button><span>${d.qty}</span><button type="button" data-action="qty-inc">+</button></div></div>
+            </div>
+            <div>
+              <div class="field-label">Modifiers <span class="field-label__opt">· optional</span></div>
+              ${d.mods.length ? `<div class="mod-tags">${d.mods.map((m, i) => `<span class="mod-tag">${esc(m)}<button type="button" data-action="mod-remove" data-i="${i}" title="Remove">${X_ICON}</button></span>`).join('')}</div>` : ''}
+              <div class="add-row" style="margin-bottom:0">
+                <input class="modal-field" name="mod" style="font-size:14px" placeholder="e.g. Extra cheese" autocomplete="off" value="${esc(d.modInput)}">
+                <button type="button" class="mod-add" data-action="mod-add" ${d.modInput.trim() ? '' : 'disabled'}>Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal__actions">
+            <button type="button" class="btn-modal btn-ghost" data-action="close-modal">Cancel</button>
+            <button type="submit" class="btn-modal btn-primary" ${valid ? '' : 'disabled'}>${valid ? `Add item · $${total.toFixed(2)}` : 'Add item'}</button>
+          </div>
+        </form>
+      </div>`;
+    if (enter) root.querySelector('input[name=name]').focus();
+    else if (ui.focus) root.querySelector(`input[name=${ui.focus}]`)?.focus();
+    ui.focus = null;
+  } else {
+    root.innerHTML = '';
+  }
+}
+
+/* ---------------- state panel ---------------- */
+function renderState() {
+  const sum = SplitModel.summary(state);
+  const rows = {};
+  const personRows = state.people.map((p) => {
+    const key = 'p:' + p.id, val = sum.personCents[p.id] + '/' + sum.personItems[p.id];
+    rows[key] = val;
+    return `<tr class="${prevRows[key] !== undefined && prevRows[key] !== val ? 'changed' : ''}">
+      <td><span style="color:${colorOf(p.id)};font-weight:700">${esc(p.name)}</span> <span class="st-sub">${sum.personItems[p.id]} item${sum.personItems[p.id] === 1 ? '' : 's'}</span></td>
+      <td>${money(sum.personCents[p.id])}</td></tr>`;
+  }).join('');
+  const itemRows = state.items.map((it) => {
+    const s = state.shares[it.id] || {};
+    const st = SplitModel.status(state, it);
+    const holders = state.people.filter((p) => s[p.id]).map((p) => `${p.name.split(' ')[0]} ×${s[p.id]}`).join(', ');
+    const key = 'i:' + it.id, val = JSON.stringify(s);
+    rows[key] = val;
+    return `<tr class="${prevRows[key] !== undefined && prevRows[key] !== val ? 'changed' : ''}">
+      <td>${esc(itemLabel(it))}${it.qty > 1 ? ` <span class="st-sub">qty ${it.qty}</span>` : ''}<div class="st-sub">${holders ? esc(holders) : 'no Shares'}</div></td>
+      <td><span class="tag tag--${st}">${st === 'full' ? 'ASSIGNED' : st.toUpperCase()}</span></td></tr>`;
+  }).join('');
+  prevRows = rows;
+
+  const reason = !state.people.length ? 'no people yet'
+    : sum.unassignedItems.length ? `${sum.unassignedItems.length} item(s) have no Shares`
+    : 'ready';
+  document.getElementById('state').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="margin:0">What's happening</h3><button class="reset" data-action="reset">Reset bill</button></div>
+    <div class="last">${esc(ui.lastChange)}</div>
+    <table class="st-table"><tbody>${personRows || '<tr><td class="st-sub">No people</td><td></td></tr>'}</tbody></table>
+    <table class="st-table"><tbody>${itemRows}</tbody></table>
+    <div class="checks">
+      Items subtotal <b>${money(sum.itemsSubtotalCents)}</b> · receipt <b>${sum.receiptCents == null ? '—' : money(sum.receiptCents)}</b> ${sum.mismatch ? '<span style="color:var(--warn)">⚠ mismatch</span>' : '✓'}<br>
+      Next button: <b>${sum.canProceed ? 'enabled' : 'blocked'}</b> (${reason})<br>
+      Split so far adds up to <b>${money(Object.values(sum.personCents).reduce((a, b) => a + b, 0))}</b> before tax &amp; tip
+    </div>`;
+}
+
+/* ---------------- walkthroughs ---------------- */
+const assignAll = (s, map) => { for (const [itemId, pids] of Object.entries(map)) s.shares[itemId] = Object.fromEntries(pids.map((p) => [p, 1])); return s; };
+const WALKTHROUGHS = [
+  {
+    tab: 'Family-style',
+    desc: 'Alex, Sam and Jo shared one Cheeseburger. Under the old model this was impossible: once one person had the only unit, tapping anyone else did nothing.',
+    watch: 'Watch the card: <b>Split 3 ways · ~$1.42 each</b>. $4.25 doesn’t divide evenly, so one person pays a cent less and it still adds up to exactly $4.25.',
+    setup: baseState,
+    steps: [
+      ['Tap Alex on Cheeseburger', { type: 'toggle', itemId: 'cb', personId: 'alex' }],
+      ['Tap Sam on Cheeseburger', { type: 'toggle', itemId: 'cb', personId: 'sam' }],
+      ['Tap Jo on Cheeseburger', { type: 'toggle', itemId: 'cb', personId: 'jo' }],
+      ['Open the Cheeseburger Share sheet', { ui: 'sheet', itemId: 'cb' }],
+      ['Close it', { ui: 'close' }],
+    ],
+  },
+  {
+    tab: '2 of 3 fries',
+    desc: 'Three orders of fries. Alex and Sam each tap once, which gives 2 Shares on a quantity-3 item. That’s <i>Partially assigned</i>.',
+    watch: 'The card warns <b>“2 of 3 claimed — Alex & Sam split all 3 evenly”</b>, but Next isn’t blocked, because 50/50 might be what they meant. Then Alex goes to ×2 in the sheet and pays for 2 of the 3.',
+    setup: baseState,
+    steps: [
+      ['Tap Alex on Fry', { type: 'toggle', itemId: 'fry', personId: 'alex' }],
+      ['Tap Sam on Fry', { type: 'toggle', itemId: 'fry', personId: 'sam' }],
+      ['Open the Fry Share sheet', { ui: 'sheet', itemId: 'fry' }],
+      ['Press + next to Alex', { type: 'increment', itemId: 'fry', personId: 'alex' }],
+      ['Done', { ui: 'close' }],
+    ],
+  },
+  {
+    tab: 'Oops, undo',
+    desc: 'Someone gives Alex ×2 on the shakes by mistake. It was meant to be one each for Alex and Sam.',
+    watch: 'Use <b>−</b> in the sheet to go back down. After that, tapping Alex’s avatar removes Alex completely, and Sam is left covering both shakes.',
+    setup: baseState,
+    steps: [
+      ['Tap Alex on Neapolitan Shake', { type: 'toggle', itemId: 'shk', personId: 'alex' }],
+      ['Open the Shake Share sheet', { ui: 'sheet', itemId: 'shk' }],
+      ['+ Alex (the mistake)', { type: 'increment', itemId: 'shk', personId: 'alex' }],
+      ['− Alex (fix it)', { type: 'decrement', itemId: 'shk', personId: 'alex' }],
+      ['+ Sam', { type: 'increment', itemId: 'shk', personId: 'sam' }],
+      ['Close', { ui: 'close' }],
+      ['Tap Alex’s avatar on the Shake card', { type: 'toggle', itemId: 'shk', personId: 'alex' }],
+    ],
+  },
+  {
+    tab: 'Around the table',
+    desc: 'Go around the table asking “what did you have?” Select a person, then tap each card that’s theirs.',
+    watch: 'In the <b>Calmer</b> look, the page switches to focus mode while a person is selected. Their cards get their colour and a “✓ Sam” badge, and everything else fades back. Flip to <b>Current</b> at the bottom of the page to compare. Tapping a card doesn’t open the sheet while someone is selected; you can still open it with <b>Shares ›</b>.',
+    setup: baseState,
+    steps: [
+      ['Select Sam', { type: 'selectPerson', personId: 'sam' }],
+      ['Tap Dbl-Dbl (Tomato)', { type: 'tapItem', itemId: 'dd1' }],
+      ['Tap Med Coke', { type: 'tapItem', itemId: 'coke' }],
+      ['Tap Fry', { type: 'tapItem', itemId: 'fry' }],
+      ['Select Jo (switches straight over)', { type: 'selectPerson', personId: 'jo' }],
+      ['Tap Fry', { type: 'tapItem', itemId: 'fry' }],
+      ['Tap Animal Fry', { type: 'tapItem', itemId: 'afry' }],
+      ['Tap Animal Fry again (oops, take Jo off)', { type: 'tapItem', itemId: 'afry' }],
+      ['Done', { type: 'clearSelection' }],
+    ],
+  },
+  {
+    tab: 'Nothing for Priya',
+    desc: 'Every item except the Root Beer is assigned to Alex, Sam and Jo. Priya has nothing yet.',
+    watch: 'Next is blocked by the <b>unassigned item</b>, not by Priya. Once the Root Beer has a Share, Next unlocks, and the note about Priya stays as a warning only.',
+    setup: () => assignAll(baseState(), { cb: ['alex'], dd1: ['sam'], dd2: ['jo'], dd3: ['alex'], fry: ['alex', 'sam', 'jo'], afry: ['sam', 'jo'], coke: ['alex'], shk: ['sam', 'jo'] }),
+    steps: [
+      ['Tap Jo on Med Root Beer', { type: 'toggle', itemId: 'rb', personId: 'jo' }],
+      ['Tap Priya on Med Root Beer', { type: 'toggle', itemId: 'rb', personId: 'priya' }],
+    ],
+  },
+  {
+    tab: 'Missed a line',
+    desc: 'The OCR missed the Root Beer, so the items no longer add up to the receipt subtotal ($49.80).',
+    watch: 'A <b>Subtotal mismatch</b> banner appears above the items and goes away once the missing line is added back.',
+    setup: baseState,
+    steps: [
+      ['Delete Med Root Beer (simulate the miss)', { type: 'deleteItem', itemId: 'rb' }],
+      ['Add “Med Root Beer” $2.30 × 1', { type: 'addItem', id: 'rb', name: 'Med Root Beer', price: 2.30, qty: 1 }],
+    ],
+  },
+];
+let wt = { index: 0, done: 0 };
+
+function startWalkthrough(i) {
+  wt = { index: i, done: 0 };
+  state = WALKTHROUGHS[i].setup();
+  ui = { sheetItemId: null, addOpen: false, lastChange: `Walkthrough “${WALKTHROUGHS[i].tab}” started. The bill has been reset.` };
+  prevRows = {};
+  render();
+}
+function runStep(n) {
+  const w = WALKTHROUGHS[wt.index];
+  if (n !== wt.done) return;
+  const act = w.steps[n][1];
+  wt.done++;
+  if (act.ui === 'sheet') { ui.sheetItemId = act.itemId; ui.lastChange = `Opened the Share sheet for ${itemLabel(item(act.itemId))}.`; render(); }
+  else if (act.ui === 'close') { ui.sheetItemId = null; render(); }
+  else dispatch(act);
+}
+function renderWalkthroughs() {
+  const w = WALKTHROUGHS[wt.index];
+  document.getElementById('walkthroughs').innerHTML = `
+    <h3>Walkthroughs</h3>
+    <div class="tabs">${WALKTHROUGHS.map((x, i) => `<button class="tab ${i === wt.index ? 'tab--active' : ''}" data-action="wt" data-i="${i}">${esc(x.tab)}</button>`).join('')}</div>
+    <p class="wt-desc">${w.desc}</p>
+    <p class="wt-watch">${w.watch}</p>
+    <div class="steps">${w.steps.map(([label], n) => `
+      <button class="step-btn ${n < wt.done ? 'step-btn--done' : n === wt.done ? 'step-btn--next' : ''}" data-action="step" data-n="${n}" ${n === wt.done ? '' : 'disabled'}>
+        <span class="step-btn__n">${n < wt.done ? '✓' : n + 1}</span><span>${esc(label)}</span></button>`).join('')}</div>
+    <button class="wt-restart" data-action="wt" data-i="${wt.index}">↺ Restart this walkthrough</button>`;
+}
+
+function render() { renderApp(); renderModal(); renderState(); renderWalkthroughs(); }
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const { action, item: itemId, person: personId } = el.dataset;
+  if (action === 'close-modal' && e.target !== el && el.classList.contains('overlay')) return; // clicks inside modal
+  switch (action) {
+    case 'avatar': e.stopPropagation(); dispatch({ type: 'toggle', itemId, personId }); break;
+    case 'card':
+      if (state.selectedPersonId) dispatch({ type: 'tapItem', itemId });
+      else { ui.sheetItemId = itemId; render(); }
+      break;
+    case 'sheet': ui.sheetItemId = itemId; render(); break;
+    case 'inc': dispatch({ type: 'increment', itemId, personId }); break;
+    case 'dec': dispatch({ type: 'decrement', itemId, personId }); break;
+    case 'close-modal': closeModals(); break;
+    case 'select': dispatch({ type: 'selectPerson', personId }); break;
+    case 'remove-person': {
+      // Confirm only when there's something to lose (they hold Shares).
+      const count = SplitModel.summary(state).personItems[personId];
+      if (count) { ui.confirm = { kind: 'person', id: personId, count }; render(); }
+      else dispatch({ type: 'removePerson', personId });
+      break;
+    }
+    case 'clear-selection': dispatch({ type: 'clearSelection' }); break;
+    case 'delete-item': ui.confirm = { kind: 'item', id: itemId }; render(); break;
+    case 'confirm-yes': {
+      const c = ui.confirm; ui.confirm = null;
+      dispatch(c.kind === 'item' ? { type: 'deleteItem', itemId: c.id } : { type: 'removePerson', personId: c.id });
+      break;
+    }
+    case 'open-add': ui.addOpen = true; ui.draft = { name: '', price: '', qty: 1, mods: [], modInput: '' }; render(); break;
+    case 'qty-inc': ui.draft.qty++; renderModal(); break;
+    case 'qty-dec': ui.draft.qty = Math.max(1, ui.draft.qty - 1); renderModal(); break;
+    case 'mod-add': addDraftMod(); break;
+    case 'mod-remove': ui.draft.mods.splice(+el.dataset.i, 1); renderModal(); break;
+    case 'reset': state = baseState(); prevRows = {}; wt.done = 0; ui = { sheetItemId: null, addOpen: false, lastChange: 'Bill reset.' }; render(); break;
+    case 'wt': startWalkthrough(+el.dataset.i); break;
+    case 'step': runStep(+el.dataset.n); break;
+  }
+}, true);
+
+function setLook(look) {
+  document.body.classList.toggle('calm', look === 'calm');
+  document.querySelectorAll('[data-look]').forEach((b) => b.classList.toggle('on', b.dataset.look === look));
+  const url = new URL(location.href); url.searchParams.set('look', look); history.replaceState(null, '', url);
+}
+document.querySelectorAll('[data-look]').forEach((b) => b.addEventListener('click', () => setLook(b.dataset.look)));
+setLook(new URLSearchParams(location.search).get('look') === 'current' ? 'current' : 'calm');
+
+function closeModals() { ui.sheetItemId = null; ui.addOpen = false; ui.confirm = null; render(); }
+const draftValid = (d) => d.name.trim() && parseFloat(d.price) > 0;
+function addDraftMod() {
+  const m = ui.draft.modInput.trim();
+  if (!m) return;
+  ui.draft.mods.push(m); ui.draft.modInput = ''; ui.focus = 'mod'; renderModal();
+}
+
+// Keep the add-item draft in sync without re-rendering (so focus and caret stay put).
+document.addEventListener('input', (e) => {
+  const form = e.target.closest('[data-form=item]');
+  if (!form) return;
+  const d = ui.draft, n = e.target.name;
+  if (n === 'name') d.name = e.target.value;
+  if (n === 'price') {
+    // Text field (no number spinner): keep digits and one dot, at most 2 decimals.
+    const clean = e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1').replace(/(\.\d{2})\d+/, '$1');
+    if (clean !== e.target.value) e.target.value = clean;
+    d.price = clean;
+  }
+  if (n === 'mod') d.modInput = e.target.value;
+  form.querySelector('[data-action=mod-add]').disabled = !d.modInput.trim();
+  const submit = form.querySelector('[type=submit]');
+  submit.disabled = !draftValid(d);
+  submit.textContent = draftValid(d) ? `Add item · $${(parseFloat(d.price) * d.qty).toFixed(2)}` : 'Add item';
+});
+
+document.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (e.target.dataset.form === 'person') {
+    const name = String(new FormData(e.target).get('name') || '').trim();
+    if (name) dispatch({ type: 'addPerson', name });
+    document.querySelector('[data-form=person] input')?.focus();
+  } else if (e.target.dataset.form === 'item') {
+    if (document.activeElement?.name === 'mod') return; // Enter there adds a modifier (keydown handler)
+    const d = ui.draft;
+    if (!draftValid(d)) return;
+    ui.addOpen = false;
+    dispatch({ type: 'addItem', name: d.name.trim(), price: parseFloat(d.price), qty: d.qty, mods: d.mods });
+  }
+});
+// Enter in the modifier field adds the modifier. Handled on keydown because the browser skips
+// implicit form submission while "Add item" is still disabled.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.name === 'mod' && e.target.closest('[data-form=item]')) { e.preventDefault(); addDraftMod(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (ui.sheetItemId || ui.addOpen || ui.confirm)) closeModals(); });
+
+render();
+</script>
+</body>
+</html>
