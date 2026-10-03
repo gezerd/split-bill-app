@@ -4,192 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands run from the repo root and work the same on Windows and macOS. Prerequisites: Node 18+ and [uv](https://docs.astral.sh/uv/) (uv provides Python 3.12 via `backend/.python-version`).
+Root `package.json` scripts drive everything, the same on Windows and macOS. Prerequisites: Node 18+ and [uv](https://docs.astral.sh/uv/). Start with `npm run setup`, then `npm run dev:mock` (no Anthropic API calls) or `npm run dev` (live OCR, needs `ANTHROPIC_API_KEY` in root `.env`). `npm test` needs no servers; `npm run test:e2e` starts its own servers on :8001/:5174. Pass extra args after `--` (e.g. `npm run test:backend -- -k breakdown`).
 
-```bash
-npm run setup       # .env from .env.example, npm installs, `uv sync` backend, Playwright chromium
-npm run dev         # backend :8000 + frontend :5173 (concurrently), live OCR
-npm run dev:mock    # same with MOCK_OCR=true — no Anthropic API calls
-npm test            # pytest (backend) + vitest (frontend) — no servers needed
-npm run test:e2e    # Playwright; starts its own mock backend :8001 + Vite :5174
-npm run test:all    # test, then test:e2e
-```
-
-Sub-scripts: `dev:backend`, `dev:frontend`, `test:backend`, `test:frontend`. Pass extra args after `--` (e.g. `npm run test:backend -- -k breakdown`).
-
-Backend Python deps are managed by uv (`backend/pyproject.toml` + `backend/uv.lock`, test deps in the `dev` group). Run backend tools with `uv run --directory backend <cmd>` — don't use pip. Lockfiles (`uv.lock`, both `package-lock.json`) are committed.
-
-### Docker
-
-```bash
-docker-compose up --build   # frontend, backend, postgres; reads root .env (set MOCK_OCR=true there for mock mode)
-docker-compose down
-```
-
-API docs available at `http://localhost:8000/docs` when running.
+The backend is uv-managed: run tools with `uv run --directory backend <cmd>` and add deps with `uv add`. Lockfiles (`uv.lock`, both `package-lock.json`) are committed.
 
 ## Architecture
 
-**Three-service Docker stack**: React frontend (5173) → FastAPI backend (8000) → PostgreSQL (5432). The database is infrastructure-only in v1; all data lives in a thread-safe in-memory store (`backend/app/services/data_store.py`).
-
-### Request flow
-
-1. User uploads receipt image → `POST /api/bills/upload-receipt`
-2. `OCRService` sends image to Claude Haiku 4.5 (base64-encoded) and parses JSON response → creates `Bill` + `Item` records in `InMemoryStore`
-3. Frontend (`useBillData` hook) holds all state: `billId`, `items`, `people`, `assignments`, `tax`, `tip`
-4. User adds people, taps items to assign via `AssignmentModal` (supports `share_count` for splitting a single item between multiple people)
-5. `GET /api/bills/{bill_id}/breakdown` → `CalculationService` computes proportional tax/tip per person based on their subtotal share
-
-### Frontend state management
-
-All API calls and React state live in `frontend/src/hooks/useBillData.js`. Components are pure presentational — they receive handlers and data as props. `App.jsx` manages step (1–4) and passes everything down.
-
-### Backend layers
-
-- `app/routers/` — FastAPI route handlers (bills, items, people, assignments)
-- `app/services/data_store.py` — `InMemoryStore` singleton with threading locks
-- `app/services/ocr_service.py` — Claude API integration; set `MOCK_OCR=true` to use hardcoded In-N-Out data
-- `app/services/calculation_service.py` — proportional split logic
-- `app/schemas/` — Pydantic request/response models
-
-### Splitting logic
-
-An `Assignment` links a `Person` to an `Item` with a `share_count`. The item price is `unit_price × quantity`; a person's share is `unit_price × their_share_count`. Tax and tip are distributed proportionally based on each person's subtotal divided by total subtotal.
-
-## Key environment variables
-
-| Variable | Where | Purpose |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | root `.env` | Required for live OCR; get from platform.claude.com |
-| `MOCK_OCR` | root `.env` / `npm run dev:mock` | Set to `true` to skip Claude API calls |
-| `VITE_API_URL` | frontend env | Backend URL (default: `http://localhost:8000`) |
-| `CORS_ORIGINS` | backend env | Comma-separated allowed origins |
+- **All data lives in memory** (`backend/app/services/data_store.py`). Postgres in `docker-compose.yml` is infrastructure only in v1; nothing reads or writes it.
+- **Frontend state lives in one hook**: every API call and piece of React state goes in `frontend/src/hooks/useBillData.js`. Components stay presentational, receiving data and handlers as props from `App.jsx`.
+- **Splitting rules**: read `CONTEXT.md` for the domain language and `docs/adr/` for decisions. ADR 0001 (shares are weights) supersedes the units-based math still in `calculation_service.py`.
 
 ## UI Verification Rule
 
-**Trigger:** Follow this rule after any UI change, AND whenever asked to "verify the frontend", "check the UI", "make it match the design", or similar — treat that as an instruction to run the full verification loop below and fix every deviation found before reporting done. **Also trigger** whenever the user shares a claude.ai artifact link (`claude.ai/artifact/...` or `claude.ai/code/artifact/...`) for the design handoff — treat that as a new/updated reference to import (see below) before doing anything else.
+**Trigger:** after any UI change; when asked to verify the frontend or match the design; and when the user shares a claude.ai artifact link (`claude.ai/artifact/...` or `claude.ai/code/artifact/...`), which is a design update to import first.
 
-### Importing design updates from claude.ai
+### Importing design updates
 
-The `designs/` folder originates from a claude.ai Design artifact. When the user shares that artifact's link, pull the files in directly instead of asking them to export/paste anything by hand:
+`designs/` mirrors a claude.ai Design artifact. Pull it directly rather than asking the user to export anything:
 
-1. `Artifact` tool, `action: "list"`, `scope: "files"`, `url: <the link>` — list the artifact's published files.
-2. `Artifact` tool, `action: "read"`, `paths: [...all published files...]`, `url: <the link>`, `out_dir: "designs"` — fetch every file (each screen's `.html`, `styles.css`, `index.html`, etc.) and save it directly into this repo's `designs/` folder, overwriting the previous versions in place.
-3. Diff the fetched file list against the **Screen reference** table below and against `designs/README.md`'s file list — add rows for new screens, drop/update stale ones for removed or renamed screens.
-4. Continue into the verification loop below using the freshly imported files as the reference.
+1. `Artifact` tool, `action: "list"`, `scope: "files"`, `url: <link>`.
+2. `Artifact` tool, `action: "read"`, `paths: [<every published file>]`, `url: <link>`, `out_dir: "designs"`, overwriting in place.
+3. Continue into the verification loop with the fresh files.
 
-**After making any UI change**, verify the result matches the design handoff before considering the task complete. Follow these steps every time:
+### Verification loop
 
-1. **Run the app** — start the app with `npm run dev:mock` from the repo root if not already running.
-2. **Navigate** to `http://localhost:5173` and reach the affected screen/step.
-3. **Screenshot** the current UI state.
-4. **Read the reference** — the pixel-perfect screenshot and component source for that screen (see map below).
-5. **Compare** — check colors, spacing, typography, radius, layout, and interactive states against the reference. **Dynamic data (item names, prices, people names, dollar amounts) does not need to match the design exactly — only the structure, formatting, and visual design do.**
-6. **Fix and repeat** — make the necessary code changes and loop back to step 3 until the live UI matches exactly.
-7. **Tear down** — stop the dev server once verification is complete.
+The handoff is **high-fidelity**: recreate it pixel-for-pixel. `designs/README.md` maps each screen/state to its HTML file and states the quantity-aware assignment rule; `designs/styles.css` holds every token, size, radius and animation. Open the HTML in a browser to inspect exact values.
 
-If no reference exists for the changed area, note that and skip.
+1. Run `npm run dev:mock` and open `http://localhost:5173` on the affected step.
+2. Screenshot the live UI and the matching `designs/*.html`.
+3. Compare colors, spacing, typography, radius, layout and interactive states. Dynamic data (names, prices, amounts) may differ; structure, formatting and visuals must match.
+4. Fix and repeat from step 2 until the screenshots match. Every deviation found is fixed before reporting done.
+5. Stop the dev server.
 
-### Design reference files
+If no design file covers the changed area, say so and skip.
 
-All design files live in `designs/`. The handoff is **high-fidelity** — final colors, typography, spacing, radii, interactions, and copy are all settled. Recreate pixel-for-pixel.
-
-**Screen reference** (`designs/`): Standalone HTML files sharing one stylesheet (`designs/styles.css`) — open any in a browser and use dev tools to inspect exact spacing, color, and type. All render with the **cyan (default) accent**. Start at `designs/index.html`.
-
-| File | Screen |
-|------|--------|
-| `index.html` | Contact sheet — thumbnails linking all screens |
-| `01-upload.html` | Step 1 — upload dropzone (idle) |
-| `01-upload-scanning.html` | Step 1 — scanning state (spinner + "Scanning with AI…") |
-| `01-upload-processed.html` | Step 1 — processed state (check + item count) |
-| `02-assign-complete.html` | Step 2 — every item fully assigned → "All assigned ✓" |
-| `02-assign-partial.html` | Step 2 — some quantities unfilled → "2 unassigned" |
-| `02-assign-additem.html` | Step 2 — "Add an item" modal open (name / price / qty stepper / modifiers) |
-| `02-assign-edititem.html` | Step 2 — "Edit item" modal open (pre-filled, save shows "Save · $X.XX") |
-| `02-assign-delete.html` | Step 2 — delete confirmation modal ("Delete item?" with item name) |
-| `03-taxtip.html` | Step 3 — tax field, "Add tip" selected with presets visible, Total pill |
-| `03-taxtip-notip.html` | Step 3 — "No tip" selected, presets hidden, lower Total pill |
-| `04-breakdown-cards.html` | Step 4 — per-person cards layout |
-| `04-breakdown-receipt.html` | Step 4 — paper-receipt layout |
-
-**Shared stylesheet**: `designs/styles.css` — CSS variables (design tokens), all component classes, no build step required.
-
-### Design tokens (source of truth)
-
-CSS variables defined in `:root` in `designs/styles.css`:
-
-| CSS var | Value | Role |
-|---------|-------|------|
-| `--bg` | `#152D42` | Page background (deep navy) |
-| `--surface` | `#1C3A54` | Card / panel |
-| `--surface-hi` | `#254862` | Elevated / inset surface |
-| `--border` | `#2E5674` | Borders, dividers |
-| `--accent` | `#00FDDC` (cyan) | Primary brand — CTAs, totals, active |
-| `--accent-dim` | `oklch(92% 0.14 185 / .15)` | Accent tint (selected backgrounds) |
-| `--on-accent` | `#111111` | Text/icons on accent fills |
-| `--text` | `#EEF4FA` | Primary text |
-| `--text-muted` | `#A0C4DC` | Secondary text |
-| `--text-dim` | `#7AAAB8` | Tertiary text |
-
-- On-accent foreground: `text-[#111]` (near-black on any accent fill)
-- Avatar colors (cycled by person index): `#F87171` `#60A5FA` `#A78BFA` `#4ADE80` `#FBBF24` `#F472B6` `#FB923C` `#38BDF8`
-
-### Typography
-
-- **Font:** Plus Jakarta Sans (weights 400/500/600/700/800) — already loaded via CDN in `index.html`
-- **Mono:** Courier New — Step 4 receipt view only
-- **Scale:** 34/800 page title · 26/800 step heading · 22/800 person total · 17–18/800 item/modal title · 15–16 body/input · 13–14 labels · 11–12 meta · 10 modifier chip
-- **Letter-spacing:** `-0.5px` on big title, `-1px` on total figure, `+1–3px` on uppercase labels
-
-### Radius scale
-
-`6` chips · `9–12` buttons/inputs/small tiles · `13–14` primary buttons/inputs · `18` item card / total pill · `20–24` panels & dropzone · `full` avatars, people chips, steppers, status pills
-
-### Spacing & layout
-
-- App shell: `max-w-[760px]`, centered, padding `36px 20px 80px`
-- Item grid (Step 2) and card grid (Step 4): CSS Grid, `repeat(auto-fill, minmax(250px, 1fr))`, gap `12–14px`
-- TaxTip and Upload steps: `max-w-[500px]` / `max-w-[540px]`; receipt: `max-w-[380px]`
-
-### Motion
-
-| Animation | Value | Used on |
-|-----------|-------|---------|
-| `fade-up` | `fadeUp .3s ease both` (12px rise + fade) | Every step on mount |
-| `scale-in` | `scaleIn .25s cubic-bezier(.34,1.56,.64,1)` (springy) | Modal, upload success check |
-| `spin-slow` | `spin .7s linear infinite` | Upload scanning spinner |
-| Transitions | `.15s` controls · `.2s` cards · `.35s cubic-bezier(.4,0,.2,1)` step bar | Hovers, selection, progress |
-
-### Screen-by-screen spec (quick reference)
-
-**Step 1 — Upload:** Centered max-540px. H1 "Split the bill." + subtitle. Large dashed dropzone (radius 24, padding ~72×40). States: idle → uploading (spinner + "Scanning with AI…") → done (accent check + item count) → auto-advance. Border turns accent on drag-over and success; bg becomes `accent-dim` while dragging.
-
-**Step 2 — Assign:** Name input + "Add" row → wrap of removable people chips → status pill (unassigned/all-assigned) → item card grid → right-aligned Next button. Next disabled until ≥1 person and all items assigned. ItemCard border turns accent when assigned. Each card has ✎ (edit) and ✕ (delete) icon buttons; a dashed "Add missing item" card trails the grid. Edit/add open a modal (name, price, qty stepper, optional modifiers); delete opens a compact confirmation modal.
-
-**Step 3 — Tax & Tip:** Max-500px panel. Subtotal row → editable Tax `$` field → **No tip / Add tip** segmented toggle → when "Add tip": preset buttons (15/18/20/22/25% + Custom) + computed tip amount; when "No tip": presets hidden, tip zeroed → full-width **accent Total pill** (28px figure). Back + "See Breakdown".
-
-**Step 4 — Breakdown:** "All settled!" heading + Cards/Receipt segmented toggle. Cards: grid of per-person cards with avatar, item count, accent total, itemized lines with `(myShares/totalShares)`, Subtotal/Tax/Tip footer. Receipt: 380px monospace with torn SVG edges, dashed dividers, per-person colored names.
-
-## Design tokens
-
-Tailwind theme is extended in `frontend/tailwind.config.js`. Key tokens:
-- `background` → `#152D42` (dark blue page bg)
-- `surface` → `#1C3A54` (card bg)
-- `accent` → `#00FDDC` (cyan — primary interactive color)
-- `border` → `#2E5674`
-
-Font: Plus Jakarta Sans (loaded via CDN in `index.html`).
+**Token gotcha:** `frontend/tailwind.config.js` approximates the design tokens but drifts in places: its `on-accent` is navy, while the design puts `#111` on accent fills (`text-[#111]`). When they disagree, `designs/styles.css` wins.
 
 ## Agent skills
 
-### Issue tracker
-
-Issues are tracked in GitHub Issues (gezerd/split-bill-app) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- **Issue tracker**: GitHub Issues (gezerd/split-bill-app) via `gh`. See `docs/agents/issue-tracker.md`.
+- **Triage labels**: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+- **Domain docs**: single-context `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
