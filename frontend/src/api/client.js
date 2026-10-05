@@ -22,6 +22,11 @@ export const uploadReceipt = async (file) => {
   return response.data;
 };
 
+export const createBill = async () => {
+  const response = await apiClient.post('/api/bills');
+  return response.data;
+};
+
 export const getBill = async (billId) => {
   const response = await apiClient.get(`/api/bills/${billId}`);
   return response.data;

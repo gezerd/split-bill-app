@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBillData } from './hooks/useBillData';
 import StepIndicator from './components/StepIndicator';
 import ReceiptUpload from './components/ReceiptUpload';
@@ -17,9 +17,12 @@ export default function App() {
     tax,
     tip,
     receiptSubtotal,
+    itemsEdited,
     loading,
     error,
     handleUploadReceipt,
+    handleStartManual,
+    handleReset,
     handleCreateItem,
     handleUpdateItem,
     handleDeleteItem,
@@ -56,8 +59,20 @@ export default function App() {
       ? Math.round((parseFloat(tip) / parseFloat(subtotal)) * 100)
       : null;
 
-  const handleUpload = async (file) => {
-    return await handleUploadReceipt(file);
+  // Uploading over an existing bill keeps its people.
+  const handleUpload = (file) => handleUploadReceipt(file, { keepPeople: true });
+
+  // Warn before refresh/close while a bill is in progress.
+  useEffect(() => {
+    if (!billId) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [billId]);
+
+  const handleNewBill = () => {
+    handleReset();
+    setStep(1);
   };
 
   const handleUploadDone = () => setStep(2);
@@ -92,7 +107,14 @@ export default function App() {
 
         {/* Step 1: Upload */}
         {step === 1 && (
-          <ReceiptUpload onUpload={handleUpload} onDone={handleUploadDone} />
+          <ReceiptUpload
+            onUpload={handleUpload}
+            onDone={handleUploadDone}
+            onManual={handleStartManual}
+            hasBill={!!billId}
+            needsReplaceConfirm={assignments.length > 0 || itemsEdited}
+            onContinue={() => setStep(2)}
+          />
         )}
 
         {/* Step 2: Assign */}
@@ -186,6 +208,11 @@ export default function App() {
             tax={tax}
             tip={tip}
             subtotal={subtotal}
+            mismatchNote={
+              summary.mismatch
+                ? `Items add up to ${money(summary.itemsSubtotalCents)}, but the receipt subtotal is ${money(summary.receiptCents)}.`
+                : null
+            }
             onUpdateTax={handleUpdateTax}
             onUpdateTip={handleUpdateTip}
             onBack={() => setStep(2)}
@@ -200,6 +227,7 @@ export default function App() {
             people={people}
             tipPercentage={tipPercentage}
             onBack={() => setStep(3)}
+            onNewBill={handleNewBill}
           />
         )}
 

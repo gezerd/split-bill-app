@@ -115,3 +115,19 @@ def test_breakdown_single_share_on_multi_quantity_pays_full_item(client):
 def test_breakdown_total_shares_is_sum_of_shares(client):
     people = _breakdown_for(client, 5.00, 3, [2, 1, 4])
     assert [p["items"][0]["total_shares"] for p in people] == [7, 7, 7]
+
+
+def test_create_empty_bill_has_upload_shape_and_accepts_items(client):
+    response = client.post("/api/bills")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["items"] == []
+    for field in ("tax_amount", "tip_amount", "subtotal", "total"):
+        assert data[field] == 0
+
+    item = client.post(
+        "/api/items",
+        json={"bill_id": data["bill_id"], "name": "Soup", "price": 4.5, "quantity": 1},
+    )
+    assert item.status_code in (200, 201)
+    assert item.json()["name"] == "Soup"
