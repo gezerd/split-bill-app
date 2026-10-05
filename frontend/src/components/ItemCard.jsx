@@ -11,6 +11,8 @@ export default function ItemCard({
   onEdit,
   onDeleteRequest,
   onSetShareCount,
+  onOpenSheet = () => {},
+  selectedPerson = null, // { id, name, color } while in selected-person (focus) mode
 }) {
   const itemAssignments = assignments.filter((a) => a.item_id === item.id);
   const status = itemStatus(item, assignments);
@@ -21,12 +23,39 @@ export default function ItemCard({
     onSetShareCount(item.id, person.id, shares > 0 ? 0 : 1);
   };
 
+  const focus = !!selectedPerson;
+  const mineShares = focus ? itemAssignments.find((a) => a.person_id === selectedPerson.id)?.share_count || 0 : 0;
+  const mine = mineShares > 0;
+
+  const handleCardClick = () => {
+    if (focus) onSetShareCount(item.id, selectedPerson.id, mine ? 0 : 1);
+    else onOpenSheet(item);
+  };
+
   const totalPrice = parseFloat(item.price) * (item.quantity || 1);
 
   return (
     <div
-      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-colors duration-200 ${BORDER[status]}`}
+      data-testid="item-card"
+      data-focus={focus ? (mine ? 'match' : 'dim') : undefined}
+      onClick={handleCardClick}
+      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-all duration-200 relative cursor-pointer ${
+        focus ? (mine ? '' : 'border-border opacity-[0.55] hover:opacity-[0.85]') : BORDER[status]
+      }`}
+      style={mine ? {
+        borderColor: selectedPerson.color,
+        background: `color-mix(in srgb, ${selectedPerson.color} 12%, #1C3A54)`,
+      } : undefined}
     >
+      {mine && (
+        <span
+          data-testid="match-badge"
+          className="absolute font-extrabold"
+          style={{ top: -10, left: 14, fontSize: 11, padding: '2px 9px', borderRadius: 100, background: selectedPerson.color, color: '#111' }}
+        >
+          ✓ {selectedPerson.name.trim().split(/\s+/)[0]}{mineShares > 1 ? ` ×${mineShares}` : ''}
+        </span>
+      )}
       {/* Card header */}
       <div className="flex items-start justify-between mb-2">
         {/* Left: name + modifiers */}
@@ -81,7 +110,7 @@ export default function ItemCard({
             return (
               <button
                 key={person.id}
-                onClick={() => handlePersonClick(person)}
+                onClick={(e) => { e.stopPropagation(); handlePersonClick(person); }}
                 className={`avatar-ring relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
                   held ? 'text-[#111] border-transparent' : 'bg-transparent border-[1.5px] border-[#2E5674] text-[#7AAAB8]'
                 }`}
@@ -103,10 +132,16 @@ export default function ItemCard({
         </div>
       )}
 
-      {/* Footer: status line (room for a "Shares ›" link, wired by the Share sheet) */}
-      {people.length > 0 && (
-        <div className="mt-3 flex items-center justify-between" style={{ fontSize: 12 }}>
+      {/* Footer: status line and Shares link; removed (not hidden) in focus mode */}
+      {people.length > 0 && !focus && (
+        <div className="mt-3 flex items-center justify-between gap-2" style={{ fontSize: 12 }}>
           <span className={TONE[line.tone]} data-testid="status-line">{line.text}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenSheet(item); }}
+            className="font-bold text-accent whitespace-nowrap hover:underline"
+          >
+            Shares ›
+          </button>
         </div>
       )}
     </div>
