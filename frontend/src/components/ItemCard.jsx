@@ -64,7 +64,7 @@ export default function ItemCard({
           {item.customModifiers && item.customModifiers.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {item.customModifiers.map((mod, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-surface-2 text-gray-400 rounded-[6px]">
+                <span key={i} style={{ fontSize: 10, padding: '2px 7px', background: '#254862', color: '#A0C4DC', borderRadius: 6 }}>
                   {mod}
                 </span>
               ))}

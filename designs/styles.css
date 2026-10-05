@@ -37,9 +37,11 @@ body {
   color: var(--text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.5;   /* matches the app's CSS reset */
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-input  { font-family: inherit; }
+input  { font-family: inherit; line-height: inherit; }
+button { line-height: inherit; }
 
 /* ---- Layout shell ---- */
 .app { min-height: 100vh; padding: 36px 20px 80px; }
@@ -101,7 +103,7 @@ input  { font-family: inherit; }
   display: flex; align-items: center; justify-content: center; transition: 0.15s;
 }
 .avatar--filled { background: var(--c); color: var(--on-accent); }
-.avatar--sm { --sz: 26px; }
+.avatar--sm { --sz: 26px; font-size: 10px; line-height: 15px; }
 .avatar--lg { --sz: 42px; }
 /* palette assignment */
 .ac-red { --c: var(--c-red); }  .ac-blue { --c: var(--c-blue); }  .ac-purple { --c: var(--c-purple); }
@@ -192,15 +194,15 @@ input  { font-family: inherit; }
 .item-card--full { border-color: var(--accent); }   /* shares cover quantity */
 .item-card__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
 .item-card__info { flex: 1; min-width: 0; padding-right: 10px; }
-.item-card__name { font-weight: 700; font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mods { display: flex; flex-wrap: wrap; gap: 4px; }
+.item-card__name { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mods { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .mod-chip { font-size: 10px; background: var(--surface-hi); color: var(--text-muted); border-radius: 6px; padding: 2px 7px; }
 .item-card__price-wrap { text-align: right; flex-shrink: 0; }
-.item-card__price { font-weight: 800; font-size: 16px; }
-.item-card__qty { font-size: 11px; color: var(--text-muted); }
+.item-card__price { font-weight: 700; font-size: 14px; }
+.item-card__qty { font-size: 12px; color: var(--text-muted); }
 .assign-label { font-size: 11px; color: var(--text-dim); margin-bottom: 7px; font-weight: 500; display: flex; justify-content: space-between; }
 .assign-label__count { color: var(--text-muted); }
-.share-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.share-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* item-card right column: price stacked above the edit / delete actions row */
 .item-card__aside { display: flex; align-items: flex-start; gap: 12px; flex-shrink: 0; }
@@ -354,15 +356,15 @@ input  { font-family: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* ---- Step 2: calm avatars, card footer, partial + focus states ---- */
-.avatar--card { --sz: 32px; border-width: 1.5px; font-size: 12px; }
+.avatar--card { --sz: 32px; border-width: 1.5px; font-size: 12px; line-height: 16px; }
 .avatar--idle { border-color: var(--border); color: var(--text-dim); background: transparent; }   /* grey ring until the Person holds a Share */
 .avatar--idle:hover { border-color: var(--c); color: var(--c); }                                   /* hover previews the colour */
 .avatar--card.avatar--filled { border-color: transparent; }
 .item-card { padding: 16px; position: relative; }
 .item-card--partial { border-color: var(--c-amber); }   /* 1+ Share but fewer than quantity */
 .item-card__foot { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
-.status { color: #D1D5DB; }
-.status--dim { color: #9CA3AF; }
+.status { color: var(--text-muted); }
+.status--dim { color: var(--text-dim); }
 .status--warn { color: var(--c-amber); }
 .shares-link { font-weight: 700; color: var(--accent); white-space: nowrap; }
 .badge--warn { color: var(--c-amber); background: rgba(251, 191, 36, 0.12); font-weight: 600; }
@@ -387,7 +389,7 @@ input  { font-family: inherit; }
   background: rgba(251, 191, 36, 0.12); border: 1.5px solid var(--c-amber); color: var(--c-amber);
   border-radius: 12px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
 }
-.next-note { font-size: 12px; color: #9CA3AF; }
+.next-note { font-size: 12px; color: var(--c-amber); max-width: 280px; text-align: right; line-height: 1.4; }
 .next-row { display: flex; align-items: center; gap: 12px; }
 .btn-row--between { justify-content: space-between; padding-top: 8px; }
 
