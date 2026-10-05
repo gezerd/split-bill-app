@@ -54,3 +54,13 @@ test('deleting a line makes the subtotal mismatch banner appear', async ({ page 
 
   await expect(page.getByText(/Items add up to \$45.55, but the receipt subtotal is \$49.80/)).toBeVisible();
 });
+
+test('editing a line price makes the subtotal mismatch banner appear', async ({ page }) => {
+  await uploadReceipt(page);
+
+  await itemCard(page, 'Med Coke').getByTitle('Edit item').click();
+  await page.getByPlaceholder('0.00').fill('3.30');
+  await page.getByRole('button', { name: /Save/ }).click();
+
+  await expect(page.getByText(/Items add up to \$50.80, but the receipt subtotal is \$49.80/)).toBeVisible();
+});
