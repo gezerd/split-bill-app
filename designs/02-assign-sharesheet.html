@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Split Bill · 2 Assign — Delete item</title>
+<title>Split Bill · 2 Assign — Share sheet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -45,7 +45,7 @@
       <div class="people-hint">Tip: tap a name to select them, then tap everything they had.</div>
       <div class="section-head">
         <span class="section-title">Items from receipt</span>
-        <div class="pills"><span class="badge badge--muted">1 unassigned</span><span class="badge badge--warn">2 partial</span></div>
+        <div class="pills"><span class="badge badge--accent">All assigned ✓</span></div>
       </div>
       <div class="item-grid">
         <div class="item-card item-card--full">
@@ -64,7 +64,7 @@
         <div class="item-card__foot"><span class="status status--ok">Alex pays</span><span class="shares-link">Shares ›</span></div>
         </div>
 
-        <div class="item-card item-card--partial">
+        <div class="item-card item-card--full">
           <div class="item-card__head">
             <div class="item-card__info">
               <div class="item-card__name">Cheeseburger</div>
@@ -74,10 +74,10 @@
           </div>
           <div class="share-row">
               <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span></div>
-              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--filled" title="Sam">S</span></div>
               <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
           </div>
-        <div class="item-card__foot"><span class="status status--warn">1 of 2 claimed — Alex covers all 2</span><span class="shares-link">Shares ›</span></div>
+        <div class="item-card__foot"><span class="status status--ok">Split 2 ways · ~$3.75 each</span><span class="shares-link">Shares ›</span></div>
         </div>
 
         <div class="item-card item-card--full">
@@ -96,7 +96,7 @@
         <div class="item-card__foot"><span class="status status--ok">Sam pays</span><span class="shares-link">Shares ›</span></div>
         </div>
 
-        <div class="item-card">
+        <div class="item-card item-card--full">
           <div class="item-card__head">
             <div class="item-card__info">
               <div class="item-card__name">Strawberry Shake</div>
@@ -105,14 +105,14 @@
             <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$3.25</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
           </div>
           <div class="share-row">
-              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--idle" title="Alex">A</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span></div>
               <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
               <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
           </div>
-        <div class="item-card__foot"><span class="status status--dim">Tap a person to assign</span><span class="shares-link">Shares ›</span></div>
+        <div class="item-card__foot"><span class="status status--ok">Alex pays</span><span class="shares-link">Shares ›</span></div>
         </div>
 
-        <div class="item-card item-card--partial">
+        <div class="item-card item-card--full">
           <div class="item-card__head">
             <div class="item-card__info">
               <div class="item-card__name">Large Soda</div>
@@ -122,10 +122,10 @@
           </div>
           <div class="share-row">
               <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span><span class="x-badge">×2</span></div>
-              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--filled" title="Sam">S</span></div>
               <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
           </div>
-        <div class="item-card__foot"><span class="status status--warn">2 of 3 claimed — Alex covers all 3</span><span class="shares-link">Shares ›</span></div>
+        <div class="item-card__foot"><span class="status status--ok">Alex $4.00 · Sam $2.00</span><span class="shares-link">Shares ›</span></div>
         </div>
 
         <button class="add-item-card"><span class="add-item-card__plus">+</span> Add missing item</button>
@@ -137,14 +137,34 @@
 
 <!-- Overlay -->
 <div class="overlay">
-  <div class="modal modal--sm">
-    <div class="modal__body" style="gap:8px;padding:22px 24px 20px;">
-      <div class="modal__title">Delete item?</div>
-      <div class="modal__sub" style="font-size:14px;line-height:1.5;">Remove <span class="confirm-name">Double Double</span> from the bill? This also clears anyone it was assigned to.</div>
+  <div class="modal">
+    <div class="modal__head" style="display:block;">
+      <div class="modal__title">Large Soda</div>
+      <div class="modal__sub">$6.00 · 3 × $2.00 · 3 shares</div>
     </div>
-    <div class="modal__foot">
-      <button class="btn btn--ghost btn--modal btn--block">Cancel</button>
-      <button class="btn btn--danger btn--modal btn--block">Delete</button>
+    <div class="sheet__body">
+      <div class="sheet-row">
+        <span class="avatar avatar--sm ac-red avatar--filled">A</span>
+        <span class="sheet-row__name">Alex</span>
+        <div class="stepper stepper--sm"><button class="stepper__btn">−</button><span class="stepper__val">2</span><button class="stepper__btn">+</button></div>
+        <span class="sheet-row__amount sheet-row__amount--on">$4.00</span>
+      </div>
+      <div class="sheet-row">
+        <span class="avatar avatar--sm ac-blue avatar--filled">S</span>
+        <span class="sheet-row__name">Sam</span>
+        <div class="stepper stepper--sm"><button class="stepper__btn">−</button><span class="stepper__val">1</span><button class="stepper__btn">+</button></div>
+        <span class="sheet-row__amount sheet-row__amount--on">$2.00</span>
+      </div>
+      <div class="sheet-row">
+        <span class="avatar avatar--sm ac-purple avatar--filled">J</span>
+        <span class="sheet-row__name">Jordan</span>
+        <div class="stepper stepper--sm"><button class="stepper__btn" disabled>−</button><span class="stepper__val">0</span><button class="stepper__btn">+</button></div>
+        <span class="sheet-row__amount">—</span>
+      </div>
+    </div>
+    <div class="sheet__foot">
+      <div class="sheet__status">Alex $4.00 · Sam $2.00</div>
+      <button class="btn btn--primary btn--modal">Done</button>
     </div>
   </div>
 </div>

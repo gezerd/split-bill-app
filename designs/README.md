@@ -14,10 +14,12 @@ handoff/
 ├── 01-upload.html              ← Step 1 · upload dropzone (idle)
 ├── 01-upload-scanning.html     ← Step 1 · scanning ("Scanning with AI…" spinner)
 ├── 01-upload-processed.html    ← Step 1 · processed ("5 items found!" check)
-├── 02-assign-complete.html     ← Step 2 · all quantities assigned → "All assigned ✓"
-├── 02-assign-partial.html      ← Step 2 · some quantities unfilled → "2 unassigned"
-├── 02-assign-additem.html      ← Step 2 · "Add missing item" modal (name/price/qty/modifiers)
-├── 02-assign-edititem.html     ← Step 2 · ✎ edit-item modal (pre-filled)
+├── 02-assign-complete.html     ← Step 2 · every Item has Shares → "All assigned ✓"
+├── 02-assign-partial.html      ← Step 2 · amber partial Items, "1 unassigned" + "2 partial" pills, Subtotal mismatch banner
+├── 02-assign-sharesheet.html   ← Step 2 · Share sheet (names, −/+ stepper, live amounts, status line)
+├── 02-assign-focus.html        ← Step 2 · focus mode (a Person selected: banner, tinted + badged cards, others faded)
+├── 02-assign-additem.html      ← Step 2 · "Add missing item" modal (name / price per item / quantity / modifiers)
+├── 02-assign-edititem.html     ← Step 2 · ✎ edit-item modal (pre-filled, "Save · $X.XX")
 ├── 02-assign-delete.html       ← Step 2 · ✕ delete-item confirmation dialog
 ├── 03-taxtip.html              ← Step 3 · "Add tip" → tax field + tip presets + Total pill
 ├── 03-taxtip-notip.html        ← Step 3 · "No tip" → tip options hidden, tip $0
@@ -55,11 +57,20 @@ Block/element naming (loose BEM): `.item-card`, `.item-card__head`,
 `.item-card--full`. Avatars combine a base class, an optional size, a palette
 class, and a fill state — e.g. `class="avatar avatar--lg ac-blue avatar--filled"`.
 
-## One behavior rule worth knowing
+## Behavior rules worth knowing
 
-Assignment is **quantity-aware**: an item is "assigned" only when the shares on
-it cover its quantity. A qty-2 item with one share is *partial* — its card uses
-`.item-card` (default border), **not** `.item-card--full` (accent border), and
-it counts toward the "# unassigned" badge. Compare `02-assign-complete.html`
-(Large Soda ×3 = Alex 2 + Sam 1, all full) with `02-assign-partial.html`
-(Cheeseburger ×2 has 1 share, Large Soda ×3 has 2 — both partial).
+A **Share is a weight** (ADR 0001): an Item's cost is split among everyone holding
+Shares on it, in proportion to their Shares. Item status comes only from its Shares:
+
+- **Unassigned** (0 Shares): neutral border (default `.item-card`), status line "Tap a person to assign". Counts toward "N unassigned" and blocks Next.
+- **Partially assigned** (≥1 Share, fewer than the quantity): `.item-card--partial` (amber border), amber status line, counts toward the amber "N partial" pill. Never blocks.
+- **Fully assigned** (Shares ≥ quantity): `.item-card--full` (cyan border).
+
+Other Step 2 conventions:
+
+- **Calm avatars:** `.avatar--idle` is a grey ring; it fills with the Person's colour (`.avatar--filled`) once they hold a Share, plus a `.x-badge` "×N" above 1. Tapping an avatar toggles ×1 / none.
+- **Card footer:** `.item-card__foot` holds the status line and a "Shares ›" link that opens the Share sheet.
+- **Focus mode** (`02-assign-focus.html`): while a Person is selected, status borders go neutral, footers are removed, matching cards get `.item-card--match` + `.match-badge`, others `.item-card--dim`.
+- **Subtotal mismatch banner** (`.mismatch-banner`): shown when the Items subtotal differs from the receipt subtotal.
+- **Chip ×** is an SVG icon centred in a fixed 18px round button (`.person-chip__x`), never a "×" text glyph.
+- **Modal controls** are all 46px tall; the Quantity stepper reuses `.stepper` (also used, at 34px, in the Share sheet).

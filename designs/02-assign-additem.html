@@ -17,6 +17,7 @@
       <span class="wordmark__name">splitbill</span>
     </div>
 
+    <!-- Step bar: Upload done · Assign active -->
     <div class="stepbar">
       <div class="step"><div class="step__dot step__dot--done">✓</div><span class="step__label step__label--done">Upload</span></div>
       <div class="step__line step__line--done"></div>
@@ -27,21 +28,25 @@
       <div class="step"><div class="step__dot">4</div><span class="step__label">Done</span></div>
     </div>
 
-    <div>
+    <div class="fade-up">
       <h2 class="h2">Who's splitting?</h2>
       <p class="subhead">Add everyone, then tap each item to assign it.</p>
 
-      <div class="people">
-        <div class="person-chip"><button class="avatar avatar--sm ac-red avatar--filled">A</button><span class="person-chip__name">Alex</span><button class="person-chip__x">×</button></div>
-        <div class="person-chip"><button class="avatar avatar--sm ac-blue avatar--filled">S</button><span class="person-chip__name">Sam</span><button class="person-chip__x">×</button></div>
-        <div class="person-chip"><button class="avatar avatar--sm ac-purple avatar--filled">J</button><span class="person-chip__name">Jordan</span><button class="person-chip__x">×</button></div>
+      <div class="add-row">
+        <input class="input" placeholder="Enter a name…" value="">
+        <button class="btn btn--disabled" style="padding:12px 20px;border-radius:13px;" disabled>+ Add</button>
       </div>
 
+      <div class="people">
+        <div class="person-chip"><span class="avatar avatar--sm ac-red avatar--filled">A</span><span class="person-chip__name">Alex</span><button class="person-chip__x" aria-label="Remove Alex"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button></div>
+        <div class="person-chip"><span class="avatar avatar--sm ac-blue avatar--filled">S</span><span class="person-chip__name">Sam</span><button class="person-chip__x" aria-label="Remove Sam"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button></div>
+        <div class="person-chip"><span class="avatar avatar--sm ac-purple avatar--filled">J</span><span class="person-chip__name">Jordan</span><button class="person-chip__x" aria-label="Remove Jordan"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button></div>
+      </div>
+      <div class="people-hint">Tip: tap a name to select them, then tap everything they had.</div>
       <div class="section-head">
         <span class="section-title">Items from receipt</span>
-        <span class="badge badge--muted">2 unassigned</span>
+        <div class="pills"><span class="badge badge--muted">1 unassigned</span><span class="badge badge--warn">2 partial</span></div>
       </div>
-
       <div class="item-grid">
         <div class="item-card item-card--full">
           <div class="item-card__head">
@@ -51,17 +56,15 @@
             </div>
             <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$5.45</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
           </div>
-          <div>
-            <div class="assign-label"><span>Tap to add a share:</span><span class="assign-label__count">1 share</span></div>
-            <div class="share-row">
-              <div class="avatar-wrap"><button class="avatar ac-red avatar--filled">A</button></div>
-              <div class="avatar-wrap"><button class="avatar ac-blue">S</button></div>
-              <div class="avatar-wrap"><button class="avatar ac-purple">J</button></div>
-            </div>
+          <div class="share-row">
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
           </div>
+        <div class="item-card__foot"><span class="status status--ok">Alex pays</span><span class="shares-link">Shares ›</span></div>
         </div>
 
-        <div class="item-card">
+        <div class="item-card item-card--partial">
           <div class="item-card__head">
             <div class="item-card__info">
               <div class="item-card__name">Cheeseburger</div>
@@ -69,14 +72,60 @@
             </div>
             <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$7.50</div><div class="item-card__qty">×2 @ $3.75</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
           </div>
-          <div>
-            <div class="assign-label"><span>Tap to add a share:</span><span class="assign-label__count">1 share</span></div>
-            <div class="share-row">
-              <div class="avatar-wrap"><button class="avatar ac-red avatar--filled">A</button></div>
-              <div class="avatar-wrap"><button class="avatar ac-blue">S</button></div>
-              <div class="avatar-wrap"><button class="avatar ac-purple">J</button></div>
-            </div>
+          <div class="share-row">
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
           </div>
+        <div class="item-card__foot"><span class="status status--warn">1 of 2 claimed — Alex covers all 2</span><span class="shares-link">Shares ›</span></div>
+        </div>
+
+        <div class="item-card item-card--full">
+          <div class="item-card__head">
+            <div class="item-card__info">
+              <div class="item-card__name">Animal Style Fries</div>
+              <div class="mods"><span class="mod-chip">Grilled Onions</span></div>
+            </div>
+            <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$2.95</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
+          </div>
+          <div class="share-row">
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--idle" title="Alex">A</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--filled" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
+          </div>
+        <div class="item-card__foot"><span class="status status--ok">Sam pays</span><span class="shares-link">Shares ›</span></div>
+        </div>
+
+        <div class="item-card">
+          <div class="item-card__head">
+            <div class="item-card__info">
+              <div class="item-card__name">Strawberry Shake</div>
+              <div class="mods"></div>
+            </div>
+            <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$3.25</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
+          </div>
+          <div class="share-row">
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--idle" title="Alex">A</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
+          </div>
+        <div class="item-card__foot"><span class="status status--dim">Tap a person to assign</span><span class="shares-link">Shares ›</span></div>
+        </div>
+
+        <div class="item-card item-card--partial">
+          <div class="item-card__head">
+            <div class="item-card__info">
+              <div class="item-card__name">Large Soda</div>
+              <div class="mods"></div>
+            </div>
+            <div class="item-card__aside"><div class="item-card__price-wrap"><div class="item-card__price">$6.00</div><div class="item-card__qty">×3 @ $2.00</div></div><div class="item-card__actions"><button class="icon-btn" title="Edit item">✎</button><button class="icon-btn icon-btn--danger" title="Delete item">✕</button></div></div>
+          </div>
+          <div class="share-row">
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-red avatar--filled" title="Alex">A</span><span class="x-badge">×2</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-blue avatar--idle" title="Sam">S</span></div>
+              <div class="avatar-wrap"><span class="avatar avatar--card ac-purple avatar--idle" title="Jordan">J</span></div>
+          </div>
+        <div class="item-card__foot"><span class="status status--warn">2 of 3 claimed — Alex covers all 3</span><span class="shares-link">Shares ›</span></div>
         </div>
 
         <button class="add-item-card"><span class="add-item-card__plus">+</span> Add missing item</button>
@@ -86,7 +135,7 @@
   </div>
 </div>
 
-<!-- Overlay: Add item modal (opened from the dashed "Add missing item" card) -->
+<!-- Overlay -->
 <div class="overlay">
   <div class="modal">
     <div class="modal__head">
@@ -103,19 +152,19 @@
       </div>
       <div class="modal__row">
         <div style="flex:1;">
-          <div class="field-label">Price each</div>
-          <div class="field"><span class="field__prefix">$</span><input class="field__input" placeholder="0.00"></div>
+          <div class="field-label">Price per item</div>
+          <div class="money-wrap"><span class="money-wrap__prefix">$</span><input class="modal-field modal-field--money" inputmode="decimal" placeholder="0.00"></div>
         </div>
         <div>
-          <div class="field-label">Qty</div>
+          <div class="field-label">Quantity</div>
           <div class="stepper"><button class="stepper__btn" disabled>−</button><span class="stepper__val">1</span><button class="stepper__btn">+</button></div>
         </div>
       </div>
       <div>
         <div class="field-label">Modifiers <span class="field-label__opt">· optional</span></div>
         <div class="add-row" style="margin-bottom:0;">
-          <input class="modal-field" style="font-size:14px;" placeholder="e.g. Extra cheese">
-          <button class="btn btn--disabled" style="padding:0 18px;border-radius:12px;font-size:14px;" disabled>Add</button>
+          <input class="modal-field" placeholder="e.g. Extra cheese">
+          <button class="btn btn--outline" style="height:46px;padding:0 18px;border-radius:12px;font-size:15px;" disabled>Add</button>
         </div>
       </div>
     </div>
