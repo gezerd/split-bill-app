@@ -9,6 +9,8 @@ export const useBillData = () => {
   const [tax, setTax] = useState(0);
   const [tip, setTip] = useState(0);
   const [receiptSubtotal, setReceiptSubtotal] = useState(0);
+  // True once an Item has been added, edited or deleted on the current bill.
+  const [itemsEdited, setItemsEdited] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   // Server assignment ids per (item, person) pair, and the per-pair write chains.
@@ -16,22 +18,49 @@ export const useBillData = () => {
   const writeChains = useRef(new Map());
   const pairKey = (itemId, personId) => `${itemId}:${personId}`;
 
-  // Upload receipt
-  const handleUploadReceipt = useCallback(async (file) => {
+  // Swap in a freshly created bill (upload or manual). People and assignments
+  // belong to the previous bill on the backend, so they start over unless the
+  // caller re-creates the people on the new bill.
+  const adoptBill = (data, newPeople = []) => {
+    setBillId(data.bill_id);
+    setItems(data.items || []);
+    setPeople(newPeople);
+    setAssignments([]);
+    setTax(data.tax_amount || 0);
+    setTip(data.tip_amount || 0);
+    setReceiptSubtotal(data.subtotal || 0);
+    setItemsEdited(false);
+    assignmentIds.current.clear();
+    writeChains.current.clear();
+  };
+
+  const recreatePeople = (newBillId, names) =>
+    Promise.all(names.map((n) => api.createPerson(newBillId, n)));
+
+  // Upload receipt. keepPeople re-creates the current people on the new bill.
+  const handleUploadReceipt = useCallback(async (file, { keepPeople = false } = {}) => {
     setLoading(true);
     setError(null);
     try {
       const data = await api.uploadReceipt(file);
-      setBillId(data.bill_id);
-      setItems(data.items || []);
-      // A new upload is a new bill — people/assignments from the previous bill
-      // belong to it on the backend and would be rejected against the new items.
-      setPeople([]);
-      setAssignments([]);
-      setTax(data.tax_amount || 0);
-      setTip(data.tip_amount || 0);
-      setReceiptSubtotal(data.subtotal || 0);
-      assignmentIds.current.clear();
+      const kept = keepPeople ? await recreatePeople(data.bill_id, people.map((p) => p.name)) : [];
+      adoptBill(data, kept);
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [people]);
+
+  // Start an empty bill for manual entry
+  const handleStartManual = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.createBill();
+      adoptBill(data);
       return data;
     } catch (err) {
       setError(err.message);
@@ -41,6 +70,21 @@ export const useBillData = () => {
     }
   }, []);
 
+  // Reset to a blank slate, in place (no reload)
+  const handleReset = useCallback(() => {
+    setBillId(null);
+    setItems([]);
+    setPeople([]);
+    setAssignments([]);
+    setTax(0);
+    setTip(0);
+    setReceiptSubtotal(0);
+    setItemsEdited(false);
+    setError(null);
+    assignmentIds.current.clear();
+    writeChains.current.clear();
+  }, []);
+
   // Items
   const handleCreateItem = useCallback(async (name, price, quantity = 1, customModifiers = []) => {
     if (!billId) return;
@@ -48,6 +92,7 @@ export const useBillData = () => {
     try {
       const newItem = await api.createItem(billId, name, price, quantity, customModifiers);
       setItems((prev) => [...prev, newItem]);
+      setItemsEdited(true);
       return newItem;
     } catch (err) {
       setError(err.message);
@@ -66,6 +111,7 @@ export const useBillData = () => {
       setItems((prev) =>
         prev.map((item) => (item.id === itemId ? updatedItem : item))
       );
+      setItemsEdited(true);
       return updatedItem;
     } catch (err) {
       setError(err.message);
@@ -80,6 +126,7 @@ export const useBillData = () => {
     try {
       await api.deleteItem(itemId);
       setItems((prev) => prev.filter((item) => item.id !== itemId));
+      setItemsEdited(true);
       // Remove assignments for this item
       setAssignments((prev) => prev.filter((a) => a.item_id !== itemId));
     } catch (err) {
@@ -211,9 +258,12 @@ export const useBillData = () => {
     tax,
     tip,
     receiptSubtotal,
+    itemsEdited,
     loading,
     error,
     handleUploadReceipt,
+    handleStartManual,
+    handleReset,
     handleCreateItem,
     handleUpdateItem,
     handleDeleteItem,

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+// Same filter as the price field: digits and one decimal point, at most 2 decimals.
+const MONEY_PATTERN = /^\d*\.?\d{0,2}$/;
 const TIP_PRESETS = ['15', '18', '20', '22', '25'];
 
 function getInitialPreset(tip, subtotal) {
@@ -8,16 +10,16 @@ function getInitialPreset(tip, subtotal) {
   return TIP_PRESETS.includes(pct) ? pct : 'custom';
 }
 
-export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateTip, onBack, onNext }) {
-  const [taxValue, setTaxValue] = useState(tax || 0);
+export default function TipTaxInput({ tax, tip, subtotal, mismatchNote, onUpdateTax, onUpdateTip, onBack, onNext }) {
+  const [taxValue, setTaxValue] = useState(String(tax || 0));
   const [tipMode, setTipMode] = useState(() => (tip > 0 ? 'add' : 'none'));
   const [selectedPreset, setSelectedPreset] = useState(() => getInitialPreset(tip, subtotal));
-  const [customTip, setCustomTip] = useState(tip || '');
+  const [customTip, setCustomTip] = useState(tip ? String(tip) : '');
 
-  useEffect(() => { setTaxValue(tax || 0); }, [tax]);
+  useEffect(() => { setTaxValue(String(tax || 0)); }, [tax]);
   useEffect(() => {
     setSelectedPreset(getInitialPreset(tip, subtotal));
-    setCustomTip(tip || '');
+    setCustomTip(tip ? String(tip) : '');
   }, [tip, subtotal]);
 
   const handleTaxBlur = () => onUpdateTax(parseFloat(taxValue) || 0);
@@ -47,6 +49,10 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
 
   const total = parseFloat(subtotal || 0) + parseFloat(taxValue || 0) + computedTip;
 
+  const taxPercent = parseFloat(subtotal) > 0 && parseFloat(taxValue) > 0
+    ? ((parseFloat(taxValue) / parseFloat(subtotal)) * 100).toFixed(1)
+    : null;
+
   const fieldStyle = {
     display: 'flex', alignItems: 'center',
     background: '#254862', borderRadius: 12,
@@ -75,6 +81,9 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
           <span style={{ color: '#A0C4DC', fontSize: 14 }}>Subtotal</span>
           <span style={{ fontWeight: 700, fontSize: 14 }}>${parseFloat(subtotal || 0).toFixed(2)}</span>
         </div>
+        {mismatchNote && (
+          <p role="status" style={{ fontSize: 12, color: '#FBBF24', marginTop: -6, marginBottom: 16 }}>{mismatchNote}</p>
+        )}
 
         {/* Tax */}
         <div style={{ marginBottom: 20 }}>
@@ -82,14 +91,17 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
           <div style={fieldStyle}>
             <span style={{ color: '#A0C4DC', marginRight: 8, fontSize: 15 }}>$</span>
             <input
-              type="number" step="0.01" min="0"
+              type="text" inputMode="decimal" aria-label="Tax"
               value={taxValue}
-              onChange={(e) => setTaxValue(e.target.value)}
+              onChange={(e) => { if (MONEY_PATTERN.test(e.target.value)) setTaxValue(e.target.value); }}
               onBlur={handleTaxBlur}
               style={inputStyle}
             />
           </div>
-          <p style={{ fontSize: 12, color: '#7AAAB8', marginTop: 5 }}>Auto-extracted from receipt, tap to edit</p>
+          <p style={{ fontSize: 12, color: '#7AAAB8', marginTop: 5 }}>
+            {taxPercent && <span style={{ color: '#A0C4DC', fontWeight: 600 }}>≈ {taxPercent}% · </span>}
+            Auto-extracted from receipt, tap to edit
+          </p>
         </div>
 
         {/* Tip */}
@@ -150,9 +162,9 @@ export default function TipTaxInput({ tax, tip, subtotal, onUpdateTax, onUpdateT
                 <div style={{ ...fieldStyle, marginBottom: 8 }}>
                   <span style={{ color: '#A0C4DC', marginRight: 8, fontSize: 15 }}>$</span>
                   <input
-                    type="number" step="0.01" min="0"
+                    type="text" inputMode="decimal" aria-label="Custom tip"
                     value={customTip}
-                    onChange={(e) => setCustomTip(e.target.value)}
+                    onChange={(e) => { if (MONEY_PATTERN.test(e.target.value)) setCustomTip(e.target.value); }}
                     onBlur={handleCustomBlur}
                     placeholder="0.00"
                     autoFocus

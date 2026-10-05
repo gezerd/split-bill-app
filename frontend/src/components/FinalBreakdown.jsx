@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getBreakdown } from '../api/client';
+import ConfirmDialog from './ConfirmDialog';
 import { getInitials, AVATAR_COLORS } from './PeopleManager';
 
 // Torn-edge zigzag SVG mask. Fill matches page background (#152D42).
@@ -75,7 +76,18 @@ function ReceiptView({ breakdown }) {
   );
 }
 
-export default function FinalBreakdown({ billId, people, onBack }) {
+// Totals only, e.g. "Split — $54.66" then one padded "Name  $0.00" line per Person.
+export function summaryText(breakdown) {
+  const rows = breakdown.people.map((p) => [p.name, Math.round(parseFloat(p.total) * 100)]);
+  const grand = rows.reduce((s, [, c]) => s + c, 0);
+  const width = Math.max(...rows.map(([n]) => n.length)) + 2;
+  const money = (c) => `$${(c / 100).toFixed(2)}`;
+  return [`Split — ${money(grand)}`, ...rows.map(([n, c]) => `${n.padEnd(width)}${money(c)}`)].join('\n');
+}
+
+export default function FinalBreakdown({ billId, people, onBack, onNewBill }) {
+  const [copied, setCopied] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const [breakdown, setBreakdown] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,6 +109,16 @@ export default function FinalBreakdown({ billId, people, onBack }) {
   useEffect(() => {
     fetchBreakdown();
   }, [billId]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(summaryText(breakdown));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -256,7 +278,16 @@ export default function FinalBreakdown({ billId, people, onBack }) {
           ← Back
         </button>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleCopy}
+          style={{
+            padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
+            background: '#254862', color: copied ? '#00FDDC' : '#A0C4DC', transition: '0.2s',
+          }}
+        >
+          {copied ? 'Copied' : 'Copy summary'}
+        </button>
+        <button
+          onClick={() => setConfirmNew(true)}
           className="accent-hover"
           style={{
             flex: 1, padding: '14px 24px', borderRadius: 14, fontSize: 14, fontWeight: 700,
@@ -266,6 +297,17 @@ export default function FinalBreakdown({ billId, people, onBack }) {
           Start New Bill
         </button>
       </div>
+
+      {confirmNew && (
+        <ConfirmDialog
+          title="Start a new bill?"
+          confirmLabel="Start new bill"
+          onCancel={() => setConfirmNew(false)}
+          onConfirm={() => onNewBill()}
+        >
+          The current split will be discarded.
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
