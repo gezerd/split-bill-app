@@ -21,6 +21,7 @@ class ItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     price: Optional[Decimal] = Field(None, ge=0)
     quantity: Optional[int] = Field(None, ge=1)
+    custom_modifiers: Optional[List[str]] = None
 
 
 class Item(ItemBase):

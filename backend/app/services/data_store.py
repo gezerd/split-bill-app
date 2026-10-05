@@ -124,6 +124,7 @@ class InMemoryStore:
         name: Optional[str] = None,
         price: Optional[Decimal] = None,
         quantity: Optional[int] = None,
+        custom_modifiers: Optional[List[str]] = None,
     ) -> Optional[Item]:
         with self._lock:
             item = self._items.get(item_id)
@@ -134,6 +135,8 @@ class InMemoryStore:
                     item.price = price
                 if quantity is not None:
                     item.quantity = quantity
+                if custom_modifiers is not None:
+                    item.custom_modifiers = list(custom_modifiers)
             return item
 
     def delete_item(self, item_id: UUID) -> bool:
