@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import ItemCard from './ItemCard';
 import ItemModal from './ItemModal';
+import ShareSheet from './ShareSheet';
 import ConfirmDialog, { boldName } from './ConfirmDialog';
 
 export default function ItemList({
@@ -11,8 +12,9 @@ export default function ItemList({
   onUpdateItem,
   onDeleteItem,
   onSetShareCount,
+  selectedPerson,
 }) {
-  // modal: null | { mode: 'add' } | { mode: 'edit', item } | { mode: 'delete', item }
+  // modal: null | { mode: 'add' } | { mode: 'edit', item } | { mode: 'delete', item } | { mode: 'sheet', itemId }
   const [modal, setModal] = useState(null);
   const closeModal = useCallback(() => setModal(null), []);
 
@@ -53,6 +55,8 @@ export default function ItemList({
             onEdit={(item) => setModal({ mode: 'edit', item })}
             onDeleteRequest={(item) => setModal({ mode: 'delete', item })}
             onSetShareCount={onSetShareCount}
+            onOpenSheet={(item) => setModal({ mode: 'sheet', itemId: item.id })}
+            selectedPerson={selectedPerson}
           />
         ))}
 
@@ -62,6 +66,15 @@ export default function ItemList({
         </button>
       </div>
 
+      {modal?.mode === 'sheet' && items.find((i) => i.id === modal.itemId) && (
+        <ShareSheet
+          item={items.find((i) => i.id === modal.itemId)}
+          people={people}
+          assignments={assignments}
+          onSetShareCount={onSetShareCount}
+          onClose={closeModal}
+        />
+      )}
       {modal?.mode === 'add' && (
         <ItemModal mode="add" onClose={closeModal} onSubmit={handleAddSubmit} />
       )}

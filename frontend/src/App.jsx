@@ -7,6 +7,7 @@ import PeopleManager from './components/PeopleManager';
 import TipTaxInput from './components/TipTaxInput';
 import FinalBreakdown from './components/FinalBreakdown';
 import { summarize } from './lib/splitModel';
+import { AVATAR_PLAIN_COLORS } from './components/PeopleManager';
 
 export default function App() {
   const {
@@ -34,6 +35,12 @@ export default function App() {
   } = useBillData();
 
   const [step, setStep] = useState(1);
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
+
+  const selectedIndex = people.findIndex((p) => p.id === selectedPersonId);
+  const selectedPerson = selectedIndex >= 0
+    ? { ...people[selectedIndex], color: AVATAR_PLAIN_COLORS[selectedIndex % AVATAR_PLAIN_COLORS.length] }
+    : null;
 
   const summary = summarize({ items, people, assignments, receiptSubtotal });
   const { canProceed, unassignedItems, partialItems, unassignedPeople } = summary;
@@ -127,7 +134,31 @@ export default function App() {
               people={people}
               onAddPerson={handleCreatePerson}
               onDeletePerson={handleDeletePerson}
+              assignments={assignments}
+              selectedPersonId={selectedPerson?.id ?? null}
+              onSelectPerson={(id) => setSelectedPersonId((cur) => (cur === id ? null : id))}
             />
+
+            {selectedPerson && (
+              <div
+                className="flex items-center justify-between"
+                style={{
+                  gap: 12, padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontSize: 13,
+                  background: `color-mix(in srgb, ${selectedPerson.color} 14%, transparent)`,
+                  border: `1.5px solid ${selectedPerson.color}`,
+                }}
+              >
+                <span>
+                  Tapping items for <b style={{ color: selectedPerson.color }}>{selectedPerson.name}</b>. Tap a card to add them to it or take them off.
+                </span>
+                <button
+                  onClick={() => setSelectedPersonId(null)}
+                  style={{ fontWeight: 700, fontSize: 13, padding: '6px 12px', borderRadius: 9, background: selectedPerson.color, color: '#111' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
 
             <div>
               <div className="flex items-center justify-between mb-3.5">
@@ -167,6 +198,7 @@ export default function App() {
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
                 onSetShareCount={setShareCount}
+                selectedPerson={selectedPerson}
               />
             </div>
 
