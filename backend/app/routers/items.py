@@ -17,7 +17,11 @@ def create_item(item: ItemCreate):
         raise HTTPException(status_code=404, detail="Bill not found")
 
     new_item = data_store.create_item(
-        bill_id=item.bill_id, name=item.name, price=item.price, quantity=item.quantity
+        bill_id=item.bill_id,
+        name=item.name,
+        price=item.price,
+        quantity=item.quantity,
+        custom_modifiers=item.custom_modifiers,
     )
 
     return {
@@ -51,7 +55,11 @@ def get_items(bill_id: UUID):
 def update_item(item_id: UUID, item_update: ItemUpdate):
     """Update an item (e.g., fix OCR errors)"""
     updated_item = data_store.update_item(
-        item_id, name=item_update.name, price=item_update.price, quantity=item_update.quantity
+        item_id,
+        name=item_update.name,
+        price=item_update.price,
+        quantity=item_update.quantity,
+        custom_modifiers=item_update.custom_modifiers,
     )
 
     if not updated_item:

@@ -91,3 +91,26 @@ def test_assignment_across_mismatched_bills_returns_400(client):
     )
 
     assert response.status_code == 400
+
+
+def test_modifiers_saved_on_create_replaced_on_update_and_kept_when_omitted(client):
+    bill = data_store.create_bill()
+    created = client.post(
+        "/api/items",
+        json={"bill_id": str(bill.id), "name": "Burger", "price": "5.00", "custom_modifiers": ["No onion"]},
+    ).json()
+    assert created["customModifiers"] == ["No onion"]
+
+    kept = client.put(f"/api/items/{created['id']}", json={"name": "Burger 2"}).json()
+    assert kept["customModifiers"] == ["No onion"]
+
+    replaced = client.put(
+        f"/api/items/{created['id']}", json={"custom_modifiers": ["Extra cheese", "Grilled"]}
+    ).json()
+    assert replaced["customModifiers"] == ["Extra cheese", "Grilled"]
+
+    cleared = client.put(f"/api/items/{created['id']}", json={"custom_modifiers": []}).json()
+    assert cleared["customModifiers"] == []
+
+    listed = client.get("/api/items", params={"bill_id": str(bill.id)}).json()
+    assert listed[0]["customModifiers"] == []

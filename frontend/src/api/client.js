@@ -47,12 +47,13 @@ export const getBreakdown = async (billId) => {
 };
 
 // Items API
-export const createItem = async (billId, name, price, quantity = 1) => {
+export const createItem = async (billId, name, price, quantity = 1, customModifiers = []) => {
   const response = await apiClient.post('/api/items', {
     bill_id: billId,
     name,
     price,
     quantity,
+    custom_modifiers: customModifiers,
   });
   return response.data;
 };

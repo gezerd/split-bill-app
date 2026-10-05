@@ -42,11 +42,11 @@ export const useBillData = () => {
   }, []);
 
   // Items
-  const handleCreateItem = useCallback(async (name, price, quantity = 1) => {
+  const handleCreateItem = useCallback(async (name, price, quantity = 1, customModifiers = []) => {
     if (!billId) return;
     setLoading(true);
     try {
-      const newItem = await api.createItem(billId, name, price, quantity);
+      const newItem = await api.createItem(billId, name, price, quantity, customModifiers);
       setItems((prev) => [...prev, newItem]);
       return newItem;
     } catch (err) {
@@ -60,7 +60,9 @@ export const useBillData = () => {
   const handleUpdateItem = useCallback(async (itemId, updates) => {
     setLoading(true);
     try {
-      const updatedItem = await api.updateItem(itemId, updates);
+      const { customModifiers, ...rest } = updates;
+      const payload = customModifiers === undefined ? rest : { ...rest, custom_modifiers: customModifiers };
+      const updatedItem = await api.updateItem(itemId, payload);
       setItems((prev) =>
         prev.map((item) => (item.id === itemId ? updatedItem : item))
       );
