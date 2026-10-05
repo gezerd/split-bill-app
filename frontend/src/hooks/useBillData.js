@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import * as api from '../api/client';
 
 export const useBillData = () => {
@@ -8,9 +8,13 @@ export const useBillData = () => {
   const [assignments, setAssignments] = useState([]);
   const [tax, setTax] = useState(0);
   const [tip, setTip] = useState(0);
-  const [subtotal, setSubtotal] = useState(0);
+  const [receiptSubtotal, setReceiptSubtotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Server assignment ids per (item, person) pair, and the per-pair write chains.
+  const assignmentIds = useRef(new Map());
+  const writeChains = useRef(new Map());
+  const pairKey = (itemId, personId) => `${itemId}:${personId}`;
 
   // Upload receipt
   const handleUploadReceipt = useCallback(async (file) => {
@@ -26,7 +30,8 @@ export const useBillData = () => {
       setAssignments([]);
       setTax(data.tax_amount || 0);
       setTip(data.tip_amount || 0);
-      setSubtotal(data.subtotal || 0);
+      setReceiptSubtotal(data.subtotal || 0);
+      assignmentIds.current.clear();
       return data;
     } catch (err) {
       setError(err.message);
@@ -86,7 +91,6 @@ export const useBillData = () => {
   // People
   const handleCreatePerson = useCallback(async (name) => {
     if (!billId) return;
-    setLoading(true);
     try {
       const newPerson = await api.createPerson(billId, name);
       setPeople((prev) => [...prev, newPerson]);
@@ -94,13 +98,10 @@ export const useBillData = () => {
     } catch (err) {
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, [billId]);
 
   const handleUpdatePerson = useCallback(async (personId, name) => {
-    setLoading(true);
     try {
       const updatedPerson = await api.updatePerson(personId, name);
       setPeople((prev) =>
@@ -110,13 +111,10 @@ export const useBillData = () => {
     } catch (err) {
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   const handleDeletePerson = useCallback(async (personId) => {
-    setLoading(true);
     try {
       await api.deletePerson(personId);
       setPeople((prev) => prev.filter((person) => person.id !== personId));
@@ -125,44 +123,54 @@ export const useBillData = () => {
     } catch (err) {
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
-  // Assignments
-  const handleCreateAssignment = useCallback(async (itemId, personId, shareCount = 1) => {
-    setLoading(true);
-    try {
-      const newAssignment = await api.createAssignment(itemId, personId, shareCount);
-      setAssignments((prev) => {
-        // Remove existing assignment if it exists, then add new one
-        const filtered = prev.filter(
-          (a) => !(a.item_id === itemId && a.person_id === personId)
+  // Assignments: optimistic, and writes for one (item, person) pair are chained
+  // so they reach the server in order. No loading overlay.
+  const setShareCount = useCallback((itemId, personId, count) => {
+    const key = pairKey(itemId, personId);
+
+    setAssignments((prev) => {
+      const rest = prev.filter((a) => !(a.item_id === itemId && a.person_id === personId));
+      if (count <= 0) return rest;
+      const existing = prev.find((a) => a.item_id === itemId && a.person_id === personId);
+      return [...rest, { ...existing, item_id: itemId, person_id: personId, share_count: count }];
+    });
+
+    const write = async () => {
+      if (count > 0) {
+        const saved = await api.createAssignment(itemId, personId, count);
+        assignmentIds.current.set(key, saved.id);
+        setAssignments((prev) =>
+          prev.map((a) =>
+            a.item_id === itemId && a.person_id === personId ? { ...a, id: saved.id } : a
+          )
         );
-        return [...filtered, newAssignment];
-      });
-      return newAssignment;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      } else {
+        const id = assignmentIds.current.get(key);
+        if (id) await api.deleteAssignment(id);
+        assignmentIds.current.delete(key);
+      }
+    };
 
-  const handleDeleteAssignment = useCallback(async (assignmentId) => {
-    setLoading(true);
-    try {
-      await api.deleteAssignment(assignmentId);
-      setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const chain = (writeChains.current.get(key) || Promise.resolve())
+      .then(write)
+      .catch(async (err) => {
+        setError(err.message);
+        try {
+          const fresh = await api.getAssignments(billId);
+          assignmentIds.current = new Map(
+            fresh.map((a) => [pairKey(a.item_id, a.person_id), a.id])
+          );
+          setAssignments(fresh);
+        } catch {
+          // keep the error from the failed write
+        }
+      });
+    writeChains.current.set(key, chain);
+    return chain;
+  }, [billId]);
 
   // Tax and Tip
   const handleUpdateTax = useCallback(async (taxAmount) => {
@@ -200,7 +208,7 @@ export const useBillData = () => {
     assignments,
     tax,
     tip,
-    subtotal,
+    receiptSubtotal,
     loading,
     error,
     handleUploadReceipt,
@@ -210,8 +218,7 @@ export const useBillData = () => {
     handleCreatePerson,
     handleUpdatePerson,
     handleDeletePerson,
-    handleCreateAssignment,
-    handleDeleteAssignment,
+    setShareCount,
     handleUpdateTax,
     handleUpdateTip,
   };

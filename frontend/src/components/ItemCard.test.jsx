@@ -9,81 +9,55 @@ function makeItem(overrides) {
   return { id: 'i1', name: 'Pizza', price: '10.00', quantity: 1, customModifiers: [], ...overrides };
 }
 
+function renderCard({ item = makeItem(), people = [alice, bob], assignments = [] } = {}) {
+  const onSetShareCount = vi.fn();
+  const { container } = render(
+    <ItemCard
+      item={item}
+      people={people}
+      assignments={assignments}
+      onEdit={vi.fn()}
+      onDeleteRequest={vi.fn()}
+      onSetShareCount={onSetShareCount}
+    />
+  );
+  return { onSetShareCount, card: container.firstChild };
+}
+
+const holds = (personId, n) => ({ id: 'a-' + personId, item_id: 'i1', person_id: personId, share_count: n });
+
 describe('ItemCard', () => {
-  it('assigning an unassigned person adds a share and calls onAssignmentSave', async () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 1 })}
-        people={[alice]}
-        assignments={[]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
+  it('tapping an avatar with no Share sets ×1', () => {
+    const { onSetShareCount } = renderCard();
     fireEvent.click(screen.getByTitle('Alice'));
-
-    expect(onAssignmentSave).toHaveBeenCalledTimes(1);
-    const [itemId, shareMap] = onAssignmentSave.mock.calls[0];
-    expect(itemId).toBe('i1');
-    expect(shareMap.get('p1')).toBe(1);
+    expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 1);
   });
 
-  it('clicking a person already at max shares removes their assignment (toggle-off)', async () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 1 })}
-        people={[alice]}
-        assignments={[{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 }]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
+  it('tapping an avatar holding ×2 removes the Share', () => {
+    const { onSetShareCount } = renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 2)] });
     fireEvent.click(screen.getByTitle('Alice'));
-
-    expect(onAssignmentSave).toHaveBeenCalledTimes(1);
-    const [, shareMap] = onAssignmentSave.mock.calls[0];
-    expect(shareMap.has('p1')).toBe(false);
+    expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 0);
   });
 
-  it('caps share_count at item.quantity when another person already holds all shares', () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 2 })}
-        people={[alice, bob]}
-        assignments={[{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 2 }]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
-    fireEvent.click(screen.getByTitle('Bob'));
-
-    expect(onAssignmentSave).not.toHaveBeenCalled();
+  it('shows a ×N badge only above one Share', () => {
+    renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 2), holds('p2', 1)] });
+    expect(screen.getByText('×2')).toBeInTheDocument();
+    expect(screen.queryByText('×1')).not.toBeInTheDocument();
   });
 
-  it('renders the fully-assigned (accent) state once all shares are claimed', () => {
-    const { container } = render(
-      <ItemCard
-        item={makeItem({ quantity: 2 })}
-        people={[alice, bob]}
-        assignments={[
-          { id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 },
-          { id: 'a2', item_id: 'i1', person_id: 'p2', share_count: 1 },
-        ]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={vi.fn()}
-      />
-    );
+  it('shows the status line and an amber border when partially assigned', () => {
+    const { card } = renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 1)] });
+    expect(screen.getByText('1 of 3 claimed — Alice covers all 3')).toBeInTheDocument();
+    expect(card.className).toContain('border-[#FBBF24]');
+  });
 
-    expect(container.firstChild).toHaveClass('border-accent');
+  it('uses the accent border when fully assigned and neutral when unassigned', () => {
+    expect(renderCard({ assignments: [holds('p1', 1)] }).card.className).toContain('border-accent');
+    expect(renderCard().card.className).toContain('border-border');
+  });
+
+  it('lets several people hold Shares on a quantity-1 item', () => {
+    renderCard({ item: makeItem({ price: '4.25' }), assignments: [holds('p1', 1), holds('p2', 1)] });
+    expect(screen.getByText('Split 2 ways · ~$2.13 each')).toBeInTheDocument();
   });
 });

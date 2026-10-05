@@ -3,8 +3,8 @@ import {
   uploadReceipt,
   addPerson,
   itemCard,
-  assignItemFullyToPerson,
-  assignAllItemsFullyToOnePerson,
+  assignItemToPerson,
+  assignAllItemsToOnePerson,
 } from './helpers';
 
 // Runs against the real backend with MOCK_OCR=true (see README) — the fixed
@@ -20,11 +20,11 @@ test('full workflow: upload, assign (including a shared item), tax/tip, breakdow
   // Split the shared "Fry" item (quantity 3) between Alice and Bob
   const friesCard = itemCard(page, 'Fry');
   await friesCard.getByTitle('Bob').click();
-  await page.waitForLoadState('networkidle');
-  await assignItemFullyToPerson(page, friesCard, 'Alice');
+  await friesCard.getByTitle('Alice').click();
+  await expect(friesCard.getByTestId('status-line')).toHaveText('2 of 3 claimed — Alice & Bob split all 3 evenly');
 
   // Give everything else to Alice
-  await assignAllItemsFullyToOnePerson(page, 'Alice');
+  await assignAllItemsToOnePerson(page, 'Alice', { except: ['Fry'] });
 
   await expect(page.getByRole('button', { name: 'Next →' })).toBeEnabled();
   await page.getByRole('button', { name: 'Next →' }).click();

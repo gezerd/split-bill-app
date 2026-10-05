@@ -9,7 +9,7 @@ export default function ItemList({
   onAddItem,
   onUpdateItem,
   onDeleteItem,
-  onAssignmentSave,
+  onSetShareCount,
 }) {
   // modal: null | { mode: 'add' } | { mode: 'edit', item } | { mode: 'delete', item }
   const [modal, setModal] = useState(null);
@@ -50,7 +50,7 @@ export default function ItemList({
             assignments={assignments}
             onEdit={(item) => setModal({ mode: 'edit', item })}
             onDeleteRequest={(item) => setModal({ mode: 'delete', item })}
-            onAssignmentSave={onAssignmentSave}
+            onSetShareCount={onSetShareCount}
           />
         ))}
 

@@ -62,32 +62,47 @@ class CalculationService:
         if not people:
             return {"people": []}
 
+        # Split each item to whole cents by Share weight (largest remainder),
+        # so holders' amounts add up exactly to the item total.
+        item_splits = {}
+        item_total_shares = {}
+        for item in items:
+            holders = [
+                (person.id, a.share_count)
+                for person in people
+                for a in assignments
+                if a.item_id == item.id and a.person_id == person.id and a.share_count > 0
+            ]
+            total_shares = sum(c for _, c in holders)
+            item_total_shares[item.id] = total_shares
+            if total_shares == 0:
+                continue
+            total_cents = int((item.price * item.quantity * 100).to_integral_value())
+            raw = [Decimal(total_cents * c) / total_shares for _, c in holders]
+            floors = [int(r.to_integral_value(rounding=ROUND_DOWN)) for r in raw]
+            leftover = total_cents - sum(floors)
+            order = sorted(range(len(holders)), key=lambda i: raw[i] - floors[i], reverse=True)
+            for i in order[:leftover]:
+                floors[i] += 1
+            item_splits[item.id] = {pid: floors[i] for i, (pid, _) in enumerate(holders)}
+
+        items_by_id = {item.id: item for item in items}
         breakdown = []
         raw_subtotals = []
         total_subtotal = Decimal("0.00")
 
-        # Calculate each person's share
         for person in people:
             person_items = []
             person_subtotal = Decimal("0.00")
 
-            # Get all assignments for this person
-            person_assignments = [a for a in assignments if a.person_id == person.id]
-
-            for assignment in person_assignments:
-                item = data_store.get_item(assignment.item_id)
+            for assignment in assignments:
+                if assignment.person_id != person.id or assignment.share_count <= 0:
+                    continue
+                item = items_by_id.get(assignment.item_id)
                 if not item:
                     continue
 
-                # Calculate total shares for this item (sum of all share_counts)
-                item_assignments = data_store.get_assignments_by_item(item.id)
-                total_shares = sum(a.share_count for a in item_assignments)
-
-                if total_shares == 0:
-                    continue
-
-                # Each share = 1 unit at unit price
-                share_amount = item.price * Decimal(assignment.share_count)
+                share_amount = Decimal(item_splits[item.id][person.id]) / 100
 
                 person_items.append(
                     {
@@ -95,7 +110,7 @@ class CalculationService:
                         "price": item.price,
                         "quantity": item.quantity,
                         "share_count": assignment.share_count,
-                        "total_shares": item.quantity,
+                        "total_shares": item_total_shares[item.id],
                         "share_amount": round(share_amount, 2),
                     }
                 )

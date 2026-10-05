@@ -18,7 +18,7 @@ const baseHookReturn = {
   assignments: [],
   tax: 0,
   tip: 0,
-  subtotal: 0,
+  receiptSubtotal: 0,
   loading: false,
   error: null,
   handleUploadReceipt: vi.fn(),
@@ -27,8 +27,7 @@ const baseHookReturn = {
   handleDeleteItem: vi.fn(),
   handleCreatePerson: vi.fn(),
   handleDeletePerson: vi.fn(),
-  handleCreateAssignment: vi.fn(),
-  handleDeleteAssignment: vi.fn(),
+  setShareCount: vi.fn(),
   handleUpdateTax: vi.fn(),
   handleUpdateTip: vi.fn(),
 };
@@ -39,55 +38,61 @@ function renderAtStep2(overrides) {
   fireEvent.click(screen.getByText('go-to-step-2'));
 }
 
-describe('App — Step 2 Next button gating', () => {
+describe('App — Step 2 gating and warnings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('enables Next when all items and all people are assigned', () => {
-    renderAtStep2({
-      items: [{ id: 'i1', name: 'Burger', price: 5, quantity: 1 }],
-      people: [{ id: 'p1', name: 'Alice' }],
-      assignments: [{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 }],
-    });
+  const burger = { id: 'i1', name: 'Burger', price: 5, quantity: 1 };
+  const alice = { id: 'p1', name: 'Alice' };
+  const holds = (itemId, personId, n = 1) => ({ id: `a-${itemId}`, item_id: itemId, person_id: personId, share_count: n });
 
-    const nextBtn = screen.getByRole('button', { name: 'Next →' });
-    expect(nextBtn).not.toBeDisabled();
+  it('enables Next when every item has a Share', () => {
+    renderAtStep2({ items: [burger], people: [alice], assignments: [holds('i1', 'p1')] });
+    expect(screen.getByRole('button', { name: 'Next →' })).not.toBeDisabled();
+    expect(screen.getByText('All assigned ✓')).toBeInTheDocument();
   });
 
-  it('disables Next with the correct remaining count when items are not fully assigned', () => {
-    renderAtStep2({
-      items: [{ id: 'i1', name: 'Burger', price: 5, quantity: 2 }],
-      people: [{ id: 'p1', name: 'Alice' }],
-      assignments: [{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 }],
-    });
-
-    const nextBtn = screen.getByRole('button', { name: '1 items remaining' });
-    expect(nextBtn).toBeDisabled();
+  it('blocks Next with the unassigned count', () => {
+    renderAtStep2({ items: [burger], people: [alice], assignments: [] });
+    expect(screen.getByRole('button', { name: '1 items remaining' })).toBeDisabled();
+    expect(screen.getByText('1 unassigned')).toBeInTheDocument();
   });
 
-  it('disables Next when items are fully assigned but a person has zero assignments (A1 regression)', () => {
+  it('allows Next for a partially assigned item and shows the partial pill', () => {
     renderAtStep2({
-      items: [{ id: 'i1', name: 'Burger', price: 5, quantity: 1 }],
-      people: [
-        { id: 'p1', name: 'Alice' },
-        { id: 'p2', name: 'Bob' },
-      ],
-      assignments: [{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 }],
+      items: [{ ...burger, quantity: 2 }],
+      people: [alice],
+      assignments: [holds('i1', 'p1')],
     });
-
-    const nextBtn = screen.getByRole('button', { name: '1 people unassigned' });
-    expect(nextBtn).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next →' })).not.toBeDisabled();
+    expect(screen.getByText('1 partial')).toBeInTheDocument();
   });
 
-  it('disables Next when there are no people at all', () => {
-    renderAtStep2({
-      items: [],
-      people: [],
-      assignments: [],
-    });
+  it('notes an unassigned person only once every item has a Share, without blocking', () => {
+    const bob = { id: 'p2', name: 'Bob' };
+    renderAtStep2({ items: [burger], people: [alice, bob], assignments: [holds('i1', 'p1')] });
+    expect(screen.getByText("Bob has nothing assigned — they'll owe $0.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next →' })).not.toBeDisabled();
+  });
 
-    const nextBtn = screen.getByRole('button', { name: '0 people unassigned' });
-    expect(nextBtn).toBeDisabled();
+  it('hides the unassigned person note while items are unassigned', () => {
+    renderAtStep2({ items: [burger], people: [alice], assignments: [] });
+    expect(screen.queryByText(/nothing assigned/)).not.toBeInTheDocument();
+  });
+
+  it('disables Next with "Add people first" when there are no people', () => {
+    renderAtStep2({ items: [burger], people: [], assignments: [] });
+    expect(screen.getByRole('button', { name: 'Add people first' })).toBeDisabled();
+  });
+
+  it('shows the subtotal mismatch banner only with a receipt subtotal', () => {
+    renderAtStep2({ items: [burger], people: [alice], receiptSubtotal: 9 });
+    expect(screen.getByText(/Items add up to \$5.00, but the receipt subtotal is \$9.00/)).toBeInTheDocument();
+  });
+
+  it('skips the mismatch check without a receipt subtotal', () => {
+    renderAtStep2({ items: [burger], people: [alice], receiptSubtotal: 0 });
+    expect(screen.queryByText(/Items add up to/)).not.toBeInTheDocument();
   });
 });
