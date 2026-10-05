@@ -22,7 +22,7 @@ export const AVATAR_COLORS_OUTLINE = [
   'border-[#38BDF8] text-[#38BDF8]',
 ];
 
-const AVATAR_PLAIN_COLORS = [
+export const AVATAR_PLAIN_COLORS = [
   '#F87171','#60A5FA','#A78BFA','#4ADE80',
   '#FBBF24','#F472B6','#FB923C','#38BDF8',
 ];

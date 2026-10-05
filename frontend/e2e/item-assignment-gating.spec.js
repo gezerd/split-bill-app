@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { uploadReceipt, addPerson, itemCard, assignItemFullyToPerson } from './helpers';
+import { uploadReceipt, addPerson, itemCard, assignItemToPerson } from './helpers';
 
 test('partially assigned items keep Next disabled with the correct remaining count', async ({ page }) => {
   await uploadReceipt(page);
@@ -12,7 +12,7 @@ test('partially assigned items keep Next disabled with the correct remaining cou
     const name = await heading.textContent();
     if (name === 'Med Coke') continue;
     const card = heading.locator('xpath=ancestor::div[contains(@class,"bg-surface")][1]');
-    await assignItemFullyToPerson(page, card, 'Alice');
+    await assignItemToPerson(card, 'Alice');
   }
 
   await expect(page.getByRole('button', { name: '1 items remaining' })).toBeDisabled();

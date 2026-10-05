@@ -1,4 +1,8 @@
-import { getInitials, AVATAR_COLORS, AVATAR_COLORS_OUTLINE } from './PeopleManager';
+import { getInitials, AVATAR_PLAIN_COLORS } from './PeopleManager';
+import { itemStatus, describeItem } from '../lib/splitModel';
+
+const BORDER = { full: 'border-accent', partial: 'border-[#FBBF24]', unassigned: 'border-border' };
+const TONE = { dim: 'text-gray-400', warn: 'text-[#FBBF24]', ok: 'text-gray-300' };
 
 export default function ItemCard({
   item,
@@ -6,43 +10,22 @@ export default function ItemCard({
   assignments,
   onEdit,
   onDeleteRequest,
-  onAssignmentSave,
+  onSetShareCount,
 }) {
   const itemAssignments = assignments.filter((a) => a.item_id === item.id);
-  const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
-  const isFullyAssigned = totalShares >= (item.quantity || 1);
+  const status = itemStatus(item, assignments);
+  const line = describeItem(item, people, assignments);
 
-  const handlePersonClick = async (person) => {
-    const quantity = item.quantity || 1;
-    const currentAssignment = itemAssignments.find((a) => a.person_id === person.id);
-    const currentShares = currentAssignment?.share_count || 0;
-    const otherShares = itemAssignments
-      .filter((a) => a.person_id !== person.id)
-      .reduce((sum, a) => sum + (a.share_count || 1), 0);
-    const maxShares = quantity - otherShares;
-
-    const newShareMap = new Map(
-      itemAssignments.map((a) => [a.person_id, a.share_count || 1])
-    );
-
-    if (currentShares > 0 && currentShares >= maxShares) {
-      newShareMap.delete(person.id);
-    } else {
-      const newShares = Math.min(currentShares + 1, maxShares);
-      if (newShares === 0) return;
-      newShareMap.set(person.id, newShares);
-    }
-
-    await onAssignmentSave(item.id, newShareMap);
+  const handlePersonClick = (person) => {
+    const shares = itemAssignments.find((a) => a.person_id === person.id)?.share_count || 0;
+    onSetShareCount(item.id, person.id, shares > 0 ? 0 : 1);
   };
 
   const totalPrice = parseFloat(item.price) * (item.quantity || 1);
 
   return (
     <div
-      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-colors duration-200 ${
-        isFullyAssigned ? 'border-accent' : 'border-border'
-      }`}
+      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-colors duration-200 ${BORDER[status]}`}
     >
       {/* Card header */}
       <div className="flex items-start justify-between mb-2">
@@ -89,44 +72,41 @@ export default function ItemCard({
       {people.length === 0 ? (
         <div className="mt-3 text-xs text-gray-400">Add people to assign</div>
       ) : (
-        <div className="mt-3">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-400">Tap to add a share:</span>
-            {totalShares > 0 && (
-              <span className="text-xs text-gray-400">{totalShares} share{totalShares !== 1 ? 's' : ''}</span>
-            )}
-          </div>
-          <div className="mt-1.5 flex flex-wrap gap-2">
-            {people.map((person) => {
-              const colorIndex = people.findIndex((p) => p.id === person.id);
-              const assignment = itemAssignments.find((a) => a.person_id === person.id);
-              const shares = assignment?.share_count || 0;
-              const assigned = shares > 0;
+        <div className="mt-3 flex flex-wrap gap-2">
+          {people.map((person, index) => {
+            const color = AVATAR_PLAIN_COLORS[index % AVATAR_PLAIN_COLORS.length];
+            const shares = itemAssignments.find((a) => a.person_id === person.id)?.share_count || 0;
+            const held = shares > 0;
 
-              return (
-                <button
-                  key={person.id}
-                  onClick={() => handlePersonClick(person)}
-                  className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
-                    assigned
-                      ? `${AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]} text-black border-transparent`
-                      : `bg-transparent border-[1.5px] ${AVATAR_COLORS_OUTLINE[colorIndex % AVATAR_COLORS_OUTLINE.length]}`
-                  }`}
-                  title={person.name}
-                >
-                  {getInitials(person.name)}
-                  {shares > 1 && (
-                    <span
-                      className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center rounded-full"
-                      style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
-                    >
-                      ×{shares}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={person.id}
+                onClick={() => handlePersonClick(person)}
+                className={`avatar-ring relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
+                  held ? 'text-[#111] border-transparent' : 'bg-transparent border-[1.5px] border-[#2E5674] text-[#7AAAB8]'
+                }`}
+                style={held ? { background: color } : { '--avatar-color': color }}
+                title={person.name}
+              >
+                {getInitials(person.name)}
+                {shares > 1 && (
+                  <span
+                    className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center rounded-full"
+                    style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
+                  >
+                    ×{shares}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer: status line (room for a "Shares ›" link, wired by the Share sheet) */}
+      {people.length > 0 && (
+        <div className="mt-3 flex items-center justify-between" style={{ fontSize: 12 }}>
+          <span className={TONE[line.tone]} data-testid="status-line">{line.text}</span>
         </div>
       )}
     </div>

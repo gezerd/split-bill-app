@@ -77,3 +77,41 @@ def test_breakdown_for_unknown_bill_returns_404(client):
     response = client.get("/api/bills/00000000-0000-0000-0000-000000000000/breakdown")
 
     assert response.status_code == 404
+
+
+def _breakdown_for(client, price, quantity, share_counts):
+    bill_id = client.post("/api/bills/upload-receipt", files={"file": ("r.jpg", b"x", "image/jpeg")}).json()["bill_id"]
+    item = client.post(
+        "/api/items", json={"bill_id": bill_id, "name": "Dish", "price": price, "quantity": quantity}
+    ).json()
+    for i, count in enumerate(share_counts):
+        person = client.post("/api/people", json={"bill_id": bill_id, "name": f"P{i}"}).json()
+        client.post(
+            "/api/assignments",
+            json={"item_id": item["id"], "person_id": person["id"], "share_count": count},
+        )
+    return client.get(f"/api/bills/{bill_id}/breakdown").json()["people"]
+
+
+def _item_amounts(people):
+    return [Decimal(str(p["items"][0]["share_amount"])) for p in people]
+
+
+def test_breakdown_three_way_split_is_cent_exact(client):
+    people = _breakdown_for(client, 4.25, 1, [1, 1, 1])
+    assert _item_amounts(people) == [Decimal("1.42"), Decimal("1.42"), Decimal("1.41")]
+
+
+def test_breakdown_shares_beyond_quantity_act_as_weights(client):
+    people = _breakdown_for(client, 3.00, 1, [2, 1])
+    assert _item_amounts(people) == [Decimal("2.00"), Decimal("1.00")]
+
+
+def test_breakdown_single_share_on_multi_quantity_pays_full_item(client):
+    people = _breakdown_for(client, 5.00, 3, [1])
+    assert _item_amounts(people) == [Decimal("15.00")]
+
+
+def test_breakdown_total_shares_is_sum_of_shares(client):
+    people = _breakdown_for(client, 5.00, 3, [2, 1, 4])
+    assert [p["items"][0]["total_shares"] for p in people] == [7, 7, 7]
