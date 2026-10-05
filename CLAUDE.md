@@ -45,3 +45,4 @@ If no design file covers the changed area, say so and skip.
 - **Issue tracker**: GitHub Issues (gezerd/split-bill-app) via `gh`. See `docs/agents/issue-tracker.md`.
 - **Triage labels**: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
 - **Domain docs**: single-context `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
+- **spec-runner**: `.spec-runner/` configures builds of Specs by gezerd/spec-runner. See `docs/agents/spec-runner.md`.

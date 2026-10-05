@@ -1,0 +1,6 @@
+{
+  "setup": "cp .env.example .env && npm ci && npm ci --prefix frontend && uv sync --locked --directory backend",
+  "gate": "npm test && npm run test:e2e",
+  "concurrency": 3,
+  "attemptTimeoutMinutes": 60
+}
