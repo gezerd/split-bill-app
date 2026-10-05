@@ -176,4 +176,58 @@ describe('useBillData', () => {
 
     expect(result.current.assignments).toHaveLength(0);
   });
+
+  it('keeps people (re-created by name) when uploading with keepPeople', async () => {
+    api.uploadReceipt
+      .mockResolvedValueOnce({ bill_id: 'bill-1', items: [{ id: 'item-1' }] })
+      .mockResolvedValueOnce({ bill_id: 'bill-2', items: [{ id: 'item-2' }] });
+    api.createPerson
+      .mockResolvedValueOnce({ id: 'p1', name: 'Ann' })
+      .mockResolvedValueOnce({ id: 'p9', name: 'Ann' });
+
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    await act(async () => { await result.current.handleCreatePerson('Ann'); });
+    await act(async () => {
+      await result.current.handleUploadReceipt(new File(['y'], 'b.jpg'), { keepPeople: true });
+    });
+
+    expect(api.createPerson).toHaveBeenLastCalledWith('bill-2', 'Ann');
+    expect(result.current.people).toEqual([{ id: 'p9', name: 'Ann' }]);
+    expect(result.current.items).toEqual([{ id: 'item-2' }]);
+    expect(result.current.assignments).toEqual([]);
+  });
+
+  it('starts an empty manual bill', async () => {
+    api.createBill.mockResolvedValue({
+      bill_id: 'bill-m', items: [], tax_amount: 0, tip_amount: 0, subtotal: 0, total: 0,
+    });
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleStartManual(); });
+    expect(result.current.billId).toBe('bill-m');
+    expect(result.current.items).toEqual([]);
+    expect(result.current.receiptSubtotal).toBe(0);
+  });
+
+  it('resets the bill in place', async () => {
+    api.uploadReceipt.mockResolvedValue({ bill_id: 'bill-1', items: [{ id: 'i' }], subtotal: 5, tax_amount: 1 });
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    act(() => { result.current.handleReset(); });
+    expect(result.current.billId).toBeNull();
+    expect(result.current.items).toEqual([]);
+    expect(result.current.people).toEqual([]);
+    expect(result.current.tax).toBe(0);
+    expect(result.current.receiptSubtotal).toBe(0);
+  });
+
+  it('flags edited items', async () => {
+    api.uploadReceipt.mockResolvedValue({ bill_id: 'bill-1', items: [{ id: 'i', price: 1 }] });
+    api.deleteItem.mockResolvedValue({});
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    expect(result.current.itemsEdited).toBe(false);
+    await act(async () => { await result.current.handleDeleteItem('i'); });
+    expect(result.current.itemsEdited).toBe(true);
+  });
 });
