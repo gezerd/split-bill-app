@@ -9,81 +9,96 @@ function makeItem(overrides) {
   return { id: 'i1', name: 'Pizza', price: '10.00', quantity: 1, customModifiers: [], ...overrides };
 }
 
+function renderCard({ item = makeItem(), people = [alice, bob], assignments = [], selectedPerson = null } = {}) {
+  const onOpenSheet = vi.fn();
+  const onSetShareCount = vi.fn();
+  const { container } = render(
+    <ItemCard
+      item={item}
+      people={people}
+      assignments={assignments}
+      onEdit={vi.fn()}
+      onDeleteRequest={vi.fn()}
+      onSetShareCount={onSetShareCount}
+      onOpenSheet={onOpenSheet}
+      selectedPerson={selectedPerson}
+    />
+  );
+  return { onSetShareCount, onOpenSheet, card: container.firstChild };
+}
+
+const holds = (personId, n) => ({ id: 'a-' + personId, item_id: 'i1', person_id: personId, share_count: n });
+
 describe('ItemCard', () => {
-  it('assigning an unassigned person adds a share and calls onAssignmentSave', async () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 1 })}
-        people={[alice]}
-        assignments={[]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
+  it('tapping an avatar with no Share sets ×1', () => {
+    const { onSetShareCount } = renderCard();
     fireEvent.click(screen.getByTitle('Alice'));
-
-    expect(onAssignmentSave).toHaveBeenCalledTimes(1);
-    const [itemId, shareMap] = onAssignmentSave.mock.calls[0];
-    expect(itemId).toBe('i1');
-    expect(shareMap.get('p1')).toBe(1);
+    expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 1);
   });
 
-  it('clicking a person already at max shares removes their assignment (toggle-off)', async () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 1 })}
-        people={[alice]}
-        assignments={[{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 }]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
+  it('tapping an avatar holding ×2 removes the Share', () => {
+    const { onSetShareCount } = renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 2)] });
     fireEvent.click(screen.getByTitle('Alice'));
-
-    expect(onAssignmentSave).toHaveBeenCalledTimes(1);
-    const [, shareMap] = onAssignmentSave.mock.calls[0];
-    expect(shareMap.has('p1')).toBe(false);
+    expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 0);
   });
 
-  it('caps share_count at item.quantity when another person already holds all shares', () => {
-    const onAssignmentSave = vi.fn().mockResolvedValue();
-    render(
-      <ItemCard
-        item={makeItem({ quantity: 2 })}
-        people={[alice, bob]}
-        assignments={[{ id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 2 }]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={onAssignmentSave}
-      />
-    );
-
-    fireEvent.click(screen.getByTitle('Bob'));
-
-    expect(onAssignmentSave).not.toHaveBeenCalled();
+  it('shows a ×N badge only above one Share', () => {
+    renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 2), holds('p2', 1)] });
+    expect(screen.getByText('×2')).toBeInTheDocument();
+    expect(screen.queryByText('×1')).not.toBeInTheDocument();
   });
 
-  it('renders the fully-assigned (accent) state once all shares are claimed', () => {
-    const { container } = render(
-      <ItemCard
-        item={makeItem({ quantity: 2 })}
-        people={[alice, bob]}
-        assignments={[
-          { id: 'a1', item_id: 'i1', person_id: 'p1', share_count: 1 },
-          { id: 'a2', item_id: 'i1', person_id: 'p2', share_count: 1 },
-        ]}
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-        onAssignmentSave={vi.fn()}
-      />
-    );
+  it('shows the status line and an amber border when partially assigned', () => {
+    const { card } = renderCard({ item: makeItem({ quantity: 3 }), assignments: [holds('p1', 1)] });
+    expect(screen.getByText('1 of 3 claimed — Alice covers all 3')).toBeInTheDocument();
+    expect(card.className).toContain('border-[#FBBF24]');
+  });
 
-    expect(container.firstChild).toHaveClass('border-accent');
+  it('uses the accent border when fully assigned and neutral when unassigned', () => {
+    expect(renderCard({ assignments: [holds('p1', 1)] }).card.className).toContain('border-accent');
+    expect(renderCard().card.className).toContain('border-border');
+  });
+
+  it('lets several people hold Shares on a quantity-1 item', () => {
+    renderCard({ item: makeItem({ price: '4.25' }), assignments: [holds('p1', 1), holds('p2', 1)] });
+    expect(screen.getByText('Split 2 ways · ~$2.13 each')).toBeInTheDocument();
+  });
+
+  it('opens the sheet on a card tap, and via Shares ›', () => {
+    const { onOpenSheet, card } = renderCard();
+    fireEvent.click(card);
+    fireEvent.click(screen.getByText('Shares ›'));
+    expect(onOpenSheet).toHaveBeenCalledTimes(2);
+  });
+
+  describe('with a Person selected', () => {
+    const selectedPerson = { ...alice, color: '#F87171' };
+
+    it('toggles that Person on a card tap instead of opening the sheet', () => {
+      const { onSetShareCount, onOpenSheet, card } = renderCard({ selectedPerson });
+      fireEvent.click(card);
+      expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 1);
+      expect(onOpenSheet).not.toHaveBeenCalled();
+    });
+
+    it('removes the Person when they already hold a Share', () => {
+      const { onSetShareCount, card } = renderCard({ selectedPerson, assignments: [holds('p1', 1)] });
+      fireEvent.click(card);
+      expect(onSetShareCount).toHaveBeenCalledWith('i1', 'p1', 0);
+    });
+
+    it('drops the footer and status border, and badges matching cards', () => {
+      const { card } = renderCard({ selectedPerson, item: makeItem({ quantity: 3 }), assignments: [holds('p1', 2)] });
+      expect(screen.queryByTestId('status-line')).not.toBeInTheDocument();
+      expect(screen.queryByText('Shares ›')).not.toBeInTheDocument();
+      expect(card.className).not.toContain('border-accent');
+      expect(screen.getByTestId('match-badge')).toHaveTextContent('✓ Alice ×2');
+    });
+
+    it('fades non-matching cards without a badge', () => {
+      const { card } = renderCard({ selectedPerson });
+      expect(card.className).toContain('opacity-[0.55]');
+      expect(screen.queryByTestId('match-badge')).not.toBeInTheDocument();
+    });
   });
 });

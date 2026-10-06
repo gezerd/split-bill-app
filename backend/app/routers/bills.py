@@ -16,6 +16,20 @@ ocr_service = OCRService()
 calc_service = CalculationService()
 
 
+@router.post("", response_model=dict)
+def create_empty_bill():
+    """Create an empty bill for manual entry (same shape as upload-receipt)."""
+    bill = data_store.create_bill()
+    return {
+        "bill_id": str(bill.id),
+        "items": [],
+        "tax_amount": float(bill.tax_amount),
+        "tip_amount": float(bill.tip_amount),
+        "subtotal": float(bill.subtotal),
+        "total": float(bill.total),
+    }
+
+
 @router.post("/upload-receipt", response_model=dict)
 def upload_receipt(file: UploadFile = File(...)):
     """

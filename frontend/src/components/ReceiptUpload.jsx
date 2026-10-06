@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
-export default function ReceiptUpload({ onUpload, onDone }) {
+export default function ReceiptUpload({ onUpload, onDone, onManual, hasBill, needsReplaceConfirm, onContinue }) {
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
-    if (file) await uploadFile(file);
+    event.target.value = '';
+    if (file) await requestUpload(file);
   };
 
   const handleDrag = (e) => {
@@ -22,11 +26,31 @@ export default function ReceiptUpload({ onUpload, onDone }) {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files?.[0]) await uploadFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files?.[0]) await requestUpload(e.dataTransfer.files[0]);
+  };
+
+  // Replacing a receipt only asks first when there is something to lose.
+  const requestUpload = async (file) => {
+    if (hasBill && needsReplaceConfirm) setPendingFile(file);
+    else await uploadFile(file);
+  };
+
+  const handleManual = async () => {
+    setUploading(true);
+    setFailed(false);
+    try {
+      await onManual();
+      onDone();
+    } catch (error) {
+      console.error('Could not start a manual bill:', error);
+      setFailed(true);
+      setUploading(false);
+    }
   };
 
   const uploadFile = async (file) => {
     setUploading(true);
+    setFailed(false);
     try {
       const data = await onUpload(file);
       setUploading(false);
@@ -35,7 +59,7 @@ export default function ReceiptUpload({ onUpload, onDone }) {
       setTimeout(() => onDone(), 700);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload receipt. Please try again.');
+      setFailed(true);
       setUploading(false);
     }
   };
@@ -71,6 +95,7 @@ export default function ReceiptUpload({ onUpload, onDone }) {
           type="file"
           id="receipt-upload"
           accept="image/*"
+          capture="environment"
           onChange={handleFileChange}
           disabled={uploading || done}
           className="hidden"
@@ -97,6 +122,18 @@ export default function ReceiptUpload({ onUpload, onDone }) {
               {itemCount} item{itemCount !== 1 ? 's' : ''} found!
             </p>
           </div>
+        ) : failed ? (
+          <div role="alert" className="flex flex-col items-center" style={{ gap: 12 }}>
+            <p className="font-bold" style={{ fontSize: 16, color: '#ff6b5e' }}>Couldn't read that receipt.</p>
+            <p className="text-gray-400" style={{ fontSize: 13 }}>Check the photo and try again, or enter the items yourself.</p>
+            <label
+              htmlFor="receipt-upload"
+              className="cursor-pointer font-bold"
+              style={{ marginTop: 4, padding: '10px 22px', borderRadius: 12, fontSize: 14, background: '#254862', color: '#A0C4DC' }}
+            >
+              Try again
+            </label>
+          </div>
         ) : (
           <label htmlFor="receipt-upload" className="cursor-pointer flex flex-col items-center">
             <svg
@@ -117,6 +154,42 @@ export default function ReceiptUpload({ onUpload, onDone }) {
           </label>
         )}
       </div>
+
+      {!uploading && !done && (
+        <div className="flex flex-col items-center" style={{ gap: 14, marginTop: 20 }}>
+          <button
+            onClick={handleManual}
+            className="font-semibold"
+            style={{ fontSize: 14, color: '#00FDDC', background: 'none', textDecoration: 'underline' }}
+          >
+            Enter items manually
+          </button>
+          {hasBill && (
+            <button
+              onClick={onContinue}
+              className="accent-hover font-bold"
+              style={{ padding: '14px 32px', borderRadius: 14, fontSize: 15, background: '#00FDDC', color: '#111' }}
+            >
+              Continue with current bill →
+            </button>
+          )}
+        </div>
+      )}
+
+      {pendingFile && (
+        <ConfirmDialog
+          title="Replace receipt?"
+          confirmLabel="Replace"
+          onCancel={() => setPendingFile(null)}
+          onConfirm={async () => {
+            const file = pendingFile;
+            setPendingFile(null);
+            await uploadFile(file);
+          }}
+        >
+          Items and assignments will be cleared. People are kept.
+        </ConfirmDialog>
+      )}
 
       <p className="text-center text-gray-500" style={{ fontSize: 12, marginTop: 16 }}>
         Powered by Claude AI

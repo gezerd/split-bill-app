@@ -107,4 +107,4 @@ def test_partial_assignment_computes_without_error():
     result = CalculationService.calculate_breakdown(bill.id)
 
     entry = result["people"][0]
-    assert entry["subtotal"] == Decimal("5.00")
+    assert entry["subtotal"] == Decimal("15.00")

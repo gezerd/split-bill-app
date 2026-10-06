@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ConfirmDialog, { boldName } from './ConfirmDialog';
 
 export const AVATAR_COLORS = [
   'bg-[#F87171]',
@@ -22,7 +23,7 @@ export const AVATAR_COLORS_OUTLINE = [
   'border-[#38BDF8] text-[#38BDF8]',
 ];
 
-const AVATAR_PLAIN_COLORS = [
+export const AVATAR_PLAIN_COLORS = [
   '#F87171','#60A5FA','#A78BFA','#4ADE80',
   '#FBBF24','#F472B6','#FB923C','#38BDF8',
 ];
@@ -33,7 +34,11 @@ export function getInitials(name) {
   return name[0].toUpperCase();
 }
 
-export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
+export default function PeopleManager({
+  people, onAddPerson, onDeletePerson,
+  assignments = [], selectedPersonId = null, onSelectPerson = () => {},
+}) {
+  const [removing, setRemoving] = useState(null); // person awaiting confirmation
   const [newPersonName, setNewPersonName] = useState('');
   const [adding, setAdding] = useState(false);
 
@@ -51,8 +56,17 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
     }
   };
 
+  const heldItemCount = (personId) =>
+    new Set(assignments.filter((a) => a.person_id === personId && a.share_count > 0).map((a) => a.item_id)).size;
+
+  const requestRemove = (person) => {
+    if (heldItemCount(person.id) > 0) setRemoving(person);
+    else handleDelete(person.id);
+  };
+
   const handleDelete = async (personId) => {
     try {
+      if (personId === selectedPersonId) onSelectPerson(personId);
       await onDeletePerson(personId);
     } catch (error) {
       console.error('Failed to delete person:', error);
@@ -97,17 +111,25 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
 
       {/* People chips */}
       {people.length > 0 && (
-        <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 32 }}>
+        <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 10 }}>
           {people.map((person, index) => {
             const color = AVATAR_PLAIN_COLORS[index % AVATAR_PLAIN_COLORS.length];
             return (
               <div
                 key={person.id}
-                className="flex items-center"
+                role="button"
+                tabIndex={0}
+                aria-label={`Select ${person.name}`}
+                aria-pressed={person.id === selectedPersonId}
+                onClick={() => onSelectPerson(person.id)}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelectPerson(person.id); } }}
+                className="flex items-center cursor-pointer"
                 style={{
                   gap: 8, padding: '6px 10px 6px 6px',
                   borderRadius: 100, background: '#1C3A54',
-                  border: '1.5px solid #2E5674',
+                  border: `1.5px solid ${person.id === selectedPersonId ? color : '#2E5674'}`,
+                  boxShadow: person.id === selectedPersonId ? `0 0 0 3px color-mix(in srgb, ${color} 25%, transparent)` : 'none',
+                  transition: '0.15s',
                 }}
               >
                 <div
@@ -121,15 +143,38 @@ export default function PeopleManager({ people, onAddPerson, onDeletePerson }) {
                 </div>
                 <span style={{ fontWeight: 600, fontSize: 13 }}>{person.name}</span>
                 <button
-                  onClick={() => handleDelete(person.id)}
-                  style={{ color: '#7AAAB8', fontSize: 17, lineHeight: 1, padding: '0 2px', marginLeft: 2 }}
+                  type="button"
+                  aria-label={`Remove ${person.name}`}
+                  title="Remove"
+                  onClick={(e) => { e.stopPropagation(); requestRemove(person); }}
+                  className="chip-x flex items-center justify-center shrink-0"
                 >
-                  ×
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+                    <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" />
+                  </svg>
                 </button>
               </div>
             );
           })}
         </div>
+      )}
+
+      {people.length > 0 && (
+        <div style={{ fontSize: 12, color: '#7AAAB8', marginBottom: 26 }}>
+          Tip: tap a name to select them, then tap everything they had.
+        </div>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title={`Remove ${removing.name}?`}
+          confirmLabel="Remove"
+          busyLabel="Removing…"
+          onCancel={() => setRemoving(null)}
+          onConfirm={async () => { await handleDelete(removing.id); setRemoving(null); }}
+        >
+          Their Shares on {heldItemCount(removing.id)} item{heldItemCount(removing.id) === 1 ? '' : 's'} will be cleared.
+        </ConfirmDialog>
       )}
     </div>
   );

@@ -52,3 +52,12 @@ input[type=number] { -moz-appearance: textfield; }
   color: #A0C4DC; font-weight: 700; font-size: 14px; transition: 0.15s;
 }
 .add-item-card:hover { border-color: #00FDDC; color: #00FDDC; background: #00FDDC26; }
+
+.avatar-ring:hover {
+  border-color: var(--avatar-color);
+  color: var(--avatar-color);
+}
+
+/* Chip remove button: SVG centred in a fixed-size round button */
+.chip-x { width: 18px; height: 18px; border-radius: 50%; color: #7AAAB8; margin-left: 2px; transition: .15s; }
+.chip-x:hover { color: #ff6b5e; background: rgba(255, 90, 80, .14); }

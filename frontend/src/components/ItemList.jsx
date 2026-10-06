@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import ItemCard from './ItemCard';
 import ItemModal from './ItemModal';
+import ShareSheet from './ShareSheet';
+import ConfirmDialog, { boldName } from './ConfirmDialog';
 
 export default function ItemList({
   items,
@@ -9,24 +11,26 @@ export default function ItemList({
   onAddItem,
   onUpdateItem,
   onDeleteItem,
-  onAssignmentSave,
+  onSetShareCount,
+  selectedPerson,
 }) {
-  // modal: null | { mode: 'add' } | { mode: 'edit', item } | { mode: 'delete', item }
+  // modal: null | { mode: 'add' } | { mode: 'edit', item } | { mode: 'delete', item } | { mode: 'sheet', itemId }
   const [modal, setModal] = useState(null);
+  const closeModal = useCallback(() => setModal(null), []);
 
   const handleAddSubmit = async (itemData) => {
-    await onAddItem(itemData.name, itemData.price, itemData.quantity);
-    setModal(null);
+    await onAddItem(itemData.name, itemData.price, itemData.quantity, itemData.customModifiers);
+    closeModal();
   };
 
   const handleEditSubmit = async (itemData) => {
     await onUpdateItem(modal.item.id, itemData);
-    setModal(null);
+    closeModal();
   };
 
   const handleDeleteConfirm = async () => {
     await onDeleteItem(modal.item.id);
-    setModal(null);
+    closeModal();
   };
 
   return (
@@ -50,7 +54,9 @@ export default function ItemList({
             assignments={assignments}
             onEdit={(item) => setModal({ mode: 'edit', item })}
             onDeleteRequest={(item) => setModal({ mode: 'delete', item })}
-            onAssignmentSave={onAssignmentSave}
+            onSetShareCount={onSetShareCount}
+            onOpenSheet={(item) => setModal({ mode: 'sheet', itemId: item.id })}
+            selectedPerson={selectedPerson}
           />
         ))}
 
@@ -60,28 +66,31 @@ export default function ItemList({
         </button>
       </div>
 
-      {modal && (
-        modal.mode === 'add' ? (
-          <ItemModal
-            mode="add"
-            onClose={() => setModal(null)}
-            onSubmit={handleAddSubmit}
-          />
-        ) : modal.mode === 'edit' ? (
-          <ItemModal
-            mode="edit"
-            item={modal.item}
-            onClose={() => setModal(null)}
-            onSubmit={handleEditSubmit}
-          />
-        ) : (
-          <ItemModal
-            mode="delete"
-            item={modal.item}
-            onClose={() => setModal(null)}
-            onDelete={handleDeleteConfirm}
-          />
-        )
+      {modal?.mode === 'sheet' && items.find((i) => i.id === modal.itemId) && (
+        <ShareSheet
+          item={items.find((i) => i.id === modal.itemId)}
+          people={people}
+          assignments={assignments}
+          onSetShareCount={onSetShareCount}
+          onClose={closeModal}
+        />
+      )}
+      {modal?.mode === 'add' && (
+        <ItemModal mode="add" onClose={closeModal} onSubmit={handleAddSubmit} />
+      )}
+      {modal?.mode === 'edit' && (
+        <ItemModal mode="edit" item={modal.item} onClose={closeModal} onSubmit={handleEditSubmit} />
+      )}
+      {modal?.mode === 'delete' && (
+        <ConfirmDialog
+          title="Delete item?"
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          onCancel={closeModal}
+          onConfirm={handleDeleteConfirm}
+        >
+          Remove <strong style={boldName}>{modal.item.name}</strong> from the bill? This also clears anyone it was assigned to.
+        </ConfirmDialog>
       )}
     </div>
   );

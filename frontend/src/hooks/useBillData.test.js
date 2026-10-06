@@ -29,7 +29,7 @@ describe('useBillData', () => {
     expect(result.current.items).toHaveLength(1);
     expect(result.current.tax).toBe(1);
     expect(result.current.tip).toBe(2);
-    expect(result.current.subtotal).toBe(10);
+    expect(result.current.receiptSubtotal).toBe(10);
     expect(result.current.error).toBeNull();
   });
 
@@ -65,7 +65,7 @@ describe('useBillData', () => {
       await result.current.handleCreatePerson('Ann');
     });
     await act(async () => {
-      await result.current.handleCreateAssignment('item-1', 'p1', 1);
+      await result.current.setShareCount('item-1', 'p1', 1);
     });
     await act(async () => {
       await result.current.handleUploadReceipt(new File(['y'], 'receipt2.jpg'));
@@ -76,22 +76,65 @@ describe('useBillData', () => {
     expect(result.current.assignments).toEqual([]);
   });
 
-  it('replaces an existing (item, person) assignment locally instead of duplicating', async () => {
-    api.createAssignment
-      .mockResolvedValueOnce({ id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 1 })
-      .mockResolvedValueOnce({ id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 2 });
+  it('updates screen state immediately, before the server answers', async () => {
+    let resolve;
+    api.createAssignment.mockReturnValue(new Promise((r) => { resolve = r; }));
+
+    const { result } = renderHook(() => useBillData());
+
+    let pending;
+    act(() => { pending = result.current.setShareCount('item-1', 'p1', 2); });
+
+    expect(result.current.assignments).toHaveLength(1);
+    expect(result.current.assignments[0].share_count).toBe(2);
+    expect(result.current.loading).toBe(false);
+
+    await act(async () => {
+      resolve({ id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 2 });
+      await pending;
+    });
+    expect(result.current.assignments).toEqual([
+      { id: 'a1', item_id: 'item-1', person_id: 'p1', share_count: 2 },
+    ]);
+  });
+
+  it('applies rapid writes for a pair in order and deletes the remembered id', async () => {
+    const calls = [];
+    api.createAssignment.mockImplementation(async (i, p, c) => {
+      calls.push(['up', c]);
+      return { id: 'a1', item_id: i, person_id: p, share_count: c };
+    });
+    api.deleteAssignment.mockImplementation(async (id) => { calls.push(['del', id]); });
 
     const { result } = renderHook(() => useBillData());
 
     await act(async () => {
-      await result.current.handleCreateAssignment('item-1', 'p1', 1);
-    });
-    await act(async () => {
-      await result.current.handleCreateAssignment('item-1', 'p1', 2);
+      result.current.setShareCount('item-1', 'p1', 1);
+      result.current.setShareCount('item-1', 'p1', 0);
+      result.current.setShareCount('item-1', 'p1', 1);
+      await result.current.setShareCount('item-1', 'p1', 0);
     });
 
-    expect(result.current.assignments).toHaveLength(1);
-    expect(result.current.assignments[0].share_count).toBe(2);
+    expect(calls).toEqual([['up', 1], ['del', 'a1'], ['up', 1], ['del', 'a1']]);
+    expect(result.current.assignments).toEqual([]);
+  });
+
+  it('sets the error and re-fetches assignments when a write fails', async () => {
+    api.uploadReceipt.mockResolvedValue({ bill_id: 'bill-1', items: [] });
+    api.createAssignment.mockRejectedValue(new Error('nope'));
+    api.getAssignments.mockResolvedValue([]);
+
+    const { result } = renderHook(() => useBillData());
+    await act(async () => {
+      await result.current.handleUploadReceipt(new File(['x'], 'r.jpg'));
+    });
+    await act(async () => {
+      await result.current.setShareCount('item-1', 'p1', 1);
+    });
+
+    expect(result.current.error).toBe('nope');
+    expect(api.getAssignments).toHaveBeenCalledWith('bill-1');
+    expect(result.current.assignments).toEqual([]);
   });
 
   it('prunes related assignments when an item is deleted', async () => {
@@ -103,7 +146,7 @@ describe('useBillData', () => {
     const { result } = renderHook(() => useBillData());
 
     await act(async () => {
-      await result.current.handleCreateAssignment('item-1', 'p1', 1);
+      await result.current.setShareCount('item-1', 'p1', 1);
     });
     expect(result.current.assignments).toHaveLength(1);
 
@@ -123,7 +166,7 @@ describe('useBillData', () => {
     const { result } = renderHook(() => useBillData());
 
     await act(async () => {
-      await result.current.handleCreateAssignment('item-1', 'p1', 1);
+      await result.current.setShareCount('item-1', 'p1', 1);
     });
     expect(result.current.assignments).toHaveLength(1);
 
@@ -132,5 +175,59 @@ describe('useBillData', () => {
     });
 
     expect(result.current.assignments).toHaveLength(0);
+  });
+
+  it('keeps people (re-created by name) when uploading with keepPeople', async () => {
+    api.uploadReceipt
+      .mockResolvedValueOnce({ bill_id: 'bill-1', items: [{ id: 'item-1' }] })
+      .mockResolvedValueOnce({ bill_id: 'bill-2', items: [{ id: 'item-2' }] });
+    api.createPerson
+      .mockResolvedValueOnce({ id: 'p1', name: 'Ann' })
+      .mockResolvedValueOnce({ id: 'p9', name: 'Ann' });
+
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    await act(async () => { await result.current.handleCreatePerson('Ann'); });
+    await act(async () => {
+      await result.current.handleUploadReceipt(new File(['y'], 'b.jpg'), { keepPeople: true });
+    });
+
+    expect(api.createPerson).toHaveBeenLastCalledWith('bill-2', 'Ann');
+    expect(result.current.people).toEqual([{ id: 'p9', name: 'Ann' }]);
+    expect(result.current.items).toEqual([{ id: 'item-2' }]);
+    expect(result.current.assignments).toEqual([]);
+  });
+
+  it('starts an empty manual bill', async () => {
+    api.createBill.mockResolvedValue({
+      bill_id: 'bill-m', items: [], tax_amount: 0, tip_amount: 0, subtotal: 0, total: 0,
+    });
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleStartManual(); });
+    expect(result.current.billId).toBe('bill-m');
+    expect(result.current.items).toEqual([]);
+    expect(result.current.receiptSubtotal).toBe(0);
+  });
+
+  it('resets the bill in place', async () => {
+    api.uploadReceipt.mockResolvedValue({ bill_id: 'bill-1', items: [{ id: 'i' }], subtotal: 5, tax_amount: 1 });
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    act(() => { result.current.handleReset(); });
+    expect(result.current.billId).toBeNull();
+    expect(result.current.items).toEqual([]);
+    expect(result.current.people).toEqual([]);
+    expect(result.current.tax).toBe(0);
+    expect(result.current.receiptSubtotal).toBe(0);
+  });
+
+  it('flags edited items', async () => {
+    api.uploadReceipt.mockResolvedValue({ bill_id: 'bill-1', items: [{ id: 'i', price: 1 }] });
+    api.deleteItem.mockResolvedValue({});
+    const { result } = renderHook(() => useBillData());
+    await act(async () => { await result.current.handleUploadReceipt(new File(['x'], 'a.jpg')); });
+    expect(result.current.itemsEdited).toBe(false);
+    await act(async () => { await result.current.handleDeleteItem('i'); });
+    expect(result.current.itemsEdited).toBe(true);
   });
 });

@@ -22,6 +22,11 @@ export const uploadReceipt = async (file) => {
   return response.data;
 };
 
+export const createBill = async () => {
+  const response = await apiClient.post('/api/bills');
+  return response.data;
+};
+
 export const getBill = async (billId) => {
   const response = await apiClient.get(`/api/bills/${billId}`);
   return response.data;
@@ -47,12 +52,13 @@ export const getBreakdown = async (billId) => {
 };
 
 // Items API
-export const createItem = async (billId, name, price, quantity = 1) => {
+export const createItem = async (billId, name, price, quantity = 1, customModifiers = []) => {
   const response = await apiClient.post('/api/items', {
     bill_id: billId,
     name,
     price,
     quantity,
+    custom_modifiers: customModifiers,
   });
   return response.data;
 };

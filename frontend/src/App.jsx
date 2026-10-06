@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBillData } from './hooks/useBillData';
 import StepIndicator from './components/StepIndicator';
 import ReceiptUpload from './components/ReceiptUpload';
@@ -6,6 +6,8 @@ import ItemList from './components/ItemList';
 import PeopleManager from './components/PeopleManager';
 import TipTaxInput from './components/TipTaxInput';
 import FinalBreakdown from './components/FinalBreakdown';
+import { summarize, fmt as money } from './lib/splitModel';
+import { AVATAR_PLAIN_COLORS } from './components/PeopleManager';
 
 export default function App() {
   const {
@@ -15,57 +17,71 @@ export default function App() {
     assignments,
     tax,
     tip,
-    subtotal,
+    receiptSubtotal,
+    itemsEdited,
     loading,
     error,
     handleUploadReceipt,
+    handleStartManual,
+    handleReset,
     handleCreateItem,
     handleUpdateItem,
     handleDeleteItem,
     handleCreatePerson,
     handleDeletePerson,
-    handleCreateAssignment,
-    handleDeleteAssignment,
+    setShareCount,
     handleUpdateTax,
     handleUpdateTip,
   } = useBillData();
 
   const [step, setStep] = useState(1);
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
 
-  const allAssigned =
-    items != null &&
-    items.every((item) => {
-      const itemAssignments = assignments ? assignments.filter((a) => a.item_id === item.id) : [];
-      const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
-      return totalShares >= (item.quantity || 1);
-    });
+  const selectedIndex = people.findIndex((p) => p.id === selectedPersonId);
+  const selectedPerson = selectedIndex >= 0
+    ? { ...people[selectedIndex], color: AVATAR_PLAIN_COLORS[selectedIndex % AVATAR_PLAIN_COLORS.length] }
+    : null;
 
-  const allPeopleAssigned =
-    people.length > 0 &&
-    people.every((person) => assignments && assignments.some((a) => a.person_id === person.id));
+  const summary = summarize({ items, people, assignments, receiptSubtotal });
+  const { canProceed, unassignedItems, partialItems, unassignedPeople } = summary;
+  const subtotal = summary.itemsSubtotalCents / 100;
 
-  const canProceed = allAssigned && allPeopleAssigned;
+  const nextLabel =
+    people.length === 0
+      ? 'Add people first'
+      : unassignedItems.length > 0
+      ? `${unassignedItems.length} items remaining`
+      : 'Next →';
+
+  const unassignedNote =
+    unassignedItems.length === 0 && items.length > 0 && unassignedPeople.length > 0
+      ? `${unassignedPeople.map((p) => p.name.trim().split(/\s+/)[0]).join(unassignedPeople.length > 2 ? ', ' : ' & ')} ${
+          unassignedPeople.length === 1 ? 'has' : 'have'
+        } nothing assigned — they'll ${unassignedPeople.length === 1 ? '' : 'each '}owe $0.`
+      : null;
 
   const tipPercentage =
     subtotal && parseFloat(subtotal) > 0 && tip && parseFloat(tip) > 0
       ? Math.round((parseFloat(tip) / parseFloat(subtotal)) * 100)
       : null;
 
-  const handleUpload = async (file) => {
-    return await handleUploadReceipt(file);
+  // Uploading over an existing bill keeps its people.
+  const handleUpload = (file) => handleUploadReceipt(file, { keepPeople: true });
+
+  // Warn before refresh/close while a bill is in progress.
+  useEffect(() => {
+    if (!billId) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [billId]);
+
+  const handleNewBill = () => {
+    handleReset();
+    setStep(1);
   };
 
   const handleUploadDone = () => setStep(2);
-
-  const handleAssignmentSave = async (itemId, selectedPeople) => {
-    const existingAssignments = assignments.filter((a) => a.item_id === itemId);
-    for (const assignment of existingAssignments) {
-      await handleDeleteAssignment(assignment.id);
-    }
-    for (const [personId, shareCount] of selectedPeople.entries()) {
-      await handleCreateAssignment(itemId, personId, shareCount);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background" style={{ padding: '36px 20px 80px' }}>
@@ -97,7 +113,14 @@ export default function App() {
 
         {/* Step 1: Upload */}
         {step === 1 && (
-          <ReceiptUpload onUpload={handleUpload} onDone={handleUploadDone} />
+          <ReceiptUpload
+            onUpload={handleUpload}
+            onDone={handleUploadDone}
+            onManual={handleStartManual}
+            hasBill={!!billId}
+            needsReplaceConfirm={assignments.length > 0 || itemsEdited}
+            onContinue={() => setStep(2)}
+          />
         )}
 
         {/* Step 2: Assign */}
@@ -110,7 +133,31 @@ export default function App() {
               people={people}
               onAddPerson={handleCreatePerson}
               onDeletePerson={handleDeletePerson}
+              assignments={assignments}
+              selectedPersonId={selectedPerson?.id ?? null}
+              onSelectPerson={(id) => setSelectedPersonId((cur) => (cur === id ? null : id))}
             />
+
+            {selectedPerson && (
+              <div
+                className="flex items-center justify-between"
+                style={{
+                  gap: 12, padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontSize: 13,
+                  background: `color-mix(in srgb, ${selectedPerson.color} 14%, transparent)`,
+                  border: `1.5px solid ${selectedPerson.color}`,
+                }}
+              >
+                <span>
+                  Tapping items for <b style={{ color: selectedPerson.color }}>{selectedPerson.name}</b>. Tap a card to add them to it or take them off.
+                </span>
+                <button
+                  onClick={() => setSelectedPersonId(null)}
+                  style={{ fontWeight: 700, fontSize: 13, padding: '6px 12px', borderRadius: 9, background: selectedPerson.color, color: '#111' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
 
             <div>
               <div className="flex items-center justify-between mb-3.5">
@@ -118,16 +165,22 @@ export default function App() {
                   Items from receipt
                 </span>
                 {items.length > 0 && (
-                  allAssigned
-                    ? <span className="text-accent bg-accent-dim font-semibold" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>All assigned ✓</span>
-                    : <span className="text-gray-400 bg-surface-2" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>
-                        {items.filter(item => {
-                          const shares = assignments.filter(a => a.item_id === item.id).reduce((s, a) => s + (a.share_count || 1), 0);
-                          return shares < (item.quantity || 1);
-                        }).length} unassigned
-                      </span>
+                  <div className="flex items-center gap-2">
+                    {unassignedItems.length === 0
+                      ? <span className="text-accent bg-accent-dim font-semibold" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>All assigned ✓</span>
+                      : <span className="text-gray-400 bg-surface-2" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100 }}>{unassignedItems.length} unassigned</span>}
+                    {partialItems.length > 0 && (
+                      <span className="font-semibold" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 100, color: '#FBBF24', background: 'rgba(251,191,36,0.12)' }}>{partialItems.length} partial</span>
+                    )}
+                  </div>
                 )}
               </div>
+
+              {summary.mismatch && (
+                <div className="mb-3.5" role="status" style={{ background: 'rgba(251,191,36,0.12)', border: '1.5px solid #FBBF24', color: '#FBBF24', borderRadius: 12, padding: '10px 14px', fontSize: 13 }}>
+                  Items add up to {money(summary.itemsSubtotalCents)}, but the receipt subtotal is {money(summary.receiptCents)}. A line may be missing or misread.
+                </div>
+              )}
 
               {items.length === 0 && (
                 <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4 mb-4">
@@ -143,7 +196,8 @@ export default function App() {
                 onAddItem={handleCreateItem}
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
-                onAssignmentSave={handleAssignmentSave}
+                onSetShareCount={setShareCount}
+                selectedPerson={selectedPerson}
               />
             </div>
 
@@ -158,25 +212,23 @@ export default function App() {
               >
                 ← Back
               </button>
-              <button
-                onClick={() => setStep(3)}
-                disabled={!canProceed}
-                className={`font-bold transition-all ${
-                  canProceed
-                    ? 'bg-accent text-on-accent accent-hover'
-                    : 'bg-surface-2 text-gray-500 cursor-not-allowed'
-                }`}
-                style={{ padding: '14px 32px', borderRadius: 14, fontSize: 15 }}
-              >
-                {!allAssigned && people.length > 0
-                  ? `${items.filter(item => {
-                      const shares = assignments.filter(a => a.item_id === item.id).reduce((s, a) => s + (a.share_count || 1), 0);
-                      return shares < (item.quantity || 1);
-                    }).length} items remaining`
-                  : !allPeopleAssigned
-                  ? `${people.filter(p => !assignments.some(a => a.person_id === p.id)).length} people unassigned`
-                  : 'Next →'}
-              </button>
+              <div className="flex items-center gap-3">
+                {unassignedNote && (
+                  <span style={{ fontSize: 12, color: '#FBBF24', maxWidth: 280, textAlign: 'right', lineHeight: 1.4 }}>{unassignedNote}</span>
+                )}
+                <button
+                  onClick={() => setStep(3)}
+                  disabled={!canProceed}
+                  className={`font-bold transition-all ${
+                    canProceed
+                      ? 'bg-accent text-on-accent accent-hover'
+                      : 'bg-surface-2 text-gray-500 cursor-not-allowed'
+                  }`}
+                  style={{ padding: '14px 32px', borderRadius: 14, fontSize: 15 }}
+                >
+                  {nextLabel}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -187,6 +239,11 @@ export default function App() {
             tax={tax}
             tip={tip}
             subtotal={subtotal}
+            mismatchNote={
+              summary.mismatch
+                ? `Items add up to ${money(summary.itemsSubtotalCents)}, but the receipt subtotal is ${money(summary.receiptCents)}.`
+                : null
+            }
             onUpdateTax={handleUpdateTax}
             onUpdateTip={handleUpdateTip}
             onBack={() => setStep(2)}
@@ -201,6 +258,7 @@ export default function App() {
             people={people}
             tipPercentage={tipPercentage}
             onBack={() => setStep(3)}
+            onNewBill={handleNewBill}
           />
         )}
 

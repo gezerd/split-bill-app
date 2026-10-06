@@ -27,38 +27,18 @@ export function itemCard(page, itemName) {
     .locator('xpath=ancestor::div[contains(@class,"bg-surface")][1]');
 }
 
-// Every avatar click re-saves the item's whole assignment map (App's
-// handleAssignmentSave deletes all of the item's existing assignments, then
-// re-creates each one) — a sequential chain of awaited API calls, not a
-// single request. Clicking again before that chain lands re-reads stale
-// props and can toggle a share back off, so each click must be clicked
-// exactly once and fully settled (network idle) before the next one.
-export async function assignItemFullyToPerson(page, card, personName) {
-  const hintLocator = card.getByText(/^×\d+ @/);
-  const hintCount = await hintLocator.count();
-  const quantity = hintCount > 0
-    ? parseInt((await hintLocator.first().textContent()).match(/×(\d+)/)[1], 10)
-    : 1;
-
-  const sharesLabel = card.getByText(/^\d+ shares?$/);
-  const sharesCount = await sharesLabel.count();
-  const currentShares = sharesCount > 0
-    ? parseInt((await sharesLabel.first().textContent()).match(/^(\d+)/)[1], 10)
-    : 0;
-
-  const clicksNeeded = quantity - currentShares;
-  const avatarBtn = card.getByTitle(personName);
-  for (let i = 0; i < clicksNeeded; i++) {
-    await avatarBtn.click();
-    await page.waitForLoadState('networkidle');
-  }
+// Avatar taps are optimistic and serialised, so a tap needs no waiting.
+// A tap toggles ×1 on/off: call this on an Item the Person doesn't hold yet.
+export async function assignItemToPerson(card, personName) {
+  await card.getByTitle(personName).click();
 }
 
-export async function assignAllItemsFullyToOnePerson(page, personName) {
+export async function assignAllItemsToOnePerson(page, personName, { except = [] } = {}) {
   const cardCount = await page.locator('h3').count();
   for (let i = 0; i < cardCount; i++) {
     const heading = page.locator('h3').nth(i);
+    if (except.includes(await heading.textContent())) continue;
     const card = heading.locator('xpath=ancestor::div[contains(@class,"bg-surface")][1]');
-    await assignItemFullyToPerson(page, card, personName);
+    await assignItemToPerson(card, personName);
   }
 }

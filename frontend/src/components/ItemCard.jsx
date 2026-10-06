@@ -1,4 +1,8 @@
-import { getInitials, AVATAR_COLORS, AVATAR_COLORS_OUTLINE } from './PeopleManager';
+import { getInitials, AVATAR_PLAIN_COLORS } from './PeopleManager';
+import { itemStatus, describeItem } from '../lib/splitModel';
+
+const BORDER = { full: 'border-accent', partial: 'border-[#FBBF24]', unassigned: 'border-border' };
+const TONE = { dim: 'text-gray-400', warn: 'text-[#FBBF24]', ok: 'text-gray-300' };
 
 export default function ItemCard({
   item,
@@ -6,44 +10,52 @@ export default function ItemCard({
   assignments,
   onEdit,
   onDeleteRequest,
-  onAssignmentSave,
+  onSetShareCount,
+  onOpenSheet = () => {},
+  selectedPerson = null, // { id, name, color } while in selected-person (focus) mode
 }) {
   const itemAssignments = assignments.filter((a) => a.item_id === item.id);
-  const totalShares = itemAssignments.reduce((sum, a) => sum + (a.share_count || 1), 0);
-  const isFullyAssigned = totalShares >= (item.quantity || 1);
+  const status = itemStatus(item, assignments);
+  const line = describeItem(item, people, assignments);
 
-  const handlePersonClick = async (person) => {
-    const quantity = item.quantity || 1;
-    const currentAssignment = itemAssignments.find((a) => a.person_id === person.id);
-    const currentShares = currentAssignment?.share_count || 0;
-    const otherShares = itemAssignments
-      .filter((a) => a.person_id !== person.id)
-      .reduce((sum, a) => sum + (a.share_count || 1), 0);
-    const maxShares = quantity - otherShares;
+  const handlePersonClick = (person) => {
+    const shares = itemAssignments.find((a) => a.person_id === person.id)?.share_count || 0;
+    onSetShareCount(item.id, person.id, shares > 0 ? 0 : 1);
+  };
 
-    const newShareMap = new Map(
-      itemAssignments.map((a) => [a.person_id, a.share_count || 1])
-    );
+  const focus = !!selectedPerson;
+  const mineShares = focus ? itemAssignments.find((a) => a.person_id === selectedPerson.id)?.share_count || 0 : 0;
+  const mine = mineShares > 0;
 
-    if (currentShares > 0 && currentShares >= maxShares) {
-      newShareMap.delete(person.id);
-    } else {
-      const newShares = Math.min(currentShares + 1, maxShares);
-      if (newShares === 0) return;
-      newShareMap.set(person.id, newShares);
-    }
-
-    await onAssignmentSave(item.id, newShareMap);
+  const handleCardClick = () => {
+    if (focus) onSetShareCount(item.id, selectedPerson.id, mine ? 0 : 1);
+    else onOpenSheet(item);
   };
 
   const totalPrice = parseFloat(item.price) * (item.quantity || 1);
 
   return (
     <div
-      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-colors duration-200 ${
-        isFullyAssigned ? 'border-accent' : 'border-border'
+      data-testid="item-card"
+      data-focus={focus ? (mine ? 'match' : 'dim') : undefined}
+      onClick={handleCardClick}
+      className={`bg-surface rounded-[18px] p-4 border-[1.5px] transition-all duration-200 relative cursor-pointer ${
+        focus ? (mine ? '' : 'border-border opacity-[0.55] hover:opacity-[0.85]') : BORDER[status]
       }`}
+      style={mine ? {
+        borderColor: selectedPerson.color,
+        background: `color-mix(in srgb, ${selectedPerson.color} 12%, #1C3A54)`,
+      } : undefined}
     >
+      {mine && (
+        <span
+          data-testid="match-badge"
+          className="absolute font-extrabold"
+          style={{ top: -10, left: 14, fontSize: 11, padding: '2px 9px', borderRadius: 100, background: selectedPerson.color, color: '#111' }}
+        >
+          ✓ {selectedPerson.name.trim().split(/\s+/)[0]}{mineShares > 1 ? ` ×${mineShares}` : ''}
+        </span>
+      )}
       {/* Card header */}
       <div className="flex items-start justify-between mb-2">
         {/* Left: name + modifiers */}
@@ -52,7 +64,7 @@ export default function ItemCard({
           {item.customModifiers && item.customModifiers.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {item.customModifiers.map((mod, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-surface-2 text-gray-400 rounded-[6px]">
+                <span key={i} style={{ fontSize: 10, padding: '2px 7px', background: '#254862', color: '#A0C4DC', borderRadius: 6 }}>
                   {mod}
                 </span>
               ))}
@@ -89,44 +101,47 @@ export default function ItemCard({
       {people.length === 0 ? (
         <div className="mt-3 text-xs text-gray-400">Add people to assign</div>
       ) : (
-        <div className="mt-3">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-400">Tap to add a share:</span>
-            {totalShares > 0 && (
-              <span className="text-xs text-gray-400">{totalShares} share{totalShares !== 1 ? 's' : ''}</span>
-            )}
-          </div>
-          <div className="mt-1.5 flex flex-wrap gap-2">
-            {people.map((person) => {
-              const colorIndex = people.findIndex((p) => p.id === person.id);
-              const assignment = itemAssignments.find((a) => a.person_id === person.id);
-              const shares = assignment?.share_count || 0;
-              const assigned = shares > 0;
+        <div className="mt-3 flex flex-wrap gap-2">
+          {people.map((person, index) => {
+            const color = AVATAR_PLAIN_COLORS[index % AVATAR_PLAIN_COLORS.length];
+            const shares = itemAssignments.find((a) => a.person_id === person.id)?.share_count || 0;
+            const held = shares > 0;
 
-              return (
-                <button
-                  key={person.id}
-                  onClick={() => handlePersonClick(person)}
-                  className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
-                    assigned
-                      ? `${AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]} text-black border-transparent`
-                      : `bg-transparent border-[1.5px] ${AVATAR_COLORS_OUTLINE[colorIndex % AVATAR_COLORS_OUTLINE.length]}`
-                  }`}
-                  title={person.name}
-                >
-                  {getInitials(person.name)}
-                  {shares > 1 && (
-                    <span
-                      className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center rounded-full"
-                      style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
-                    >
-                      ×{shares}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={person.id}
+                onClick={(e) => { e.stopPropagation(); handlePersonClick(person); }}
+                className={`avatar-ring relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-extrabold transition-all ${
+                  held ? 'text-[#111] border-transparent' : 'bg-transparent border-[1.5px] border-[#2E5674] text-[#7AAAB8]'
+                }`}
+                style={held ? { background: color } : { '--avatar-color': color }}
+                title={person.name}
+              >
+                {getInitials(person.name)}
+                {shares > 1 && (
+                  <span
+                    className="absolute bg-accent text-black font-extrabold border-2 border-surface flex items-center justify-center rounded-full"
+                    style={{ fontSize: 10, padding: '0 4px', height: 18, minWidth: 18, borderRadius: 9, bottom: -5, right: -6, pointerEvents: 'none' }}
+                  >
+                    ×{shares}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer: status line and Shares link; removed (not hidden) in focus mode */}
+      {people.length > 0 && !focus && (
+        <div className="mt-3 flex items-center justify-between gap-2" style={{ fontSize: 12 }}>
+          <span className={TONE[line.tone]} data-testid="status-line">{line.text}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenSheet(item); }}
+            className="font-bold text-accent whitespace-nowrap hover:underline"
+          >
+            Shares ›
+          </button>
         </div>
       )}
     </div>
