@@ -215,7 +215,7 @@ export default function App() {
               </button>
               <div className="flex items-center gap-3">
                 {unassignedNote && (
-                  <span className="text-gray-400" style={{ fontSize: 12 }}>{unassignedNote}</span>
+                  <span style={{ fontSize: 12, color: '#FBBF24', maxWidth: 280, textAlign: 'right', lineHeight: 1.4 }}>{unassignedNote}</span>
                 )}
                 <button
                   onClick={() => setStep(3)}

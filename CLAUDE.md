@@ -26,6 +26,23 @@ The backend is uv-managed: run tools with `uv run --directory backend <cmd>` and
 2. `Artifact` tool, `action: "read"`, `paths: [<every published file>]`, `url: <link>`, `out_dir: "designs"`, overwriting in place.
 3. Continue into the verification loop with the fresh files.
 
+### Screen reference
+
+Which `designs/` file covers which screen or state (see `designs/README.md` for the rules behind them):
+
+| Screen / state | File |
+|---|---|
+| Step 1 upload: idle, scanning, processed | `01-upload.html`, `01-upload-scanning.html`, `01-upload-processed.html` |
+| Step 2 all assigned | `02-assign-complete.html` |
+| Step 2 partial state, "N partial" pill, Subtotal mismatch banner | `02-assign-partial.html` |
+| Step 2 Share sheet | `02-assign-sharesheet.html` |
+| Step 2 focus mode (a Person selected) | `02-assign-focus.html` |
+| Add-item modal | `02-assign-additem.html` |
+| Edit-item modal | `02-assign-edititem.html` |
+| Delete-item / confirmation dialog | `02-assign-delete.html` |
+| Step 3 tax & tip | `03-taxtip.html`, `03-taxtip-notip.html` |
+| Step 4 breakdown | `04-breakdown-cards.html`, `04-breakdown-receipt.html` |
+
 ### Verification loop
 
 The handoff is **high-fidelity**: recreate it pixel-for-pixel. `designs/README.md` maps each screen/state to its HTML file and states the quantity-aware assignment rule; `designs/styles.css` holds every token, size, radius and animation. Open the HTML in a browser to inspect exact values.
