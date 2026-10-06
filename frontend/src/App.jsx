@@ -6,7 +6,7 @@ import ItemList from './components/ItemList';
 import PeopleManager from './components/PeopleManager';
 import TipTaxInput from './components/TipTaxInput';
 import FinalBreakdown from './components/FinalBreakdown';
-import { summarize } from './lib/splitModel';
+import { summarize, fmt as money } from './lib/splitModel';
 import { AVATAR_PLAIN_COLORS } from './components/PeopleManager';
 
 export default function App() {
@@ -45,7 +45,6 @@ export default function App() {
   const summary = summarize({ items, people, assignments, receiptSubtotal });
   const { canProceed, unassignedItems, partialItems, unassignedPeople } = summary;
   const subtotal = summary.itemsSubtotalCents / 100;
-  const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 
   const nextLabel =
     people.length === 0

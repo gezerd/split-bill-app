@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getBreakdown } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
 import { getInitials, AVATAR_COLORS } from './PeopleManager';
+import { fmt } from '../lib/splitModel';
 
 // Torn-edge zigzag SVG mask. Fill matches page background (#152D42).
 const ZIGZAG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 8 L8 0 L16 8' fill='%23152D42' stroke='none'/%3E%3C/svg%3E")`;
@@ -81,8 +82,7 @@ export function summaryText(breakdown) {
   const rows = breakdown.people.map((p) => [p.name, Math.round(parseFloat(p.total) * 100)]);
   const grand = rows.reduce((s, [, c]) => s + c, 0);
   const width = Math.max(...rows.map(([n]) => n.length)) + 2;
-  const money = (c) => `$${(c / 100).toFixed(2)}`;
-  return [`Split — ${money(grand)}`, ...rows.map(([n, c]) => `${n.padEnd(width)}${money(c)}`)].join('\n');
+  return [`Split — ${fmt(grand)}`, ...rows.map(([n, c]) => `${n.padEnd(width)}${fmt(c)}`)].join('\n');
 }
 
 export default function FinalBreakdown({ billId, people, onBack, onNewBill }) {

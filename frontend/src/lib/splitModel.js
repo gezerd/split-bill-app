@@ -5,7 +5,7 @@
 const toCents = (dollars) => Math.round(parseFloat(dollars) * 100);
 const qtyOf = (item) => item.quantity || 1;
 const itemTotalCents = (item) => toCents(item.price) * qtyOf(item);
-const fmt = (cents) => `$${(cents / 100).toFixed(2)}`;
+export const fmt = (cents) => `$${(cents / 100).toFixed(2)}`;
 
 // personId -> shares, for people still on the bill, in people order.
 function holdersOf(item, people, assignments) {
